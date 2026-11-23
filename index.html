@@ -348,7 +348,7 @@ legend {
 }
 .num-row label { color: var(--muted); font-size: 13.5px; }
 .num-row input[type="number"] {
-  width: 64px;
+  width: 90px;
   background: var(--input-bg);
   border: 1px solid var(--line);
   color: var(--text);
@@ -758,6 +758,14 @@ legend {
       <section>
         <h2 data-i18n="behavior.title"></h2>
         <fieldset>
+          <legend data-i18n="behavior.server"></legend>
+          <div class="num-row">
+            <label for="serverPort" data-i18n="behavior.port" data-i18n-title="behavior.portTip"></label>
+            <input type="number" id="serverPort" min="1024" max="65535" value="8460">
+            <span class="hint" id="portHint" style="margin:0;"></span>
+          </div>
+        </fieldset>
+        <fieldset>
           <legend data-i18n="behavior.badTitle"></legend>
           <div class="radio-row" id="outputMode">
             <label data-i18n-title="behavior.onlyCsv.tip">
@@ -918,6 +926,7 @@ function applyI18n() {
   updateDestPreview();
   renderLm(lastLm || {});
   renderJob(lastJob || {}, lastLog || []);
+  $("portHint").textContent = t("behavior.portHint");
   syncSelectLabels();
 }
 
@@ -1079,6 +1088,7 @@ function currentConfigPatch() {
     output_mode: document.querySelector('input[name="outputMode"]:checked')?.value || "csv_only",
     bad_folder_name: "на_удаление",
     score_threshold: Math.max(1, Math.min(5, parseInt($("scoreThreshold").value || "2", 10))),
+    port: Math.max(1024, Math.min(65535, parseInt($("serverPort").value || "8460", 10))),
     quality_rules: {
       blur: $("ruleBlur").checked,
       exposure: $("ruleExposure").checked,
@@ -1216,6 +1226,8 @@ function applyConfigToForm(cfg) {
   const mode = document.querySelector(`input[name="outputMode"][value="${cfg.output_mode || "csv_only"}"]`);
   if (mode) mode.checked = true;
   $("scoreThreshold").value = cfg.score_threshold ?? 2;
+  $("serverPort").value = cfg.port ?? 8460;
+  $("portHint").textContent = t("behavior.portHint");
   $("ruleBlur").checked = !!(cfg.quality_rules && cfg.quality_rules.blur);
   $("ruleExposure").checked = !!(cfg.quality_rules && cfg.quality_rules.exposure);
   $("ruleJunk").checked = !!(cfg.quality_rules && cfg.quality_rules.junk);
@@ -1231,7 +1243,7 @@ function applyConfigToForm(cfg) {
 
 function bindForm() {
   [
-    "inputFolder", "scoreThreshold", "ruleBlur", "ruleExposure", "ruleJunk",
+    "inputFolder", "scoreThreshold", "serverPort", "ruleBlur", "ruleExposure", "ruleJunk",
     "optRecursive", "optResume", "optDry", "optCategories", "optReasonName", "optPreserve",
   ].forEach((id) => $(id).addEventListener("change", scheduleSave));
   $("optCategories").addEventListener("change", syncAllCatRows);
@@ -1465,7 +1477,8 @@ async function init() {
   });
 
   $("btnOpenPanel").addEventListener("click", () => {
-    window.open("http://127.0.0.1:8460", "_blank");
+    const port = parseInt($("serverPort")?.value || "8460", 10) || 8460;
+    window.open(`http://127.0.0.1:${port}`, "_blank");
   });
 
   $("btnStopServer").addEventListener("click", async () => {

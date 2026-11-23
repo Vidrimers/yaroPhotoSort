@@ -126,5 +126,9 @@ window.YARO_I18N = {
   "help.s6.p": "Turn on categorization to copy or move people / documents / screenshots into their own folders. Empty folder = <code>_sorted\\category</code> inside the photo folder.",
   "help.s7.t": "Run and review",
   "help.s7.p": "Try <b>Dry-run</b> first. Then Start. Progress is shown live; results land in <code>results/analysis.csv</code>. Resume skips files already listed there.",
-  "help.note": "Tip: run start.bat - it starts the server and opens the page at http://127.0.0.1:8460. Open that URL, not the local HTML file. install.bat is only needed for the Start server button inside the page."
+  "help.note": "Tip: run start.bat - it starts the server and opens the page at http://127.0.0.1:8460. Open that URL, not the local HTML file. install.bat is only needed for the Start server button inside the page.",
+  "behavior.server": "Server",
+  "behavior.port": "Port",
+  "behavior.portTip": "Port the local server listens on. Default 8460 (8000 is often reserved by Windows). Applies after the server is restarted.",
+  "behavior.portHint": "Applies after restart"
 };

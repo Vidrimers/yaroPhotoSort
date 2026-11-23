@@ -19,6 +19,25 @@ if ($u.Scheme -ne 'yarophoto') { Fail "Unknown scheme: $($u.Scheme)" }
 
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $port = 8460
+
+# actual port wins: the server writes it when it binds (may differ if the preferred port was busy)
+$activePortFile = Join-Path $root 'active_port.txt'
+if (Test-Path -LiteralPath $activePortFile) {
+    try {
+        $p = (Get-Content -LiteralPath $activePortFile -Raw).Trim()
+        if ($p -match '^\d+$') { $port = [int]$p }
+    } catch { }
+}
+
+if ($port -eq 8460) {
+    $cfgPath = Join-Path $root 'config.json'
+    if (Test-Path -LiteralPath $cfgPath) {
+        try {
+            $cfg = Get-Content -LiteralPath $cfgPath -Raw -Encoding UTF8 | ConvertFrom-Json
+            if ($cfg.port) { $port = [int]$cfg.port }
+        } catch { }
+    }
+}
 $panel = "http://127.0.0.1:$port"
 
 function Test-ServerAlive {

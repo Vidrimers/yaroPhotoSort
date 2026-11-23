@@ -8,11 +8,13 @@ import json
 import os
 import re
 import shutil
+import socket
 import subprocess
 import sys
 import threading
 import time
 import traceback
+import webbrowser
 from dataclasses import dataclass, field
 from datetime import datetime
 from io import BytesIO
@@ -47,7 +49,53 @@ CSV_PATH = RESULTS_DIR / "analysis.csv"
 LOG_PATH = RESULTS_DIR / "run.log"
 
 LM_BASE = os.environ.get("LMSTUDIO_URL", "http://127.0.0.1:1234")
-PORT = int(os.environ.get("YAROPHOTO_PORT", "8460"))
+
+
+def resolve_port() -> int:
+    env = os.environ.get("YAROPHOTO_PORT")
+    if env:
+        try:
+            return int(env)
+        except ValueError:
+            pass
+    try:
+        if CONFIG_PATH.exists():
+            cfg = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+            return int(cfg.get("port") or 8460)
+    except Exception:
+        pass
+    return 8460
+
+
+PORT = resolve_port()
+ACTIVE_PORT_FILE = ROOT / "active_port.txt"
+
+
+def find_free_port(preferred: int, span: int = 30) -> int:
+    for port in range(preferred, min(preferred + span, 65535)):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            s.bind(("127.0.0.1", port))
+            return port
+        except OSError:
+            continue
+        finally:
+            s.close()
+    raise RuntimeError(f"No free port in {preferred}..{preferred + span}")
+
+
+def write_active_port(port: int) -> None:
+    try:
+        ACTIVE_PORT_FILE.write_text(str(port), encoding="utf-8")
+    except Exception:
+        pass
+
+
+def clear_active_port() -> None:
+    try:
+        ACTIVE_PORT_FILE.unlink(missing_ok=True)
+    except Exception:
+        pass
 
 app = FastAPI(title="yaroPhotoSort")
 app.mount("/locales", StaticFiles(directory=str(ROOT / "locales")), name="locales")
@@ -94,6 +142,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "add_reason_to_name": False,
     "preserve_structure": True,
     "max_image_side": 1280,
+    "port": 8460,
 }
 
 
@@ -763,6 +812,7 @@ class ConfigModel(BaseModel):
     add_reason_to_name: bool = False
     preserve_structure: bool = True
     max_image_side: int = 1280
+    port: int = 8460
 
 
 @app.get("/")
@@ -865,14 +915,24 @@ def api_status() -> dict[str, Any]:
 @app.post("/api/shutdown")
 def api_shutdown() -> dict[str, Any]:
     log("Shutdown requested from UI.")
+    clear_active_port()
     threading.Timer(0.5, lambda: os._exit(0)).start()
-    return {"ok": True, "message": "Сервер останавливается"}
+    return {"ok": True, "message": "Server is stopping"}
 
 
 def run() -> None:
     RESULTS_DIR.mkdir(exist_ok=True)
-    log(f"yaroPhotoSort server -> http://127.0.0.1:{PORT}")
-    uvicorn.run(app, host="127.0.0.1", port=PORT, log_level="warning")
+    port = find_free_port(PORT)
+    if port != PORT:
+        log(f"Port {PORT} is busy, using {port} instead")
+    write_active_port(port)
+    url = f"http://127.0.0.1:{port}"
+    log(f"yaroPhotoSort server -> {url}")
+    threading.Timer(1.0, lambda: webbrowser.open(url)).start()
+    try:
+        uvicorn.run(app, host="127.0.0.1", port=port, log_level="warning")
+    finally:
+        clear_active_port()
 
 
 if __name__ == "__main__":
