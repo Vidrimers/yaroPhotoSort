@@ -787,7 +787,8 @@ function applyI18n() {
 
 function syncSelectLabels() {
   const theme = document.documentElement.dataset.theme === "paper" ? "paper" : "lab";
-  $("themeSelect").querySelector(".select-value").textContent = t("theme." + theme);
+  $("themeSelect").querySelector(".select-value").textContent =
+    t("theme.label") + ": " + t("theme." + theme);
   $("themeSelect").querySelectorAll("[role=option]").forEach((li) => {
     li.setAttribute("aria-selected", li.dataset.value === theme ? "true" : "false");
   });
@@ -1190,6 +1191,11 @@ async function init() {
   setInterval(poll, 2500);
 
   $("btnBrowse").addEventListener("click", async () => {
+    if (location.protocol === "file:") {
+      dz.textContent = t("dropzone.needServer");
+      serverOffline(true);
+      return;
+    }
     try {
       const res = await api.post("/api/browse-folder");
       if (res.path) {

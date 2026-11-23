@@ -102,6 +102,8 @@ window.YARO_I18N = {
   "strip.countPrefix": "matching files: ",
   "strip.folderCount": "files found: ",
   "footer.note": "CSV is written to results/analysis.csv, settings to config.json",
-  "lang.en": "English",
-  "lang.ru": "Russian"
+  "lang.en": "🇬🇧 English",
+  "lang.ru": "🇷🇺 Russian",
+  "theme.label": "Theme",
+  "dropzone.needServer": "Open the page at http://127.0.0.1:8460 after starting the server (start.bat). Then Browse and the rest of the controls will work."
 };

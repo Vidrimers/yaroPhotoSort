@@ -1,6 +1,6 @@
-# Обработчик yarophoto:// — вызывается Windows при клике на кнопку в index.html.
-# Аргумент: yarophoto://start | yarophoto://stop | yarophoto://open
-# Только фиксированные действия, белый список ниже. Произвольные команды не выполняются.
+﻿# yarophoto:// handler - called by Windows when the page links to yarophoto://...
+# URL: yarophoto://start | yarophoto://stop | yarophoto://open
+# Fixed actions only, whitelist below. No arbitrary commands are executed.
 param(
     [Parameter(Position = 0)]
     [string]$Url
@@ -13,9 +13,9 @@ function Fail([string]$Msg) {
     exit 1
 }
 
-if (-not $Url) { Fail 'Пустой URL.' }
-try { $u = [uri]$Url } catch { Fail "Не разобрать URL: $Url" }
-if ($u.Scheme -ne 'yarophoto') { Fail "Неизвестная схема: $($u.Scheme)" }
+if (-not $Url) { Fail 'Empty URL.' }
+try { $u = [uri]$Url } catch { Fail "Cannot parse URL: $Url" }
+if ($u.Scheme -ne 'yarophoto') { Fail "Unknown scheme: $($u.Scheme)" }
 
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $port = 8460
@@ -37,20 +37,20 @@ switch ($u.Host) {
             exit 0
         }
         $bat = Join-Path $root 'start.bat'
-        if (-not (Test-Path -LiteralPath $bat)) { Fail "start.bat не найден:`n$bat" }
+        if (-not (Test-Path -LiteralPath $bat)) { Fail "start.bat not found:`n$bat" }
         Start-Process -FilePath 'cmd.exe' -ArgumentList @('/k', "`"$bat`"") -WorkingDirectory $root
         exit 0
     }
     'stop' {
         if (-not (Test-ServerAlive)) {
-            [System.Windows.Forms.MessageBox]::Show('Сервер и так не отвечает.', 'yarophoto', 'OK', 'Information') | Out-Null
+            [System.Windows.Forms.MessageBox]::Show('Server is not running.', 'yarophoto', 'OK', 'Information') | Out-Null
             exit 0
         }
         try {
             Invoke-WebRequest -Uri "$panel/api/shutdown" -UseBasicParsing -Method Post -TimeoutSec 5 | Out-Null
-            [System.Windows.Forms.MessageBox]::Show('Сервер остановлен.', 'yarophoto', 'OK', 'Information') | Out-Null
+            [System.Windows.Forms.MessageBox]::Show('Server stopped.', 'yarophoto', 'OK', 'Information') | Out-Null
         } catch {
-            Fail "Не удалось остановить сервер:`n$_"
+            Fail "Could not stop the server:`n$_"
         }
         exit 0
     }
@@ -59,6 +59,6 @@ switch ($u.Host) {
         exit 0
     }
     default {
-        Fail "Неизвестное действие: $($u.Host)`nДопустимые: start, stop, open"
+        Fail "Unknown action: $($u.Host)`nAllowed: start, stop, open"
     }
 }

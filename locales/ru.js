@@ -102,6 +102,8 @@ window.YARO_I18N = {
   "strip.countPrefix": "подходит файлов: ",
   "strip.folderCount": "найдено файлов: ",
   "footer.note": "CSV пишется в results/analysis.csv, настройки — в config.json",
-  "lang.en": "Английский",
-  "lang.ru": "Русский"
+  "lang.en": "🇬🇧 Английский",
+  "lang.ru": "🇷🇺 Русский",
+  "theme.label": "Тема",
+  "dropzone.needServer": "Открой страницу http://127.0.0.1:8460 после запуска сервера (start.bat). Тогда «Обзор» и остальные кнопки заработают."
 };
