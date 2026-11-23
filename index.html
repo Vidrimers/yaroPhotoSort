@@ -320,6 +320,22 @@ legend {
   height: 16px;
   accent-color: var(--accent-only-run);
 }
+.radio-row.sub-options {
+  margin: 2px 0 0 26px;
+  padding-left: 12px;
+  border-left: 1px solid var(--line);
+}
+.radio-row.sub-options label {
+  padding: 6px 0;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+.radio-row.sub-options.disabled {
+  opacity: 0.45;
+}
+.radio-row.sub-options label:has(input:disabled) {
+  cursor: not-allowed;
+}
 
 .formats { display: flex; flex-wrap: wrap; gap: 6px; }
 .fmt {
@@ -635,6 +651,92 @@ legend {
   font-size: 13px;
   background: var(--bg-3);
 }
+
+/* экран проверки */
+.modal-review {
+  width: min(760px, 100%);
+  max-height: min(90vh, 920px);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  border-radius: 3px;
+}
+.review-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+}
+.review-head h2 {
+  margin: 0;
+  font-family: "Bitter", Georgia, serif;
+  font-size: 19px;
+  font-weight: 500;
+  flex: 1;
+}
+.review-count {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.review-body {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 0;
+  overflow: hidden;
+  min-height: 280px;
+}
+@media (max-width: 700px) {
+  .review-body { grid-template-columns: 1fr; }
+}
+.review-photo {
+  background: var(--bg-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  max-height: 52vh;
+  overflow: hidden;
+}
+.review-photo img {
+  max-width: 100%;
+  max-height: 52vh;
+  object-fit: contain;
+  display: block;
+}
+.review-meta {
+  padding: 16px 18px;
+  border-left: 1px solid var(--line);
+  overflow: auto;
+}
+.review-meta dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 12px;
+  margin: 0;
+  font-size: 13px;
+}
+.review-meta dt { color: var(--faint); }
+.review-meta dd {
+  margin: 0;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+  word-break: break-all;
+}
+.review-actions {
+  display: flex;
+  gap: 8px;
+  padding: 14px 20px 18px;
+  border-top: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+.review-empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--muted);
+}
 </style>
 </head>
 <body>
@@ -700,6 +802,34 @@ legend {
         <button class="btn" type="button" id="helpClose" data-i18n="modal.confirm"></button>
       </div>
       <div class="modal-help-body" id="helpBody"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="reviewModal" hidden>
+    <div class="modal-review" role="dialog" aria-modal="true" aria-labelledby="reviewTitle">
+      <div class="review-head">
+        <h2 id="reviewTitle" data-i18n="review.title"></h2>
+        <span class="review-count" id="reviewCount"></span>
+        <button class="btn" type="button" id="reviewClose" data-i18n="modal.confirm"></button>
+      </div>
+      <div class="review-body" id="reviewBody">
+        <div class="review-photo"><img id="reviewImg" alt=""></div>
+        <div class="review-meta">
+          <dl>
+            <dt data-i18n="review.file"></dt><dd id="reviewFile">—</dd>
+            <dt data-i18n="review.score"></dt><dd id="reviewScore">—</dd>
+            <dt data-i18n="review.quality"></dt><dd id="reviewQuality">—</dd>
+            <dt data-i18n="review.reason"></dt><dd id="reviewReason">—</dd>
+            <dt data-i18n="review.tags"></dt><dd id="reviewTags">—</dd>
+          </dl>
+        </div>
+      </div>
+      <div class="review-empty" id="reviewEmpty" hidden></div>
+      <div class="review-actions" id="reviewActions">
+        <button class="btn btn-primary" type="button" id="reviewKeep" data-i18n="review.keep"></button>
+        <button class="btn btn-danger" type="button" id="reviewReject" data-i18n="review.reject"></button>
+        <button class="btn" type="button" id="reviewSkip" data-i18n="review.skip"></button>
+      </div>
     </div>
   </div>
 
@@ -775,6 +905,29 @@ legend {
             <label data-i18n-title="behavior.moveBad.tip">
               <input type="radio" name="outputMode" value="move_bad">
               <span data-i18n="behavior.moveBad"></span>
+            </label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend data-i18n="behavior.reviewTitle"></legend>
+          <div class="radio-row" id="reviewMode">
+            <label data-i18n-title="behavior.reviewAutoTip">
+              <input type="radio" name="reviewMode" value="auto" checked>
+              <span data-i18n="behavior.reviewAuto"></span>
+            </label>
+            <label data-i18n-title="behavior.reviewAskTip">
+              <input type="radio" name="reviewMode" value="ask">
+              <span data-i18n="behavior.reviewAsk"></span>
+            </label>
+          </div>
+          <div class="radio-row sub-options" id="reviewTiming">
+            <label data-i18n-title="behavior.reviewLiveTip">
+              <input type="radio" name="reviewTiming" value="live">
+              <span data-i18n="behavior.reviewLive"></span>
+            </label>
+            <label data-i18n-title="behavior.reviewBatchTip">
+              <input type="radio" name="reviewTiming" value="batch" checked>
+              <span data-i18n="behavior.reviewBatch"></span>
             </label>
           </div>
         </fieldset>
@@ -855,6 +1008,7 @@ legend {
           <button class="btn btn-primary" id="btnStart" type="button" data-i18n="btn.start"></button>
           <button class="btn btn-danger" id="btnStop" type="button" data-i18n="btn.stop" disabled></button>
           <button class="btn btn-ghost" id="btnScan" type="button" data-i18n="btn.scan"></button>
+          <button class="btn" id="btnReview" type="button" hidden></button>
         </div>
 
         <div class="stats">
@@ -1087,7 +1241,9 @@ function currentConfigPatch() {
   return {
     input_folder: $("inputFolder").value.trim(),
     output_mode: document.querySelector('input[name="outputMode"]:checked')?.value || "csv_only",
-    bad_folder_name: "на_удаление",
+    review_mode: document.querySelector('input[name="reviewMode"]:checked')?.value || "auto",
+    review_timing: document.querySelector('input[name="reviewTiming"]:checked')?.value || "batch",
+    bad_folder_name: "_rejects",
     score_threshold: Math.max(1, Math.min(5, parseInt($("scoreThreshold").value || "2", 10))),
     port: Math.max(1024, Math.min(65535, parseInt($("serverPort").value || "8460", 10))),
     quality_rules: {
@@ -1149,6 +1305,13 @@ function syncCatRow(row) {
 function syncAllCatRows() {
   document.querySelectorAll("#cats tr").forEach(syncCatRow);
   $("cats").closest("table").classList.toggle("cats-locked", !$("optCategories").checked);
+}
+
+function syncReviewTiming() {
+  const ask = document.querySelector('input[name="reviewMode"]:checked')?.value === "ask";
+  const box = $("reviewTiming");
+  box.classList.toggle("disabled", !ask);
+  box.querySelectorAll("input").forEach((el) => { el.disabled = !ask; });
 }
 
 function renderCategories(cats) {
@@ -1226,6 +1389,11 @@ function applyConfigToForm(cfg) {
   $("inputFolder").value = cfg.input_folder || "";
   const mode = document.querySelector(`input[name="outputMode"][value="${cfg.output_mode || "csv_only"}"]`);
   if (mode) mode.checked = true;
+  const rev = document.querySelector(`input[name="reviewMode"][value="${cfg.review_mode || "auto"}"]`);
+  if (rev) rev.checked = true;
+  const timing = document.querySelector(`input[name="reviewTiming"][value="${cfg.review_timing || "batch"}"]`);
+  if (timing) timing.checked = true;
+  syncReviewTiming();
   $("scoreThreshold").value = cfg.score_threshold ?? 2;
   $("serverPort").value = cfg.port ?? 8460;
   $("portHint").textContent = t("behavior.portHint");
@@ -1249,6 +1417,12 @@ function bindForm() {
   ].forEach((id) => $(id).addEventListener("change", scheduleSave));
   $("optCategories").addEventListener("change", syncAllCatRows);
   document.querySelectorAll('input[name="outputMode"]').forEach((el) => el.addEventListener("change", scheduleSave));
+  document.querySelectorAll('input[name="reviewMode"]').forEach((el) => el.addEventListener("change", () => {
+    syncReviewTiming();
+    scheduleSave();
+  }));
+  document.querySelectorAll('input[name="reviewTiming"]').forEach((el) => el.addEventListener("change", scheduleSave));
+  syncReviewTiming();
 }
 
 function fmtNum(n) {
@@ -1365,6 +1539,10 @@ async function poll() {
     renderLm(lm);
     renderJob(st.job || {}, st.log || []);
     serverOffline(false);
+    api.get("/api/review").then((r) => setReviewCountBadge(r.count || 0)).catch(() => {});
+    if (st.review_pending && $("reviewModal").hidden && window.__openReviewPending) {
+      window.__openReviewPending(st.review_pending);
+    }
   } catch (e) {
     serverOffline(true);
   } finally {
@@ -1510,6 +1688,114 @@ async function init() {
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && !help.hidden) closeHelp();
   });
+
+  bindReview();
+}
+
+/* ── review queue ── */
+let reviewItems = [];
+let reviewIdx = 0;
+
+function setReviewCountBadge(n) {
+  const btn = $("btnReview");
+  if (!btn) return;
+  if (n > 0) {
+    btn.hidden = false;
+    btn.textContent = `${t("btn.review")} (${n})`;
+  } else {
+    btn.hidden = true;
+  }
+}
+
+function showReviewItem() {
+  const empty = $("reviewEmpty");
+  const body = $("reviewBody");
+  const actions = $("reviewActions");
+  if (!reviewItems.length) {
+    empty.hidden = false;
+    empty.textContent = t("review.empty");
+    body.hidden = true;
+    actions.hidden = true;
+    $("reviewCount").textContent = "0 / 0";
+    return;
+  }
+  empty.hidden = true;
+  body.hidden = false;
+  actions.hidden = false;
+  const item = reviewItems[reviewIdx] || reviewItems[0];
+  $("reviewCount").textContent = `${reviewIdx + 1} / ${reviewItems.length}`;
+  $("reviewFile").textContent = item.filename || item.path || "—";
+  $("reviewScore").textContent = item.score != null ? String(item.score) : "—";
+  $("reviewQuality").textContent = item.quality || "—";
+  $("reviewReason").textContent = item.quality_reason || "—";
+  $("reviewTags").textContent = (item.category_tags || []).join(", ") || "—";
+  $("reviewImg").src = `/api/review/image?path=${encodeURIComponent(item.path)}`;
+  $("reviewImg").onerror = () => {
+    $("reviewImg").removeAttribute("src");
+    $("reviewFile").textContent = (item.filename || "") + " · " + t("review.noPreview");
+  };
+}
+
+async function decideReview(decision) {
+  const item = reviewItems[reviewIdx];
+  if (!item) return;
+  try {
+    await api.post("/api/review/decide", { path: item.path, decision });
+  } catch (e) {
+    alert(e.message);
+    return;
+  }
+  if (decision !== "skip") {
+    reviewItems.splice(reviewIdx, 1);
+    setReviewCountBadge(reviewItems.length);
+    if (reviewIdx >= reviewItems.length) reviewIdx = Math.max(0, reviewItems.length - 1);
+  } else if (reviewItems.length === 1) {
+    // live-режим: «пропустить» отпускает очередь, модалку закрываем
+    $("reviewModal").hidden = true;
+    document.body.style.overflow = "";
+    return;
+  } else {
+    reviewIdx = (reviewIdx + 1) % reviewItems.length;
+  }
+  showReviewItem();
+}
+
+function bindReview() {
+  const modal = $("reviewModal");
+  const open = async () => {
+    try {
+      const res = await api.get("/api/review");
+      reviewItems = res.items || [];
+      reviewIdx = 0;
+      setReviewCountBadge(reviewItems.length);
+      showReviewItem();
+      modal.hidden = false;
+      document.body.style.overflow = "hidden";
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+  const openPending = (item) => {
+    reviewItems = [item];
+    reviewIdx = 0;
+    showReviewItem();
+    modal.hidden = false;
+    document.body.style.overflow = "hidden";
+  };
+  const close = () => {
+    modal.hidden = true;
+    document.body.style.overflow = "";
+  };
+  $("btnReview").addEventListener("click", open);
+  $("reviewClose").addEventListener("click", close);
+  modal.addEventListener("click", (e) => { if (e.target === modal) close(); });
+  $("reviewKeep").addEventListener("click", () => decideReview("keep"));
+  $("reviewReject").addEventListener("click", () => decideReview("reject"));
+  $("reviewSkip").addEventListener("click", () => decideReview("skip"));
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !modal.hidden) close();
+  });
+  window.__openReviewPending = openPending;
 }
 
 init();

@@ -47,6 +47,7 @@ CONFIG_PATH = ROOT / "config.json"
 RESULTS_DIR = ROOT / "results"
 CSV_PATH = RESULTS_DIR / "analysis.csv"
 LOG_PATH = RESULTS_DIR / "run.log"
+REVIEW_PATH = RESULTS_DIR / "review_queue.jsonl"
 
 LM_BASE = os.environ.get("LMSTUDIO_URL", "http://127.0.0.1:1234")
 
@@ -117,7 +118,9 @@ CATEGORIES: list[dict[str, str]] = [
 DEFAULT_CONFIG: dict[str, Any] = {
     "input_folder": "",
     "output_mode": "csv_only",          # csv_only | move_bad
-    "bad_folder_name": "на_удаление",
+    "review_mode": "auto",              # auto | ask  (mutually exclusive)
+    "review_timing": "batch",           # batch | live (ask only; mutually exclusive)
+    "bad_folder_name": "_rejects",
     "score_threshold": 2,               # score <= threshold → bad
     "quality_rules": {
         "blur": True,
@@ -637,14 +640,70 @@ def resolve_dest(dest: str | None, input_folder: str, category_key: str) -> Path
     return Path(input_folder) / raw
 
 
+def needs_review(verdict: dict[str, Any], cfg: dict[str, Any]) -> bool:
+    """ask-режим: сомнительные и плохие не двигаем, кидаем в очередь."""
+    if cfg.get("review_mode") != "ask":
+        return False
+    score = int(verdict.get("score") or 5)
+    threshold = int(cfg.get("score_threshold") or 2)
+    return verdict.get("quality") == "bad" or score <= threshold + 1
+
+
+def enqueue_review(path: Path, verdict: dict[str, Any]) -> None:
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    row = {
+        "path": str(path),
+        "filename": path.name,
+        "quality": verdict.get("quality"),
+        "score": verdict.get("score"),
+        "quality_reason": verdict.get("quality_reason"),
+        "category_tags": verdict.get("category_tags") or [],
+        "ts": datetime.now().isoformat(timespec="seconds"),
+    }
+    with REVIEW_PATH.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(row, ensure_ascii=False) + "\n")
+    return row
+
+
+# live-режим: задача ждёт решения по конкретному файлу
+REVIEW_LOCK = threading.Lock()
+REVIEW_EVENTS: dict[str, threading.Event] = {}
+REVIEW_RESULTS: dict[str, str] = {}
+REVIEW_PENDING: dict[str, dict[str, Any]] = {}
+
+
+def wait_for_review_decision(path: str, item: dict[str, Any], timeout: float = 3600.0) -> str:
+    ev = threading.Event()
+    with REVIEW_LOCK:
+        REVIEW_EVENTS[path] = ev
+        REVIEW_PENDING[path] = item
+    ev.wait(timeout)
+    with REVIEW_LOCK:
+        REVIEW_EVENTS.pop(path, None)
+        REVIEW_PENDING.pop(path, None)
+        return REVIEW_RESULTS.pop(path, "skip")
+
+
+def signal_review_decision(path: str, decision: str) -> None:
+    with REVIEW_LOCK:
+        REVIEW_RESULTS[path] = decision
+        ev = REVIEW_EVENTS.get(path)
+    if ev:
+        ev.set()
+
+
 def apply_actions(path: Path, verdict: dict[str, Any], cfg: dict[str, Any]) -> str:
     """Возвращает описание действия. Уважает dry_run."""
     actions: list[str] = []
     dry = bool(cfg.get("dry_run"))
     input_folder = cfg.get("input_folder") or ""
 
+    if needs_review(verdict, cfg):
+        # в ask-режиме файл остаётся на месте, пока человек не решил
+        return "review"
+
     if cfg.get("output_mode") == "move_bad" and verdict["quality"] == "bad":
-        dest_root = Path(input_folder) / (cfg.get("bad_folder_name") or "на_удаление")
+        dest_root = Path(input_folder) / (cfg.get("bad_folder_name") or "_rejects")
         dest = dest_root / path.name
         if cfg.get("add_reason_to_name") and verdict.get("quality_reason"):
             safe = re.sub(r"[^\w\-]+", "_", verdict["quality_reason"])[:40]
@@ -725,7 +784,22 @@ def job_worker(cfg: dict[str, Any]) -> None:
 
             try:
                 verdict = ask_vlm(path, cfg, model)
-                action = apply_actions(path, verdict, cfg)
+                if needs_review(verdict, cfg):
+                    row = enqueue_review(path, verdict)
+                    if cfg.get("review_timing") == "live":
+                        with JOB_LOCK:
+                            JOB.message = "Waiting for your decision"
+                        decision = wait_for_review_decision(str(path), row)
+                        if decision == "skip":
+                            action = "review_skip"
+                        else:
+                            action = apply_review_decision(path, row, decision, load_config())
+                            drop_from_review_queue(str(path))
+                            log(f"live review {decision}: {path.name} ({action})")
+                    else:
+                        action = "review"
+                else:
+                    action = apply_actions(path, verdict, cfg)
                 append_csv(
                     {
                         "path": str(path),
@@ -817,7 +891,9 @@ def browse_folder() -> str:
 class ConfigModel(BaseModel):
     input_folder: str = ""
     output_mode: str = "csv_only"
-    bad_folder_name: str = "на_удаление"
+    review_mode: str = "auto"
+    review_timing: str = "batch"
+    bad_folder_name: str = "_rejects"
     score_threshold: int = 2
     quality_rules: dict[str, bool] = {"blur": True, "exposure": True, "junk": True}
     formats: list[str] = [".jpg", ".jpeg", ".png", ".webp"]
@@ -926,7 +1002,135 @@ def api_stop() -> dict[str, Any]:
 def api_status() -> dict[str, Any]:
     with LOG_LOCK:
         tail = LOG_LINES[-40:]
-    return {"job": job_snapshot(), "log": tail, "csv_path": str(CSV_PATH)}
+    with REVIEW_LOCK:
+        pending = next(iter(REVIEW_PENDING.values()), None)
+    return {
+        "job": job_snapshot(),
+        "log": tail,
+        "csv_path": str(CSV_PATH),
+        "review_pending": pending,
+    }
+
+
+def read_review_queue() -> list[dict[str, Any]]:
+    if not REVIEW_PATH.exists():
+        return []
+    rows: list[dict[str, Any]] = []
+    with REVIEW_PATH.open("r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rows.append(json.loads(line))
+            except Exception:
+                continue
+    return rows
+
+
+def write_review_queue(rows: list[dict[str, Any]]) -> None:
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    with REVIEW_PATH.open("w", encoding="utf-8") as f:
+        for row in rows:
+            f.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+
+@app.get("/api/review")
+def api_review_list() -> dict[str, Any]:
+    rows = read_review_queue()
+    for row in rows:
+        row["exists"] = Path(row.get("path", "")).is_file()
+    return {"ok": True, "count": len(rows), "items": rows}
+
+
+class ReviewDecision(BaseModel):
+    path: str
+    decision: str  # keep | reject | skip
+
+
+@app.get("/api/review/image")
+def api_review_image(path: str) -> FileResponse:
+    rows = read_review_queue()
+    allowed = {str(r.get("path")) for r in rows}
+    if path not in allowed:
+        raise HTTPException(403, "File is not in the review queue")
+    p = Path(path)
+    if not p.is_file():
+        raise HTTPException(404, "File not found")
+    return FileResponse(p)
+
+
+def apply_review_decision(path: Path, target: dict[str, Any], decision: str, cfg: dict[str, Any]) -> str:
+    """keep | reject — файл двигается по решению человека."""
+    input_folder = cfg.get("input_folder") or ""
+    if decision == "reject":
+        dest_root = Path(input_folder) / (cfg.get("bad_folder_name") or "_rejects")
+        dest = dest_root / path.name
+        if cfg.get("add_reason_to_name") and target.get("quality_reason"):
+            safe = re.sub(r"[^\w\-]+", "_", str(target["quality_reason"]))[:40]
+            dest = dest_root / f"{path.stem}_bad_{safe}{path.suffix}"
+        if path.is_file():
+            dest_root.mkdir(parents=True, exist_ok=True)
+            if dest.exists():
+                dest = dest_root / f"{path.stem}_{int(time.time())}{path.suffix}"
+            shutil.move(str(path), str(dest))
+        return f"reject->{dest.name}"
+
+    action = "keep"
+    if cfg.get("categorization") and path.is_file():
+        tags = target.get("category_tags") or []
+        for c in cfg.get("categories") or []:
+            if c.get("key") in tags and c.get("enabled") and c.get("action") not in (None, "skip"):
+                key = str(c.get("key"))
+                dest_root = resolve_dest(c.get("dest"), input_folder, key)
+                dest = dest_root / path.name
+                if cfg.get("preserve_structure"):
+                    try:
+                        dest = dest_root / path.relative_to(input_folder)
+                    except Exception:
+                        pass
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                if dest.exists():
+                    dest = dest.parent / f"{path.stem}_{int(time.time())}{path.suffix}"
+                if c.get("action") == "move":
+                    shutil.move(str(path), str(dest))
+                else:
+                    shutil.copy2(str(path), str(dest))
+                action = f"keep->{key}"
+                break
+    return action
+
+
+def drop_from_review_queue(path: str) -> list[dict[str, Any]]:
+    rows = [r for r in read_review_queue() if str(r.get("path")) != path]
+    write_review_queue(rows)
+    return rows
+
+
+@app.post("/api/review/decide")
+def api_review_decide(body: ReviewDecision) -> dict[str, Any]:
+    if body.decision not in ("keep", "reject", "skip"):
+        raise HTTPException(400, "decision must be keep, reject or skip")
+    rows = read_review_queue()
+    target = next((r for r in rows if str(r.get("path")) == body.path), None)
+    if target is None:
+        # live-режим: файл мог быть ещё только в памяти ожидающего потока
+        with REVIEW_LOCK:
+            target = REVIEW_PENDING.get(body.path)
+        if target is None:
+            raise HTTPException(404, "Not in review queue")
+
+    if body.decision == "skip":
+        signal_review_decision(body.path, "skip")
+        return {"ok": True, "decision": "skip", "count": len(rows)}
+
+    cfg = load_config()
+    path = Path(body.path)
+    action = apply_review_decision(path, target, body.decision, cfg)
+    rows = drop_from_review_queue(body.path)
+    signal_review_decision(body.path, body.decision)
+    log(f"review {body.decision}: {path.name} ({action})")
+    return {"ok": True, "decision": body.decision, "action": action, "count": len(rows)}
 
 
 @app.post("/api/shutdown")
