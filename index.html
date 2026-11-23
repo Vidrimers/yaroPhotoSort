@@ -560,6 +560,81 @@ legend {
   gap: 8px;
   justify-content: flex-end;
 }
+
+/* модалка «Как пользоваться» */
+.modal-help {
+  width: min(640px, 100%);
+  max-height: min(84vh, 860px);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  border-radius: 3px;
+}
+.modal-help-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 22px 14px;
+  border-bottom: 1px solid var(--line);
+}
+.modal-help-head h2 {
+  margin: 0;
+  font-family: "Bitter", Georgia, serif;
+  font-size: 20px;
+  font-weight: 500;
+  flex: 1;
+}
+.modal-help-body {
+  overflow: auto;
+  padding: 8px 22px 18px;
+}
+.help-step {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.help-step:last-child { border-bottom: 0; }
+.help-num {
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--line-2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 600 12px/1 "JetBrains Mono", monospace;
+  color: var(--muted);
+  margin-top: 1px;
+}
+.help-step h3 {
+  margin: 0 0 4px;
+  font-size: 14.5px;
+  font-weight: 600;
+}
+.help-step p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.55;
+  max-width: 58ch;
+}
+.help-step code {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 12px;
+  color: var(--faint);
+}
+.help-note {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border-left: 2px solid var(--accent-only-run);
+  color: var(--muted);
+  font-size: 13px;
+  background: var(--bg-3);
+}
 </style>
 </head>
 <body>
@@ -594,6 +669,8 @@ legend {
         </ul>
       </div>
 
+      <button class="btn" id="btnHelp" type="button" data-i18n="btn.help"></button>
+
       <a class="btn btn-primary" id="btnStartServer" href="yarophoto://start" data-i18n="btn.startServer"></a>
       <button class="btn btn-danger" id="btnStopServer" type="button" data-i18n="btn.stopServer" hidden></button>
       <button class="btn" id="btnOpenPanel" type="button" data-i18n="btn.openPanel"></button>
@@ -613,6 +690,16 @@ legend {
         <button class="btn" type="button" id="modalCancel"></button>
         <button class="btn btn-primary" type="button" id="modalOk"></button>
       </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="helpModal" hidden>
+    <div class="modal-help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+      <div class="modal-help-head">
+        <h2 id="helpTitle" data-i18n="help.title"></h2>
+        <button class="btn" type="button" id="helpClose" data-i18n="modal.confirm"></button>
+      </div>
+      <div class="modal-help-body" id="helpBody"></div>
     </div>
   </div>
 
@@ -845,6 +932,26 @@ function syncSelectLabels() {
   $("langSelect").querySelectorAll("[role=option]").forEach((li) => {
     li.setAttribute("aria-selected", li.dataset.value === LANG ? "true" : "false");
   });
+  renderHelp();
+}
+
+function renderHelp() {
+  const body = $("helpBody");
+  if (!body) return;
+  const steps = [];
+  for (let i = 1; i <= 7; i++) {
+    const title = t(`help.s${i}.t`);
+    const text = t(`help.s${i}.p`);
+    if (title !== `help.s${i}.t`) steps.push({ i, title, text });
+  }
+  body.innerHTML = steps.map((s) => `
+    <div class="help-step">
+      <div class="help-num">${s.i}</div>
+      <div>
+        <h3>${escapeHtml(s.title)}</h3>
+        <p>${s.text}</p>
+      </div>
+    </div>`).join("") + `<div class="help-note">${t("help.note")}</div>`;
 }
 
 function loadLang(lang) {
@@ -1144,9 +1251,11 @@ function uiConfirm(title, message, okLabel) {
     $("modalCancel").textContent = t("modal.cancel");
     $("modalOk").textContent = okLabel || t("modal.confirm");
     overlay.hidden = false;
+    document.body.style.overflow = "hidden";
 
     const done = (val) => {
       overlay.hidden = true;
+      document.body.style.overflow = "";
       $("modalOk").onclick = null;
       $("modalCancel").onclick = null;
       overlay.onclick = null;
@@ -1368,6 +1477,24 @@ async function init() {
       /* сервер мог успеть закрыть соединение — это норма */
     }
     setTimeout(() => { serverOffline(true); }, 600);
+  });
+
+  const help = $("helpModal");
+  $("btnHelp").addEventListener("click", () => {
+    renderHelp();
+    help.hidden = false;
+    document.body.style.overflow = "hidden";
+  });
+  const closeHelp = () => {
+    help.hidden = true;
+    document.body.style.overflow = "";
+  };
+  $("helpClose").addEventListener("click", closeHelp);
+  help.addEventListener("click", (e) => {
+    if (e.target === help) closeHelp();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !help.hidden) closeHelp();
   });
 }
 
