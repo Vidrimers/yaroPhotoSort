@@ -51,6 +51,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html, body { margin: 0; padding: 0; }
 body {
   background: var(--bg);
@@ -164,6 +165,18 @@ body {
 .select-menu li[aria-selected="true"] {
   color: var(--accent-only-run);
   font-weight: 600;
+}
+.select-menu li.select-group {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--faint);
+  cursor: default;
+  padding: 8px 11px 4px;
+  font-weight: 600;
+}
+.select-menu li.select-group:hover {
+  background: transparent;
 }
 
 .grid {
@@ -582,6 +595,8 @@ legend {
   color: var(--muted);
   font-size: 14px;
   margin: 0 0 18px;
+  white-space: pre-line;
+  max-width: 60ch;
 }
 .modal-actions {
   display: flex;
@@ -1098,21 +1113,63 @@ legend {
     <div class="col">
 
       <section id="lmCard">
-        <h2 data-i18n="lm.title"></h2>
+        <h2 data-i18n="provider.title"></h2>
         <div class="lm-head">
+          <div class="select" id="providerSelect" data-i18n-title="provider.switchTip" style="min-width: 160px;">
+            <button class="select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+              <span class="select-value">LM Studio</span>
+              <svg class="select-chevron" width="10" height="6" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+            </button>
+            <ul class="select-menu" role="listbox" hidden>
+              <li class="select-group" data-i18n="provider.localGroup"></li>
+              <li role="option" data-value="lmstudio">LM Studio</li>
+              <li role="option" data-value="ollama">Ollama</li>
+              <li class="select-group" data-i18n="provider.cloudGroup"></li>
+              <li role="option" data-value="openai">ChatGPT</li>
+              <li role="option" data-value="anthropic">Claude</li>
+              <li role="option" data-value="gemini">Gemini</li>
+              <li role="option" data-value="qwen">Qwen</li>
+              <li role="option" data-value="mimo">MiMo</li>
+              <li role="option" data-value="openrouter">OpenRouter</li>
+            </ul>
+          </div>
           <div class="dot" id="lmDot"></div>
           <div class="lm-title" id="lmTitle"></div>
-          <div class="lm-sub" id="lmUrl">127.0.0.1:1234</div>
+          <div class="lm-sub" id="lmUrl"></div>
         </div>
-        <dl class="kv">
-          <dt data-i18n="lm.model"></dt><dd id="lmModel">—</dd>
+
+        <div class="num-row" style="margin: 4px 0 12px;">
+          <label for="modelName" data-i18n="provider.model"></label>
+          <input class="folder-input" id="modelName" type="text" spellcheck="false" list="modelList" style="width:100%;max-width:280px;">
+          <datalist id="modelList"></datalist>
+        </div>
+
+        <div id="apiKeyRow" class="num-row" style="margin: 0 0 12px;">
+          <label for="apiKey" data-i18n="provider.apiKey"></label>
+          <input class="folder-input" id="apiKey" type="password" spellcheck="false" style="width:100%;max-width:280px;" data-i18n-placeholder="provider.apiKeyPh">
+          <button class="btn" type="button" id="btnKeySave" data-i18n="provider.keySave"></button>
+          <button class="btn btn-ghost" type="button" id="btnKeyHint" data-i18n="provider.keyHint"></button>
+        </div>
+
+        <dl class="kv" id="lmKv">
           <dt data-i18n="lm.context"></dt><dd id="lmCtx">—</dd>
           <dt data-i18n="lm.quant"></dt><dd id="lmQuant">—</dd>
-          <dt data-i18n="lm.params"></dt><dd id="lmParams">—</dd>
           <dt data-i18n="lm.memory"></dt><dd id="lmVram">—</dd>
-          <dt data-i18n="lm.speed"></dt><dd id="lmSpeed">—</dd>
           <dt data-i18n="lm.state"></dt><dd id="lmState">—</dd>
         </dl>
+
+        <div class="hint" id="usageLine" style="margin: 12px 0 0;" hidden></div>
+        <div id="limitsRow" class="num-row" style="margin: 10px 0 0;" hidden>
+          <label for="maxRequests" data-i18n="provider.maxReq" data-i18n-title="provider.maxReqTip"></label>
+          <input type="number" id="maxRequests" min="0" step="1" value="0">
+          <label for="maxCost" data-i18n="provider.maxCost" data-i18n-title="provider.maxCostTip"></label>
+          <input type="number" id="maxCost" min="0" step="0.01" value="0">
+        </div>
+        <div class="run-bar" style="margin: 10px 0 0;">
+          <button class="btn" id="btnTestProvider" type="button" data-i18n="provider.test"></button>
+          <button class="btn btn-ghost" id="btnUsageReset" type="button" data-i18n="provider.usageReset" hidden></button>
+        </div>
+        <p class="hint" id="testResult" style="margin: 8px 0 0;"></p>
       </section>
 
       <section>
@@ -1306,7 +1363,46 @@ function bindSelect(root, onPick) {
 
 bindSelect($("themeSelect"), setTheme);
 bindSelect($("langSelect"), (lang) => { if (lang !== LANG) loadLang(lang); });
+bindSelect($("providerSelect"), (value) => setProvider(value));
 document.addEventListener("click", () => closeAllSelects(null));
+
+function setProvider(value) {
+  window.__provider = value;
+  $("providerSelect").querySelector(".select-value").textContent =
+    value === "lmstudio" ? "LM Studio"
+    : value === "ollama" ? "Ollama"
+    : value === "openai" ? "ChatGPT"
+    : value === "anthropic" ? "Claude"
+    : value === "gemini" ? "Gemini"
+    : value === "qwen" ? "Qwen"
+    : value === "mimo" ? "MiMo"
+    : value === "openrouter" ? "OpenRouter"
+    : value;
+  $("providerSelect").querySelectorAll("[role=option]").forEach((li) => {
+    li.setAttribute("aria-selected", li.dataset.value === value ? "true" : "false");
+  });
+  const isLocal = value === "lmstudio" || value === "ollama";
+  $("apiKeyRow").style.display = isLocal ? "none" : "";
+  $("limitsRow").hidden = isLocal;
+  $("usageLine").hidden = isLocal;
+  $("btnUsageReset").hidden = isLocal;
+  $("modelName").value = defaultModelFor(value);
+  scheduleSave();
+  poll();
+}
+
+function defaultModelFor(p) {
+  return ({
+    lmstudio: "google/gemma-3-12b",
+    ollama: "llava",
+    openai: "gpt-4o-mini",
+    anthropic: "claude-3-5-sonnet-latest",
+    gemini: "gemini-2.0-flash",
+    qwen: "qwen-vl-plus",
+    mimo: "mimo-v2.6-pro",
+    openrouter: "google/gemma-3-12b",
+  })[p] || "";
+}
 
 const FORMAT_LIST = [
   { ext: ".jpg", label: ".jpg/.jpeg", match: [".jpg", ".jpeg"] },
@@ -1392,6 +1488,10 @@ function currentConfigPatch() {
     dupes_keeper: document.querySelector('input[name="dupesKeeper"]:checked')?.value || "resolution",
     ui_lang: LANG,
     ui_theme: document.documentElement.dataset.theme || "lab",
+    provider: window.__provider || "lmstudio",
+    model_name: $("modelName").value.trim(),
+    max_requests: Math.max(0, parseInt($("maxRequests").value || "0", 10)),
+    max_cost_usd: Math.max(0, parseFloat($("maxCost").value || "0")),
     categories: collectCategories(),
     add_reason_to_name: $("optReasonName").checked,
     preserve_structure: $("optPreserve").checked,
@@ -1560,6 +1660,10 @@ function applyConfigToForm(cfg) {
   $("optDry").checked = !!cfg.dry_run;
   $("optCategories").checked = !!cfg.categorization;
   $("optEvents").checked = !!cfg.events_enabled;
+  if (cfg.provider) setProvider(cfg.provider);
+  if (cfg.model_name) $("modelName").value = cfg.model_name;
+  $("maxRequests").value = cfg.max_requests ?? 0;
+  $("maxCost").value = cfg.max_cost_usd ?? 0;
   const evMethod = document.querySelector(`input[name="eventMethod"][value="${cfg.event_method || "time"}"]`);
   if (evMethod) evMethod.checked = true;
   const evName = document.querySelector(`input[name="eventName"][value="${cfg.event_name || "date"}"]`);
@@ -1580,8 +1684,52 @@ function bindForm() {
   [
     "inputFolder", "scoreThreshold", "serverPort", "ruleBlur", "ruleExposure", "ruleJunk",
     "optRecursive", "optResume", "optDry", "optCategories", "optReasonName", "optPreserve",
-    "optEvents", "optScreensDocs", "eventGap",
+    "optEvents", "optScreensDocs", "eventGap", "modelName", "maxRequests", "maxCost",
   ].forEach((id) => $(id).addEventListener("change", scheduleSave));
+  $("btnKeyHint").addEventListener("click", () => {
+    uiAlert(t("provider.keyHint"), t("provider.keyHintText"));
+  });
+  $("btnKeySave").addEventListener("click", async () => {
+    const key = $("apiKey").value.trim();
+    if (!key) {
+      uiAlert(t("provider.apiKey"), t("provider.keyEmpty"));
+      return;
+    }
+    try {
+      await api.post("/api/provider/key", {
+        provider: window.__provider || "lmstudio",
+        api_key: key,
+      });
+      $("apiKey").value = "";
+      $("testResult").textContent = t("provider.keySaved");
+      poll();
+    } catch (e) {
+      uiAlert("Error", e.message);
+    }
+  });
+  $("btnTestProvider").addEventListener("click", async () => {
+    $("testResult").textContent = t("provider.testing");
+    try {
+      const res = await api.post("/api/provider/test");
+      if (res.ok) {
+        const list = $("modelList");
+        list.innerHTML = (res.models || []).map((m) => `<option value="${escapeAttr(m)}"></option>`).join("");
+        $("testResult").textContent = t("provider.testOk", { n: (res.models || []).length, detail: res.detail });
+      } else {
+        $("testResult").textContent = t("provider.testFail", { detail: res.detail || res.status || "" });
+      }
+    } catch (e) {
+      $("testResult").textContent = t("provider.testFail", { detail: e.message });
+    }
+  });
+  $("btnUsageReset").addEventListener("click", async () => {
+    try {
+      await api.post("/api/usage/reset");
+      poll();
+    } catch (e) {
+      uiAlert("Error", e.message);
+    }
+  });
   $("optCategories").addEventListener("change", () => {
     if ($("optCategories").checked) $("optEvents").checked = false;
     syncEventsCategories();
@@ -1617,6 +1765,7 @@ function uiConfirm(title, message, okLabel) {
     const overlay = $("modal");
     $("modalTitle").textContent = title;
     $("modalText").textContent = message;
+    $("modalCancel").hidden = false;
     $("modalCancel").textContent = t("modal.cancel");
     $("modalOk").textContent = okLabel || t("modal.confirm");
     overlay.hidden = false;
@@ -1643,30 +1792,71 @@ function uiConfirm(title, message, okLabel) {
   });
 }
 
+function uiAlert(title, message) {
+  return new Promise((resolve) => {
+    const overlay = $("modal");
+    $("modalTitle").textContent = title;
+    $("modalText").textContent = message;
+    $("modalCancel").hidden = true;
+    $("modalOk").textContent = t("modal.confirm");
+    overlay.hidden = false;
+    document.body.style.overflow = "hidden";
+
+    const done = () => {
+      overlay.hidden = true;
+      document.body.style.overflow = "";
+      $("modalOk").onclick = null;
+      overlay.onclick = null;
+      document.removeEventListener("keydown", onKey);
+      resolve();
+    };
+    const onKey = (e) => { if (e.key === "Escape" || e.key === "Enter") done(); };
+    $("modalOk").onclick = done;
+    overlay.onclick = (e) => { if (e.target === overlay) done(); };
+    document.addEventListener("keydown", onKey);
+    $("modalOk").focus();
+  });
+}
+
 function renderLm(data) {
   lastLm = data;
   const dot = $("lmDot");
-  if (data.connected) {
+  const provider = document.querySelector("#providerSelect .select-value")
+    ? (window.__provider || "lmstudio") : "lmstudio";
+  const isLocal = provider === "lmstudio";
+
+  if (data.connected != null) {
+    // legacy lmstudio payload
+    if (data.connected) {
+      dot.className = "dot on";
+      $("lmTitle").textContent = t("lm.connected");
+    } else {
+      dot.className = "dot off";
+      $("lmTitle").textContent = t("lm.disconnected");
+    }
+    $("lmUrl").textContent = (data.url || "").replace(/^https?:\/\//, "");
+    $("lmCtx").textContent = data.context_length ? t("lm.tokens", { n: fmtNum(data.context_length) }) : "—";
+    $("lmQuant").textContent = data.quant || "—";
+    $("lmVram").textContent = data.vram_used_gb != null
+      ? `${data.vram_used_gb} / ${data.vram_total_gb ?? "?"} GB`
+      : "—";
+    $("lmState").textContent = data.load_state || (data.connected ? t("lm.ready") : t("lm.noLink"));
+    return;
+  }
+
+  // provider payload
+  if (data.ok) {
     dot.className = "dot on";
-    $("lmTitle").textContent = t("lm.connected");
+    $("lmTitle").textContent = t("provider.ok");
   } else {
     dot.className = "dot off";
-    $("lmTitle").textContent = t("lm.disconnected");
+    $("lmTitle").textContent = data.detail || t("provider.fail");
   }
-  $("lmUrl").textContent = (data.url || "").replace(/^https?:\/\//, "");
-  $("lmModel").textContent = data.active_model || (data.models && data.models[0]?.id) || "—";
-  $("lmCtx").textContent = data.context_length ? t("lm.tokens", { n: fmtNum(data.context_length) }) : "—";
-  $("lmQuant").textContent = data.quant || "—";
-  $("lmParams").textContent = data.params_b ? String(data.params_b) : "—";
-  if (data.vram_used_gb != null) {
-    $("lmVram").textContent = `${data.vram_used_gb} / ${data.vram_total_gb ?? "?"} GB`;
-  } else {
-    $("lmVram").textContent = "—";
-  }
-  $("lmSpeed").textContent = data.sec_per_image
-    ? t("lm.secPerImage", { n: data.sec_per_image })
-    : (data.speed_tps ? t("lm.tps", { n: data.speed_tps }) : "—");
-  $("lmState").textContent = data.load_state || (data.connected ? t("lm.ready") : t("lm.noLink"));
+  $("lmUrl").textContent = data.base || "";
+  $("lmQuant").textContent = data.has_key ? t("provider.keyOk") : (isLocal ? "—" : t("provider.keyMissing"));
+  $("lmVram").textContent = "—";
+  $("lmCtx").textContent = "—";
+  $("lmState").textContent = data.detail || "—";
 }
 
 function renderJob(job, logLines) {
@@ -1714,11 +1904,13 @@ async function poll() {
   if (polling) return;
   polling = true;
   try {
-    const [lm, st] = await Promise.all([
-      api.get("/api/lmstudio").catch(() => ({ connected: false })),
+    const [prov, st, usage] = await Promise.all([
+      api.get("/api/provider").catch(() => ({ ok: false, detail: "—" })),
       api.get("/api/status"),
+      api.get("/api/usage").catch(() => ({ usage: null })),
     ]);
-    renderLm(lm);
+    renderLm(prov);
+    if (usage && usage.usage) renderUsage(usage.usage);
     renderJob(st.job || {}, st.log || []);
     serverOffline(false);
     api.get("/api/review").then((r) => setReviewCountBadge(r.count || 0)).catch(() => {});
@@ -1732,9 +1924,25 @@ async function poll() {
   }
 }
 
+function renderUsage(u) {
+  const el = $("usageLine");
+  if (!el) return;
+  const req = u.requests ?? 0;
+  const tin = u.input_tokens ?? 0;
+  const tout = u.output_tokens ?? 0;
+  const cost = u.cost_usd ?? 0;
+  el.textContent = t("provider.usage", {
+    req: fmtNum(req),
+    tin: fmtNum(tin),
+    tout: fmtNum(tout),
+    cost: cost.toFixed(4),
+  });
+}
+
 async function init() {
   await loadLang(LANG);
   setTheme(localStorage.getItem("yarophoto-theme") || "lab");
+  setProvider("lmstudio");
 
   renderFormats(DEFAULT_FORMATS);
   renderCategories(DEFAULT_CATEGORIES);
@@ -1767,7 +1975,7 @@ async function init() {
         updateDestPreview();
       }
     } catch (e) {
-      alert(t("alert.browseFail") + e.message);
+      uiAlert(t("folder.title"), t("alert.browseFail") + e.message);
     }
   });
 
@@ -1813,7 +2021,7 @@ async function init() {
         ? t("strip.countPrefix") + fmtNum(res.count)
         : (res.error || "—");
     } catch (e) {
-      alert(e.message);
+      uiAlert("Error", e.message);
     }
   });
 
@@ -1825,7 +2033,7 @@ async function init() {
       await api.post("/api/start");
       poll();
     } catch (e) {
-      alert(t("alert.startFail") + e.message);
+      uiAlert(t("btn.start"), t("alert.startFail") + e.message);
     }
   });
 
@@ -1834,7 +2042,7 @@ async function init() {
       await api.post("/api/stop");
       poll();
     } catch (e) {
-      alert(e.message);
+      uiAlert("Error", e.message);
     }
   });
 
@@ -1870,7 +2078,7 @@ async function init() {
       localStorage.removeItem("yarophoto-theme");
       location.reload();
     } catch (e) {
-      alert(e.message);
+      uiAlert("Error", e.message);
     }
   });
   const closeHelp = () => {
@@ -1938,7 +2146,7 @@ async function decideReview(decision) {
   try {
     await api.post("/api/review/decide", { path: item.path, decision });
   } catch (e) {
-    alert(e.message);
+    uiAlert("Error", e.message);
     return;
   }
   if (decision !== "skip") {
@@ -1968,7 +2176,7 @@ function bindReview() {
       modal.hidden = false;
       document.body.style.overflow = "hidden";
     } catch (e) {
-      alert(e.message);
+      uiAlert("Error", e.message);
     }
   };
   const openPending = (item) => {
@@ -2018,7 +2226,7 @@ function bindDupes() {
       await api.post("/api/dupes/scan");
       refreshDupesStatus();
     } catch (e) {
-      alert(e.message);
+      uiAlert("Error", e.message);
     }
   });
 
@@ -2043,7 +2251,7 @@ function bindDupes() {
       modal.hidden = false;
       document.body.style.overflow = "hidden";
     } catch (e) {
-      alert(e.message);
+      uiAlert("Error", e.message);
     }
   });
   $("dupesClose").addEventListener("click", () => {

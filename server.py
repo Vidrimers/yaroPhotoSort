@@ -28,6 +28,8 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+import providers
+
 try:
     from PIL import Image
 except ImportError:
@@ -141,6 +143,10 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "always_sort_screens_docs": False,
     "dupes_action": "mark",              # mark | group | reject_extra
     "dupes_keeper": "resolution",        # resolution | time
+    "provider": "lmstudio",
+    "model_name": "google/gemma-3-12b",
+    "max_requests": 0,                   # 0 = без лимита
+    "max_cost_usd": 0.0,                 # 0 = без лимита
     "categories": [
         {
             "key": c["key"],
@@ -630,29 +636,15 @@ def ask_event_name(sample: Path, lang: str, model: str) -> str:
     )
     try:
         data_url = prepare_image(sample, 512)
-        payload = {
-            "model": model,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": prompt},
-                        {"type": "image_url", "image_url": {"url": data_url}},
-                    ],
-                }
-            ],
-            "temperature": 0.3,
-            "max_tokens": 20,
-        }
-        r = requests.post(f"{LM_BASE}/v1/chat/completions", json=payload, timeout=60)
-        if r.status_code != 200:
+        provider = "lmstudio"
+        # имя события берём у текущего провайдера из конфига
+        cfg = load_config()
+        provider = cfg.get("provider") or "lmstudio"
+        model = cfg.get("model_name") or providers.DEFAULT_MODELS.get(provider, "")
+        reply = providers.ask_model(provider, model, prompt, data_url, max_tokens=20)
+        if reply.error:
             return ""
-        text = (
-            (r.json().get("choices") or [{}])[0]
-            .get("message", {})
-            .get("content", "")
-            .strip()
-        )
+        text = reply.text.strip()
         safe = re.sub(r'[<>:"/\\|?*]+', " ", text)
         safe = re.sub(r"\s+", " ", safe).strip()
         return safe[:40]
@@ -782,42 +774,33 @@ def prepare_image(path: Path, max_side: int) -> str:
     return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
 
 
+def check_usage_limits(cfg: dict[str, Any]) -> str | None:
+    """Возвращает сообщение о лимите или None. Для локальных провайдеров — нет."""
+    provider = cfg.get("provider") or "lmstudio"
+    if provider in providers.LOCAL_PROVIDERS:
+        return None
+    max_req = int(cfg.get("max_requests") or 0)
+    max_cost = float(cfg.get("max_cost_usd") or 0.0)
+    if max_req <= 0 and max_cost <= 0:
+        return None
+    stats = providers.load_stats()
+    if max_req > 0 and int(stats.get("requests") or 0) >= max_req:
+        return f"Request limit reached ({max_req})"
+    if max_cost > 0 and float(stats.get("cost_usd") or 0.0) >= max_cost:
+        return f"Cost limit reached (${max_cost})"
+    return None
+
+
 def ask_vlm(path: Path, cfg: dict[str, Any], model: str) -> dict[str, Any]:
     prompt = build_prompt(cfg)
     data_url = prepare_image(path, int(cfg.get("max_image_side") or 1280))
-    payload = {
-        "model": model,
-        "messages": [
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": prompt},
-                    {"type": "image_url", "image_url": {"url": data_url}},
-                ],
-            }
-        ],
-        "temperature": 0.1,
-        "max_tokens": 220,
-    }
-    t0 = time.time()
-    r = requests.post(
-        f"{LM_BASE}/v1/chat/completions",
-        json=payload,
-        timeout=120,
-    )
-    dt = time.time() - t0
-    if r.status_code != 200:
-        raise RuntimeError(f"LM Studio {r.status_code}: {r.text[:200]}")
-    data = r.json()
-    content = (
-        (data.get("choices") or [{}])[0]
-        .get("message", {})
-        .get("content", "")
-    )
-    usage = data.get("usage") or {}
-    verdict = parse_verdict(content, int(cfg.get("score_threshold") or 2))
-    verdict["sec"] = round(dt, 2)
-    verdict["tokens_out"] = usage.get("completion_tokens")
+    provider = cfg.get("provider") or "lmstudio"
+    reply = providers.ask_model(provider, model, prompt, data_url, max_tokens=220)
+    if reply.error:
+        raise RuntimeError(reply.error)
+    verdict = parse_verdict(reply.text, int(cfg.get("score_threshold") or 2))
+    verdict["sec"] = reply.sec
+    verdict["tokens_out"] = reply.output_tokens
     return verdict
 
 
@@ -1069,14 +1052,27 @@ def apply_actions(
 def job_worker(cfg: dict[str, Any]) -> None:
     global JOB
     try:
-        st = lm_status()
-        model = st.get("active_model")
-        if not st.get("connected") or not model:
-            with JOB_LOCK:
-                JOB.running = False
-                JOB.message = "LM Studio is not available or no model is loaded"
-            log("Start cancelled: LM Studio is not available.")
-            return
+        provider = cfg.get("provider") or "lmstudio"
+        model = cfg.get("model_name") or providers.DEFAULT_MODELS.get(provider, "")
+        if provider in providers.LOCAL_PROVIDERS:
+            if provider == "lmstudio":
+                st = lm_status()
+                if not st.get("connected"):
+                    with JOB_LOCK:
+                        JOB.running = False
+                        JOB.message = "LM Studio is not available or no model is loaded"
+                    log("Start cancelled: LM Studio is not available.")
+                    return
+                if not model:
+                    model = st.get("active_model") or model
+            else:
+                pst = providers.provider_status(provider, model)
+                if not pst.get("ok"):
+                    with JOB_LOCK:
+                        JOB.running = False
+                        JOB.message = f"{provider} is not available"
+                    log(f"Start cancelled: {provider} is not available.")
+                    return
 
         files = iter_images(cfg)
         skip = load_done_paths() if cfg.get("resume") else set()
@@ -1122,6 +1118,14 @@ def job_worker(cfg: dict[str, Any]) -> None:
                     JOB.message = "Stopped by user"
                     break
                 JOB.current_file = str(path)
+
+            limit_msg = check_usage_limits(cfg)
+            if limit_msg:
+                with JOB_LOCK:
+                    JOB.message = limit_msg
+                    JOB.running = False
+                log(f"Stopped: {limit_msg}")
+                break
 
             try:
                 verdict = ask_vlm(path, cfg, model)
@@ -1250,6 +1254,10 @@ class ConfigModel(BaseModel):
     always_sort_screens_docs: bool = False
     dupes_action: str = "mark"
     dupes_keeper: str = "resolution"
+    provider: str = "lmstudio"
+    model_name: str = "google/gemma-3-12b"
+    max_requests: int = 0
+    max_cost_usd: float = 0.0
     categories: list[dict[str, Any]] = []
     add_reason_to_name: bool = False
     preserve_structure: bool = True
@@ -1326,6 +1334,53 @@ def api_scan() -> dict[str, Any]:
 @app.get("/api/lmstudio")
 def api_lmstudio() -> dict[str, Any]:
     return lm_status()
+
+
+@app.get("/api/provider")
+def api_provider() -> dict[str, Any]:
+    cfg = load_config()
+    provider = cfg.get("provider") or "lmstudio"
+    model = cfg.get("model_name") or providers.DEFAULT_MODELS.get(provider, "")
+    status = providers.provider_status(provider, model)
+    if provider == "lmstudio":
+        status.update(lm_status())
+    return status
+
+
+class ProviderKey(BaseModel):
+    provider: str
+    api_key: str = ""
+
+
+@app.post("/api/provider/key")
+def api_provider_key(body: ProviderKey) -> dict[str, Any]:
+    if body.provider in providers.LOCAL_PROVIDERS:
+        return {"ok": True, "message": "local provider needs no key"}
+    if not body.api_key.strip():
+        raise HTTPException(400, "Empty key")
+    name = providers.save_api_key(body.provider, body.api_key.strip())
+    log(f"API key saved to .env ({name})")
+    return {"ok": True, "env": name}
+
+
+@app.post("/api/provider/test")
+def api_provider_test() -> dict[str, Any]:
+    cfg = load_config()
+    provider = cfg.get("provider") or "lmstudio"
+    model = cfg.get("model_name") or providers.DEFAULT_MODELS.get(provider, "")
+    return providers.test_connection(provider, model)
+
+
+@app.get("/api/usage")
+def api_usage() -> dict[str, Any]:
+    return {"ok": True, "usage": providers.load_stats()}
+
+
+@app.post("/api/usage/reset")
+def api_usage_reset() -> dict[str, Any]:
+    stats = providers.reset_stats()
+    log("Usage stats reset")
+    return {"ok": True, "usage": stats}
 
 
 @app.post("/api/start")
