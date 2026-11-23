@@ -156,6 +156,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "max_image_side": 1280,
     "port": 8460,
     "ui_lang": "en",
+    "ui_theme": "lab",
 }
 
 
@@ -1255,6 +1256,7 @@ class ConfigModel(BaseModel):
     max_image_side: int = 1280
     port: int = 8460
     ui_lang: str = "en"
+    ui_theme: str = "lab"
 
 
 @app.get("/")
@@ -1293,6 +1295,16 @@ def set_config(body: ConfigModel) -> dict[str, Any]:
     save_config(cfg)
     global CONFIG
     CONFIG = cfg
+    return {"ok": True, "config": cfg}
+
+
+@app.post("/api/config/reset")
+def set_config_reset() -> dict[str, Any]:
+    cfg = json.loads(json.dumps(DEFAULT_CONFIG))
+    save_config(cfg)
+    global CONFIG
+    CONFIG = cfg
+    log("Config reset to defaults")
     return {"ok": True, "config": cfg}
 
 

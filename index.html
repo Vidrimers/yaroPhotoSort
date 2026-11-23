@@ -772,6 +772,7 @@ legend {
       </div>
 
       <button class="btn" id="btnHelp" type="button" data-i18n="btn.help"></button>
+      <button class="btn btn-ghost" id="btnReset" type="button" data-i18n="btn.reset" data-i18n-title="btn.resetTip"></button>
 
       <a class="btn btn-primary" id="btnStartServer" href="yarophoto://start" data-i18n="btn.startServer"></a>
       <button class="btn btn-danger" id="btnStopServer" type="button" data-i18n="btn.stopServer" hidden></button>
@@ -1225,6 +1226,7 @@ function loadLang(lang) {
       LANG = lang;
       localStorage.setItem("yarophoto-lang", lang);
       applyI18n();
+      scheduleSave();
       resolve();
     };
     // <script src> работает и с file://, и через сервер — в отличие от fetch
@@ -1248,6 +1250,18 @@ function setTheme(name) {
   document.documentElement.dataset.theme = name;
   localStorage.setItem("yarophoto-theme", name);
   syncSelectLabels();
+  scheduleSave();
+}
+
+function applyUiFromConfig(cfg) {
+  if (cfg.ui_lang && cfg.ui_lang !== LANG) {
+    loadLang(cfg.ui_lang);
+  }
+  if (cfg.ui_theme) {
+    document.documentElement.dataset.theme = cfg.ui_theme;
+    localStorage.setItem("yarophoto-theme", cfg.ui_theme);
+    syncSelectLabels();
+  }
 }
 
 function closeAllSelects(except) {
@@ -1365,6 +1379,7 @@ function currentConfigPatch() {
     dupes_action: document.querySelector('input[name="dupesAction"]:checked')?.value || "mark",
     dupes_keeper: document.querySelector('input[name="dupesKeeper"]:checked')?.value || "resolution",
     ui_lang: LANG,
+    ui_theme: document.documentElement.dataset.theme || "lab",
     categories: collectCategories(),
     add_reason_to_name: $("optReasonName").checked,
     preserve_structure: $("optPreserve").checked,
@@ -1717,6 +1732,7 @@ async function init() {
     const data = await api.get("/api/config");
     config = data.config;
     applyConfigToForm(config);
+    applyUiFromConfig(config);
     serverOffline(false);
   } catch (e) {
     serverOffline(true);
@@ -1831,6 +1847,19 @@ async function init() {
     renderHelp();
     help.hidden = false;
     document.body.style.overflow = "hidden";
+  });
+
+  $("btnReset").addEventListener("click", async () => {
+    const ok = await uiConfirm(t("btn.reset"), t("confirm.reset"), t("btn.reset"));
+    if (!ok) return;
+    try {
+      await api.post("/api/config/reset");
+      localStorage.removeItem("yarophoto-lang");
+      localStorage.removeItem("yarophoto-theme");
+      location.reload();
+    } catch (e) {
+      alert(e.message);
+    }
   });
   const closeHelp = () => {
     help.hidden = true;

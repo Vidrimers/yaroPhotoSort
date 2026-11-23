@@ -190,5 +190,8 @@ window.YARO_I18N = {
   "dupes.view": "Show groups",
   "dupes.scanning": "Scanning…",
   "dupes.empty": "No groups yet. Run Find duplicates first.",
-  "dupes.filesWord": "files"
+  "dupes.filesWord": "files",
+  "btn.reset": "Reset settings",
+  "btn.resetTip": "Restore all checkboxes, radios, port, theme and language to defaults. Stored in config.json on the project side.",
+  "confirm.reset": "Reset all settings to defaults? Folder path, port, theme, language and every option will be restored."
 };
