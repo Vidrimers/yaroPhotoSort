@@ -566,19 +566,19 @@ legend {
         <h2>Что считаем браком</h2>
         <p class="hint">Включи критерии, по которым модель ставит <code>quality=bad</code>.</p>
         <fieldset>
-          <label class="check">
+          <label class="check" title="Снимок не в фокусе, смазан рукой или тряской камеры.">
             <input type="checkbox" id="ruleBlur" checked>
             <span>Размытие
               <span class="sub">смаз, не в фокусе, тряска</span>
             </span>
           </label>
-          <label class="check">
+          <label class="check" title="Слабо видно детали: солнце забило небо, или наоборот кадр тёмный без света.">
             <input type="checkbox" id="ruleExposure" checked>
             <span>Пересвет или недосвет
               <span class="sub">выбитое небо, чёрная масса без деталей</span>
             </span>
           </label>
-          <label class="check">
+          <label class="check" title="Не настоящий кадр: случайный снимок, руки, пол, потолок, мусор.">
             <input type="checkbox" id="ruleJunk" checked>
             <span>Мусорный кадр
               <span class="sub">случайный снимок, руки, пол, потолок</span>
@@ -586,7 +586,7 @@ legend {
           </label>
         </fieldset>
         <div class="num-row">
-          <label for="scoreThreshold">Брак, если score не выше</label>
+          <label for="scoreThreshold" title="Модель ставит оценку 1–5 (5 — отлично). Браком считаются снимки с оценкой не выше этого порога. Например 2: score 1 и 2 — bad.">Брак, если score не выше</label>
           <input type="number" id="scoreThreshold" min="1" max="5" value="2">
         </div>
       </section>
@@ -602,11 +602,11 @@ legend {
         <fieldset>
           <legend>Что делать с плохими</legend>
           <div class="radio-row" id="outputMode">
-            <label>
+            <label title="Файлы никуда не двигаем. В results/analysis.csv пишем путь к каждому снимку, вердикт (ok/bad), причину и оценку. Дальше смотришь таблицу сам и руками решаешь, что удалить.">
               <input type="radio" name="outputMode" value="csv_only" checked>
               <span>Только CSV, сам посмотрю</span>
             </label>
-            <label>
+            <label title="Плохие снимки уезжают в папку «на_удаление» внутри папки с фото. Хорошие остаются на месте. CSV пишется в любом случае.">
               <input type="radio" name="outputMode" value="move_bad">
               <span>Перенести в «на_удаление»</span>
             </label>
@@ -614,25 +614,25 @@ legend {
         </fieldset>
         <fieldset>
           <legend>Ещё</legend>
-          <label class="check">
+          <label class="check" title="Искать фото не только в корне, но и во вложенных подпапках.">
             <input type="checkbox" id="optRecursive" checked>
             <span>Обходить подпапки</span>
           </label>
-          <label class="check">
+          <label class="check" title="При повторном запуске пропустить файлы, которые уже есть в results/analysis.csv. Можно прервать прогон и продолжить без повторной работы.">
             <input type="checkbox" id="optResume" checked>
             <span>Resume — пропускать уже обработанные из CSV</span>
           </label>
-          <label class="check">
+          <label class="check" title="Модель посчитает вердикты и запишет их в CSV, но ничего не скопирует и не перенесёт. Безопасно перед первым реальным проходом.">
             <input type="checkbox" id="optDry">
             <span>Dry-run — считать вердикты, ничего не двигать
               <span class="sub">удобно перед первым реальным проходом</span>
             </span>
           </label>
-          <label class="check">
+          <label class="check" title="Вместо IMG_1823.jpg появится IMG_1823_bad_размытие.jpg. Причина — короткая подпись от модели, для удобства глаз.">
             <input type="checkbox" id="optReasonName">
             <span>В имя файла при переносе добавлять причину брака</span>
           </label>
-          <label class="check">
+          <label class="check" title="Копировать не только сам файл, но и его вложенность: photos/2024/IMG_1.jpg → _sorted/people/2024/IMG_1.jpg.">
             <input type="checkbox" id="optPreserve" checked>
             <span>Сохранять структуру подпапок при копировании</span>
           </label>
@@ -646,7 +646,7 @@ legend {
           Пустой путь или относительный (например <code>_sorted/people</code>) — внутри «Папки с фото».
           Абсолютный (например <code>E:\Sorted\People</code>) — куда указал.
         </p>
-        <label class="cat-toggle">
+        <label class="cat-toggle" title="Дополнительно к оценке качества модель определяет, что на снимке (люди, документы, скриншоты…), и файл можно сложить в отдельные папки.">
           <input type="checkbox" id="optCategories">
           <span>Включить категоризацию</span>
         </label>
@@ -843,6 +843,7 @@ function renderFormats(selected) {
     const on = f.match.some((m) => sel.has(m));
     const label = document.createElement("label");
     label.className = "fmt";
+    label.title = `Обрабатывать файлы ${f.label}`;
     label.innerHTML = `<input type="checkbox" data-ext="${f.ext}" ${on ? "checked" : ""}><span>${f.label}</span>`;
     label.querySelector("input").addEventListener("change", scheduleSave);
     box.appendChild(label);
