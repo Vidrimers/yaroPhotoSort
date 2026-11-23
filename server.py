@@ -23,6 +23,7 @@ import requests
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 try:
@@ -49,6 +50,7 @@ LM_BASE = os.environ.get("LMSTUDIO_URL", "http://127.0.0.1:1234")
 PORT = int(os.environ.get("YAROPHOTO_PORT", "8460"))
 
 app = FastAPI(title="yaroPhotoSort")
+app.mount("/locales", StaticFiles(directory=str(ROOT / "locales")), name="locales")
 
 # ────────────────────────────── конфиг ──────────────────────────────
 
@@ -109,7 +111,7 @@ def load_config() -> dict[str, Any]:
                 elif k in cfg:
                     cfg[k] = v
         except Exception as e:
-            log(f"config.json повреждён, беру дефолт: {e}")
+            log(f"config.json is broken, using defaults: {e}")
     return cfg
 
 
@@ -626,8 +628,8 @@ def job_worker(cfg: dict[str, Any]) -> None:
         if not st.get("connected") or not model:
             with JOB_LOCK:
                 JOB.running = False
-                JOB.message = "LM Studio недоступен или модель не загружена"
-            log("Старт отменён: LM Studio недоступен.")
+                JOB.message = "LM Studio is not available or no model is loaded"
+            log("Start cancelled: LM Studio is not available.")
             return
 
         files = iter_images(cfg)
@@ -644,16 +646,16 @@ def job_worker(cfg: dict[str, Any]) -> None:
             JOB.errors = 0
             JOB.started_at = datetime.now().isoformat(timespec="seconds")
             JOB.finished_at = ""
-            JOB.message = f"Модель: {model}"
+            JOB.message = f"Model: {model}"
             JOB.last_speed = None
 
-        log(f"Запуск: {len(todo)} файлов (всего {len(files)}, resume пропущено {len(skip)}). Модель: {model}")
+        log(f"Started: {len(todo)} files (total {len(files)}, resume skipped {len(skip)}). Model: {model}")
 
         speeds: list[float] = []
         for path in todo:
             with JOB_LOCK:
                 if JOB.stop_requested:
-                    JOB.message = "Остановлено пользователем"
+                    JOB.message = "Stopped by user"
                     break
                 JOB.current_file = str(path)
 
@@ -710,15 +712,15 @@ def job_worker(cfg: dict[str, Any]) -> None:
             JOB.running = False
             JOB.current_file = ""
             JOB.finished_at = datetime.now().isoformat(timespec="seconds")
-            if not JOB.message or JOB.message.startswith("Модель"):
-                JOB.message = "Готово"
-        log("Завершено.")
+            if not JOB.message or JOB.message.startswith("Model"):
+                JOB.message = "Done"
+        log("Done.")
     except Exception as e:
-        log("Критическая ошибка job: " + str(e))
+        log("Critical job error: " + str(e))
         log(traceback.format_exc())
         with JOB_LOCK:
             JOB.running = False
-            JOB.message = f"Ошибка: {e}"
+            JOB.message = f"Error: {e}"
 
 
 # ────────────────────────────── диалог папки ──────────────────────────────
@@ -827,14 +829,14 @@ def api_start() -> dict[str, Any]:
     global JOB_THREAD
     with JOB_LOCK:
         if JOB.running:
-            raise HTTPException(409, "Задача уже выполняется")
+            raise HTTPException(409, "A job is already running")
     cfg = load_config()
     if not cfg.get("input_folder"):
-        raise HTTPException(400, "Не выбрана папка")
+        raise HTTPException(400, "No folder selected")
     if not Path(cfg["input_folder"]).is_dir():
-        raise HTTPException(400, f"Папка не найдена: {cfg['input_folder']}")
+        raise HTTPException(400, f"Folder not found: {cfg['input_folder']}")
     if not lm_alive():
-        raise HTTPException(400, "LM Studio недоступен — запусти сервер и загрузи модель")
+        raise HTTPException(400, "LM Studio is not available - start it and load a model")
 
     with JOB_LOCK:
         JOB.stop_requested = False
@@ -849,7 +851,7 @@ def api_stop() -> dict[str, Any]:
         if not JOB.running:
             return {"ok": True, "message": "Задача и так не запущена"}
         JOB.stop_requested = True
-        JOB.message = "Останавливаюсь…"
+        JOB.message = "Stopping..."
     return {"ok": True}
 
 
@@ -862,7 +864,7 @@ def api_status() -> dict[str, Any]:
 
 @app.post("/api/shutdown")
 def api_shutdown() -> dict[str, Any]:
-    log("Получен shutdown из UI.")
+    log("Shutdown requested from UI.")
     threading.Timer(0.5, lambda: os._exit(0)).start()
     return {"ok": True, "message": "Сервер останавливается"}
 

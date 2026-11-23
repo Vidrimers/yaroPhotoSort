@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru" data-theme="lab">
+<html lang="en" data-theme="lab">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,10 +8,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bitter:wght@500;700&family=Source+Sans+3:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-/* ─────────────────────────────────────────────────────────────
-   Тема «lab» — стол в проявочной: графит, лампа-амбер, без теней
-   Тема «paper» — контактный лист: бумага, чёрный, красный карандаш
-   ───────────────────────────────────────────────────────────── */
 :root, [data-theme="lab"] {
   --bg: #22201d;
   --bg-2: #2a2824;
@@ -25,9 +21,6 @@
   --amber-ink: #241a05;
   --ok: #8aa87c;
   --bad: #c45c4c;
-  --paper: #2f2c27;
-  --paper-ink: var(--text);
-  --tick: var(--bad);
   --btn-bg: #322e28;
   --btn-hover: #3c3832;
   --input-bg: #1a1816;
@@ -49,9 +42,6 @@
   --amber-ink: #f7f1e7;
   --ok: #2f6b4f;
   --bad: #b03a2e;
-  --paper: #f2ece1;
-  --paper-ink: var(--text);
-  --tick: var(--bad);
   --btn-bg: #ddd2bc;
   --btn-hover: #d2c5ab;
   --input-bg: #f4eee3;
@@ -75,11 +65,10 @@ body {
   padding: 22px 0 56px;
 }
 
-/* ── шапка: одна линия, без подсветки слов ── */
 .top {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 10px;
   flex-wrap: wrap;
   padding-bottom: 18px;
   border-bottom: 1px solid var(--line);
@@ -102,28 +91,6 @@ body {
   margin-top: 2px;
 }
 
-/* переключатель темы — сегменты, без скруглений «пилюль» */
-.theme-switch {
-  display: inline-flex;
-  border: 1px solid var(--line);
-  overflow: hidden;
-}
-.theme-switch button {
-  appearance: none;
-  border: 0;
-  background: transparent;
-  color: var(--muted);
-  font: 600 12.5px/1 "Source Sans 3", sans-serif;
-  padding: 10px 13px;
-  cursor: pointer;
-}
-.theme-switch button + button { border-left: 1px solid var(--line); }
-.theme-switch button[aria-pressed="true"] {
-  background: var(--text);
-  color: var(--bg);
-}
-
-/* ── кнопки ── */
 .btn {
   appearance: none;
   border: 1px solid var(--line-2);
@@ -133,6 +100,7 @@ body {
   padding: 11px 15px;
   border-radius: 3px;
   cursor: pointer;
+  white-space: nowrap;
 }
 .btn:hover { background: var(--btn-hover); }
 .btn:active { transform: translateY(1px); }
@@ -146,9 +114,58 @@ body {
 .btn-danger { color: var(--bad); border-color: var(--bad); background: transparent; }
 .btn-ghost { background: transparent; }
 .btn[disabled] { opacity: 0.42; cursor: not-allowed; transform: none; }
-.top-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.top-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 
-/* ── сетка: не карточки, а полосы общей рамки ── */
+/* кастомный селект */
+.select { position: relative; }
+.select-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line-2);
+  background: var(--btn-bg);
+  color: var(--text);
+  font: 600 13.5px/1 "Source Sans 3", sans-serif;
+  padding: 11px 13px;
+  border-radius: 3px;
+  cursor: pointer;
+  min-width: 128px;
+  justify-content: space-between;
+}
+.select-btn:hover { background: var(--btn-hover); }
+.select-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.select-chevron { opacity: 0.65; flex: none; }
+.select-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 100%;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  border-radius: 3px;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.28);
+  z-index: 30;
+}
+.select-menu li {
+  padding: 9px 11px;
+  cursor: pointer;
+  border-radius: 2px;
+  white-space: nowrap;
+  font-size: 13.5px;
+}
+.select-menu li:hover,
+.select-menu li[aria-selected="true"] {
+  background: var(--btn-hover);
+}
+.select-menu li[aria-selected="true"] {
+  color: var(--accent-only-run);
+  font-weight: 600;
+}
+
 .grid {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
@@ -169,7 +186,6 @@ body {
   .col + .col { border-left: 0; border-top: 1px solid var(--line); }
 }
 
-/* заголовки секций: без CAPS, без «eyebrow» */
 section h2 {
   font-family: "Bitter", Georgia, serif;
   font-weight: 500;
@@ -189,7 +205,6 @@ section h2 {
   color: var(--faint);
 }
 
-/* ── поле папки ── */
 .folder-row {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -204,10 +219,7 @@ section h2 {
   padding: 11px 12px;
   border-radius: 3px;
 }
-.folder-input:focus {
-  outline: none;
-  border-color: var(--focus);
-}
+.folder-input:focus { outline: none; border-color: var(--focus); }
 .dropzone {
   margin-top: 10px;
   border: 1px dashed var(--line-2);
@@ -223,7 +235,6 @@ section h2 {
   background: var(--bg);
 }
 
-/* ── LM Studio ── */
 .lm-head {
   display: flex;
   align-items: center;
@@ -261,7 +272,6 @@ section h2 {
   word-break: break-all;
 }
 
-/* ── настройки ── */
 fieldset {
   border: 0;
   margin: 0 0 12px;
@@ -347,7 +357,6 @@ legend {
   border-radius: 3px;
 }
 
-/* ── категории ── */
 .cat-table {
   width: 100%;
   border-collapse: collapse;
@@ -405,7 +414,6 @@ legend {
   accent-color: var(--accent-only-run);
 }
 
-/* ── прогон ── */
 .run-bar {
   display: flex;
   gap: 8px;
@@ -441,7 +449,6 @@ legend {
   .stat:nth-child(n+3) { border-top: 1px solid var(--line); }
 }
 
-/* контактная лента — единственный «выходной» акцент */
 .strip {
   position: relative;
   height: 38px;
@@ -449,7 +456,6 @@ legend {
   background: var(--bg-3);
   overflow: hidden;
   margin-bottom: 8px;
-  /* перфорация плёнки сверху и снизу */
   background-image:
     radial-gradient(circle at 8px 5px, var(--bg-2) 3px, transparent 3.5px),
     radial-gradient(circle at 8px calc(100% - 5px), var(--bg-2) 3px, transparent 3.5px);
@@ -470,7 +476,7 @@ legend {
   top: 8px;
   bottom: 8px;
   width: 2px;
-  background: var(--tick);
+  background: var(--bad);
 }
 .strip-label {
   display: flex;
@@ -481,7 +487,6 @@ legend {
   margin-bottom: 14px;
 }
 
-/* журнал */
 .log {
   background: var(--bg-3);
   border: 1px solid var(--line);
@@ -526,137 +531,151 @@ legend {
   <header class="top">
     <div class="brand">
       yaroPhotoSort
-      <small>разбор архива через LM Studio</small>
-    </div>
-
-    <div class="theme-switch" role="group" aria-label="Оформление">
-      <button type="button" id="themeLab" aria-pressed="true">Проявочная</button>
-      <button type="button" id="themePaper" aria-pressed="false">Контактный лист</button>
+      <small data-i18n="app.subtitle"></small>
     </div>
 
     <div class="top-actions">
-      <a class="btn btn-primary" id="btnStartServer" href="yarophoto://start">Запустить сервер</a>
-      <button class="btn" id="btnOpenPanel" type="button">Открыть панель</button>
+      <div class="select" id="themeSelect" data-i18n-title="theme.switch">
+        <button class="select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+          <span class="select-value"></span>
+          <svg class="select-chevron" width="10" height="6" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+        </button>
+        <ul class="select-menu" role="listbox" hidden>
+          <li role="option" data-value="lab" data-i18n="theme.lab"></li>
+          <li role="option" data-value="paper" data-i18n="theme.paper"></li>
+        </ul>
+      </div>
+
+      <div class="select" id="langSelect" data-i18n-title="lang.switch">
+        <button class="select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+          <span class="select-value"></span>
+          <svg class="select-chevron" width="10" height="6" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+        </button>
+        <ul class="select-menu" role="listbox" hidden>
+          <li role="option" data-value="en" data-i18n="lang.en"></li>
+          <li role="option" data-value="ru" data-i18n="lang.ru"></li>
+        </ul>
+      </div>
+
+      <a class="btn btn-primary" id="btnStartServer" href="yarophoto://start" data-i18n="btn.startServer"></a>
+      <button class="btn" id="btnOpenPanel" type="button" data-i18n="btn.openPanel"></button>
     </div>
   </header>
 
   <div class="alert" id="serverAlert">
-    <strong id="alertTitle">Сервер не отвечает</strong>
-    <span id="alertText">Нажми «Запустить сервер» — откроется терминал с <code>start.bat</code>. Потом обнови страницу (F5).</span>
+    <strong id="alertTitle"></strong>
+    <span id="alertText"></span>
   </div>
 
   <div class="grid">
-    <!-- левая колонка -->
     <div class="col">
 
       <section>
-        <h2>Папка с фото</h2>
-        <p class="hint">Путь к архиву. Можно выбрать диалогом, вписать руками или перетащить папку сюда.</p>
+        <h2 data-i18n="folder.title"></h2>
+        <p class="hint" data-i18n="folder.hint"></p>
         <div class="folder-row">
           <input class="folder-input" id="inputFolder" type="text" spellcheck="false"
-                 placeholder="D:\Photos\2024" autocomplete="off">
-          <button class="btn" id="btnBrowse" type="button">Обзор…</button>
+                 data-i18n-placeholder="folder.placeholder" autocomplete="off">
+          <button class="btn" id="btnBrowse" type="button" data-i18n="btn.browse"></button>
         </div>
-        <div class="dropzone" id="dropzone">
-          Перетащите папку в это поле, или впишите путь выше
-        </div>
+        <div class="dropzone" id="dropzone" data-i18n="dropzone.default"></div>
       </section>
 
       <section>
-        <h2>Что считаем браком</h2>
-        <p class="hint">Включи критерии, по которым модель ставит <code>quality=bad</code>.</p>
+        <h2 data-i18n="quality.title"></h2>
+        <p class="hint" data-i18n="quality.hint"></p>
         <fieldset>
-          <label class="check" title="Снимок не в фокусе, смазан рукой или тряской камеры.">
+          <label class="check" data-i18n-title="quality.blur.tip">
             <input type="checkbox" id="ruleBlur" checked>
-            <span>Размытие
-              <span class="sub">смаз, не в фокусе, тряска</span>
+            <span>
+              <span data-i18n="quality.blur"></span>
+              <span class="sub" data-i18n="quality.blur.sub"></span>
             </span>
           </label>
-          <label class="check" title="Слабо видно детали: солнце забило небо, или наоборот кадр тёмный без света.">
+          <label class="check" data-i18n-title="quality.exposure.tip">
             <input type="checkbox" id="ruleExposure" checked>
-            <span>Пересвет или недосвет
-              <span class="sub">выбитое небо, чёрная масса без деталей</span>
+            <span>
+              <span data-i18n="quality.exposure"></span>
+              <span class="sub" data-i18n="quality.exposure.sub"></span>
             </span>
           </label>
-          <label class="check" title="Не настоящий кадр: случайный снимок, руки, пол, потолок, мусор.">
+          <label class="check" data-i18n-title="quality.junk.tip">
             <input type="checkbox" id="ruleJunk" checked>
-            <span>Мусорный кадр
-              <span class="sub">случайный снимок, руки, пол, потолок</span>
+            <span>
+              <span data-i18n="quality.junk"></span>
+              <span class="sub" data-i18n="quality.junk.sub"></span>
             </span>
           </label>
         </fieldset>
         <div class="num-row">
-          <label for="scoreThreshold" title="Модель ставит оценку 1–5 (5 — отлично). Браком считаются снимки с оценкой не выше этого порога. Например 2: score 1 и 2 — bad.">Брак, если score не выше</label>
+          <label for="scoreThreshold" data-i18n="quality.scoreLabel" data-i18n-title="quality.scoreTip"></label>
           <input type="number" id="scoreThreshold" min="1" max="5" value="2">
         </div>
       </section>
 
       <section>
-        <h2>Форматы</h2>
-        <p class="hint">Какие расширения обходим. HEIC конвертируется на лету, RAW пока пропускаем.</p>
+        <h2 data-i18n="formats.title"></h2>
+        <p class="hint" data-i18n="formats.hint"></p>
         <div class="formats" id="formats"></div>
       </section>
 
       <section>
-        <h2>Поведение</h2>
+        <h2 data-i18n="behavior.title"></h2>
         <fieldset>
-          <legend>Что делать с плохими</legend>
+          <legend data-i18n="behavior.badTitle"></legend>
           <div class="radio-row" id="outputMode">
-            <label title="Файлы никуда не двигаем. В results/analysis.csv пишем путь к каждому снимку, вердикт (ok/bad), причину и оценку. Дальше смотришь таблицу сам и руками решаешь, что удалить.">
+            <label data-i18n-title="behavior.onlyCsv.tip">
               <input type="radio" name="outputMode" value="csv_only" checked>
-              <span>Только CSV, сам посмотрю</span>
+              <span data-i18n="behavior.onlyCsv"></span>
             </label>
-            <label title="Плохие снимки уезжают в папку «на_удаление» внутри папки с фото. Хорошие остаются на месте. CSV пишется в любом случае.">
+            <label data-i18n-title="behavior.moveBad.tip">
               <input type="radio" name="outputMode" value="move_bad">
-              <span>Перенести в «на_удаление»</span>
+              <span data-i18n="behavior.moveBad"></span>
             </label>
           </div>
         </fieldset>
         <fieldset>
-          <legend>Ещё</legend>
-          <label class="check" title="Искать фото не только в корне, но и во вложенных подпапках.">
+          <legend data-i18n="behavior.more"></legend>
+          <label class="check" data-i18n-title="behavior.recursive.tip">
             <input type="checkbox" id="optRecursive" checked>
-            <span>Обходить подпапки</span>
+            <span data-i18n="behavior.recursive"></span>
           </label>
-          <label class="check" title="При повторном запуске пропустить файлы, которые уже есть в results/analysis.csv. Можно прервать прогон и продолжить без повторной работы.">
+          <label class="check" data-i18n-title="behavior.resume.tip">
             <input type="checkbox" id="optResume" checked>
-            <span>Resume — пропускать уже обработанные из CSV</span>
+            <span data-i18n="behavior.resume"></span>
           </label>
-          <label class="check" title="Модель посчитает вердикты и запишет их в CSV, но ничего не скопирует и не перенесёт. Безопасно перед первым реальным проходом.">
+          <label class="check" data-i18n-title="behavior.dry.tip">
             <input type="checkbox" id="optDry">
-            <span>Dry-run — считать вердикты, ничего не двигать
-              <span class="sub">удобно перед первым реальным проходом</span>
+            <span>
+              <span data-i18n="behavior.dry"></span>
+              <span class="sub" data-i18n="behavior.dry.sub"></span>
             </span>
           </label>
-          <label class="check" title="Вместо IMG_1823.jpg появится IMG_1823_bad_размытие.jpg. Причина — короткая подпись от модели, для удобства глаз.">
+          <label class="check" data-i18n-title="behavior.reasonName.tip">
             <input type="checkbox" id="optReasonName">
-            <span>В имя файла при переносе добавлять причину брака</span>
+            <span data-i18n="behavior.reasonName"></span>
           </label>
-          <label class="check" title="Копировать не только сам файл, но и его вложенность: photos/2024/IMG_1.jpg → _sorted/people/2024/IMG_1.jpg.">
+          <label class="check" data-i18n-title="behavior.preserve.tip">
             <input type="checkbox" id="optPreserve" checked>
-            <span>Сохранять структуру подпапок при копировании</span>
+            <span data-i18n="behavior.preserve"></span>
           </label>
         </fieldset>
       </section>
 
       <section>
-        <h2>Категории и папки</h2>
-        <p class="hint">
-          Модель определит, что на снимке. Дальше — копия, перенос или не трогать.
-          Пустой путь или относительный (например <code>_sorted/people</code>) — внутри «Папки с фото».
-          Абсолютный (например <code>E:\Sorted\People</code>) — куда указал.
-        </p>
-        <label class="cat-toggle" title="Дополнительно к оценке качества модель определяет, что на снимке (люди, документы, скриншоты…), и файл можно сложить в отдельные папки.">
+        <h2 data-i18n="cats.title"></h2>
+        <p class="hint" data-i18n="cats.hint"></p>
+        <label class="cat-toggle" data-i18n-title="cats.enable.tip">
           <input type="checkbox" id="optCategories">
-          <span>Включить категоризацию</span>
+          <span data-i18n="cats.enable"></span>
         </label>
         <table class="cat-table">
           <thead>
             <tr>
               <th style="width:28px"></th>
-              <th>Категория</th>
-              <th>Папка</th>
-              <th style="width:110px">Действие</th>
+              <th data-i18n="cats.col.name"></th>
+              <th data-i18n="cats.col.folder"></th>
+              <th style="width:110px" data-i18n="cats.col.action"></th>
             </tr>
           </thead>
           <tbody id="cats"></tbody>
@@ -665,52 +684,49 @@ legend {
       </section>
     </div>
 
-    <!-- правая колонка -->
     <div class="col">
 
       <section id="lmCard">
-        <h2>LM Studio</h2>
+        <h2 data-i18n="lm.title"></h2>
         <div class="lm-head">
           <div class="dot" id="lmDot"></div>
-          <div class="lm-title" id="lmTitle">Проверяю…</div>
+          <div class="lm-title" id="lmTitle"></div>
           <div class="lm-sub" id="lmUrl">127.0.0.1:1234</div>
         </div>
         <dl class="kv">
-          <dt>Модель</dt><dd id="lmModel">—</dd>
-          <dt>Контекст</dt><dd id="lmCtx">—</dd>
-          <dt>Квант</dt><dd id="lmQuant">—</dd>
-          <dt>Параметры</dt><dd id="lmParams">—</dd>
-          <dt>Память</dt><dd id="lmVram">—</dd>
-          <dt>Скорость</dt><dd id="lmSpeed">—</dd>
-          <dt>Состояние</dt><dd id="lmState">—</dd>
+          <dt data-i18n="lm.model"></dt><dd id="lmModel">—</dd>
+          <dt data-i18n="lm.context"></dt><dd id="lmCtx">—</dd>
+          <dt data-i18n="lm.quant"></dt><dd id="lmQuant">—</dd>
+          <dt data-i18n="lm.params"></dt><dd id="lmParams">—</dd>
+          <dt data-i18n="lm.memory"></dt><dd id="lmVram">—</dd>
+          <dt data-i18n="lm.speed"></dt><dd id="lmSpeed">—</dd>
+          <dt data-i18n="lm.state"></dt><dd id="lmState">—</dd>
         </dl>
       </section>
 
       <section>
-        <h2>Прогон</h2>
+        <h2 data-i18n="run.title"></h2>
         <div class="run-bar">
-          <button class="btn btn-primary" id="btnStart" type="button">Запустить</button>
-          <button class="btn btn-danger" id="btnStop" type="button" disabled>Остановить</button>
-          <button class="btn btn-ghost" id="btnScan" type="button">Сколько файлов</button>
+          <button class="btn btn-primary" id="btnStart" type="button" data-i18n="btn.start"></button>
+          <button class="btn btn-danger" id="btnStop" type="button" data-i18n="btn.stop" disabled></button>
+          <button class="btn btn-ghost" id="btnScan" type="button" data-i18n="btn.scan"></button>
         </div>
 
         <div class="stats">
-          <div class="stat"><b id="stDone">0</b><span>обработано</span></div>
-          <div class="stat ok"><b id="stOk">0</b><span>ok</span></div>
-          <div class="stat bad"><b id="stBad">0</b><span>bad</span></div>
-          <div class="stat run"><b id="stEta">—</b><span>осталось</span></div>
+          <div class="stat"><b id="stDone">0</b><span data-i18n="stat.processed"></span></div>
+          <div class="stat ok"><b id="stOk">0</b><span data-i18n="stat.ok"></span></div>
+          <div class="stat bad"><b id="stBad">0</b><span data-i18n="stat.bad"></span></div>
+          <div class="stat run"><b id="stEta">—</b><span data-i18n="stat.left"></span></div>
         </div>
 
         <div class="strip" id="strip" aria-hidden="true"><div class="fill" id="stripFill"></div></div>
         <div class="strip-label">
-          <span id="stripCaption">готов к запуску</span>
+          <span id="stripCaption"></span>
           <span id="stripPct">0%</span>
         </div>
 
         <div class="log" id="log">—</div>
-        <div class="footer-note">
-          CSV лежит в <code>results/analysis.csv</code>, настройки — в <code>config.json</code>
-        </div>
+        <div class="footer-note" data-i18n="footer.note"></div>
       </section>
     </div>
   </div>
@@ -735,16 +751,115 @@ const api = {
   },
 };
 
-/* тема */
+/* ── i18n ── */
+let I18N = {};
+let LANG = localStorage.getItem("yarophoto-lang") || "en";
+
+function t(key, vars) {
+  let s = I18N[key] != null ? I18N[key] : key;
+  if (vars) {
+    for (const [k, v] of Object.entries(vars)) {
+      s = s.replaceAll("{" + k + "}", String(v));
+    }
+  }
+  return s;
+}
+
+function applyI18n() {
+  document.documentElement.lang = LANG;
+  document.querySelectorAll("[data-i18n]").forEach((el) => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.querySelectorAll("[data-i18n-title]").forEach((el) => {
+    el.title = t(el.dataset.i18nTitle);
+  });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+    el.placeholder = t(el.dataset.i18nPlaceholder);
+  });
+  // локализуем сгенерированный контент
+  renderFormats(collectFormats());
+  renderCategories(collectCategories().length ? collectCategories() : DEFAULT_CATEGORIES);
+  updateDestPreview();
+  renderLm(lastLm || {});
+  renderJob(lastJob || {}, lastLog || []);
+  syncSelectLabels();
+}
+
+function syncSelectLabels() {
+  const theme = document.documentElement.dataset.theme === "paper" ? "paper" : "lab";
+  $("themeSelect").querySelector(".select-value").textContent = t("theme." + theme);
+  $("themeSelect").querySelectorAll("[role=option]").forEach((li) => {
+    li.setAttribute("aria-selected", li.dataset.value === theme ? "true" : "false");
+  });
+  $("langSelect").querySelector(".select-value").textContent = t(LANG === "ru" ? "lang.ru" : "lang.en");
+  $("langSelect").querySelectorAll("[role=option]").forEach((li) => {
+    li.setAttribute("aria-selected", li.dataset.value === LANG ? "true" : "false");
+  });
+}
+
+function loadLang(lang) {
+  return new Promise((resolve) => {
+    const done = (dict) => {
+      I18N = dict || {};
+      LANG = lang;
+      localStorage.setItem("yarophoto-lang", lang);
+      applyI18n();
+      resolve();
+    };
+    // <script src> работает и с file://, и через сервер — в отличие от fetch
+    const prev = document.getElementById("i18n-script");
+    if (prev) prev.remove();
+    const s = document.createElement("script");
+    s.id = "i18n-script";
+    s.src = `locales/${lang}.js`;
+    s.onload = () => done(window.YARO_I18N);
+    s.onerror = () => {
+      console.warn("i18n load failed:", lang);
+      if (lang !== "en") loadLang("en").then(resolve);
+      else done(I18N);
+    };
+    document.head.appendChild(s);
+  });
+}
+
+/* ── theme + language selects ── */
 function setTheme(name) {
   document.documentElement.dataset.theme = name;
   localStorage.setItem("yarophoto-theme", name);
-  $("themeLab").setAttribute("aria-pressed", name === "lab" ? "true" : "false");
-  $("themePaper").setAttribute("aria-pressed", name === "paper" ? "true" : "false");
+  syncSelectLabels();
 }
-$("themeLab").addEventListener("click", () => setTheme("lab"));
-$("themePaper").addEventListener("click", () => setTheme("paper"));
-setTheme(localStorage.getItem("yarophoto-theme") || "lab");
+
+function closeAllSelects(except) {
+  document.querySelectorAll(".select").forEach((root) => {
+    if (root === except) return;
+    root.querySelector(".select-menu").hidden = true;
+    root.querySelector(".select-btn").setAttribute("aria-expanded", "false");
+  });
+}
+
+function bindSelect(root, onPick) {
+  const btn = root.querySelector(".select-btn");
+  const menu = root.querySelector(".select-menu");
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const open = menu.hidden;
+    closeAllSelects(root);
+    menu.hidden = !open;
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+  });
+  menu.querySelectorAll("[role=option]").forEach((li) => {
+    li.addEventListener("click", (e) => {
+      e.stopPropagation();
+      menu.hidden = true;
+      btn.setAttribute("aria-expanded", "false");
+      onPick(li.dataset.value);
+    });
+  });
+}
+
+bindSelect($("themeSelect"), setTheme);
+bindSelect($("langSelect"), (lang) => { if (lang !== LANG) loadLang(lang); });
+document.addEventListener("click", () => closeAllSelects(null));
 
 const FORMAT_LIST = [
   { ext: ".jpg", label: ".jpg/.jpeg", match: [".jpg", ".jpeg"] },
@@ -759,25 +874,26 @@ const FORMAT_LIST = [
 const DEFAULT_FORMATS = [".jpg", ".jpeg", ".png", ".webp"];
 
 const DEFAULT_CATEGORIES = [
-  { key: "people", name: "Люди / портреты" },
-  { key: "docs", name: "Документы / сканы" },
-  { key: "screenshot", name: "Скриншоты" },
-  { key: "food", name: "Еда" },
-  { key: "nature", name: "Пейзаж / природа" },
-  { key: "animals", name: "Животные" },
-  { key: "transport", name: "Транспорт" },
-  { key: "interior", name: "Интерьер / вещи" },
-  { key: "other", name: "Прочее" },
-].map((c) => ({ ...c, enabled: true, dest: "", action: "copy" }));
+  "people", "docs", "screenshot", "food", "nature",
+  "animals", "transport", "interior", "other",
+].map((key) => ({ key, name: key, enabled: true, dest: "", action: "copy" }));
 
 let config = null;
 let saveTimer = null;
 let polling = false;
+let lastLm = null;
+let lastJob = null;
+let lastLog = null;
 
 function serverOffline(show) {
   $("serverAlert").classList.toggle("show", !!show);
   $("btnStartServer").style.display = show ? "" : "none";
   $("btnOpenPanel").style.display = (!show && location.protocol === "file:") ? "" : "none";
+  if (show) {
+    const fileMode = location.protocol === "file:";
+    $("alertTitle").textContent = t(fileMode ? "alert.fileMode.title" : "alert.serverDown.title");
+    $("alertText").textContent = t(fileMode ? "alert.fileMode.text" : "alert.serverDown.text");
+  }
 }
 
 function collectFormats() {
@@ -786,7 +902,7 @@ function collectFormats() {
     const item = FORMAT_LIST.find((f) => f.ext === input.dataset.ext);
     if (item) out.push(...item.match);
   });
-  return out.length ? out : [".jpg", ".jpeg", ".png", ".webp"];
+  return out.length ? out : DEFAULT_FORMATS.slice();
 }
 
 function collectCategories() {
@@ -837,13 +953,15 @@ function scheduleSave() {
 
 function renderFormats(selected) {
   const box = $("formats");
+  if (!box) return;
+  const prev = selected || collectFormats();
   box.innerHTML = "";
-  const sel = new Set((selected || []).map((s) => s.toLowerCase()));
+  const sel = new Set(prev.map((s) => s.toLowerCase()));
   FORMAT_LIST.forEach((f) => {
     const on = f.match.some((m) => sel.has(m));
     const label = document.createElement("label");
     label.className = "fmt";
-    label.title = `Обрабатывать файлы ${f.label}`;
+    label.title = t("formats.tip", { label: f.label });
     label.innerHTML = `<input type="checkbox" data-ext="${f.ext}" ${on ? "checked" : ""}><span>${f.label}</span>`;
     label.querySelector("input").addEventListener("change", scheduleSave);
     box.appendChild(label);
@@ -866,20 +984,21 @@ function syncAllCatRows() {
 
 function renderCategories(cats) {
   const body = $("cats");
+  if (!body) return;
   body.innerHTML = "";
   (cats || []).forEach((c) => {
     const row = document.createElement("tr");
     row.dataset.key = c.key;
     row.dataset.name = c.name;
     row.innerHTML = `
-      <td><input type="checkbox" class="cat-on" ${c.enabled ? "checked" : ""} aria-label="${escapeAttr(c.name)}"></td>
-      <td>${escapeHtml(c.name)}</td>
+      <td><input type="checkbox" class="cat-on" ${c.enabled ? "checked" : ""} aria-label="${escapeAttr(t("cat." + c.key))}"></td>
+      <td>${escapeHtml(t("cat." + c.key))}</td>
       <td><input type="text" class="cat-dest" placeholder="_sorted/${c.key}" value="${escapeAttr(c.dest || "")}" spellcheck="false"></td>
       <td>
         <select class="cat-action">
-          <option value="skip" ${c.action === "skip" ? "selected" : ""}>не трогать</option>
-          <option value="copy" ${c.action === "copy" ? "selected" : ""}>копия</option>
-          <option value="move" ${c.action === "move" ? "selected" : ""}>перенос</option>
+          <option value="skip" ${c.action === "skip" ? "selected" : ""}>${escapeHtml(t("cats.action.skip"))}</option>
+          <option value="copy" ${c.action === "copy" ? "selected" : ""}>${escapeHtml(t("cats.action.copy"))}</option>
+          <option value="move" ${c.action === "move" ? "selected" : ""}>${escapeHtml(t("cats.action.move"))}</option>
         </select>
       </td>`;
     row.querySelectorAll("input, select").forEach((el) => el.addEventListener("change", scheduleSave));
@@ -902,7 +1021,6 @@ function escapeHtml(s) {
   return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-/* гибрид путей: как resolve_dest в server.py */
 function resolveDest(dest, inputFolder, key) {
   const raw = (dest || "").trim();
   const base = (inputFolder || "").trim() || "…";
@@ -915,7 +1033,7 @@ function joinPath(...parts) {
     .filter(Boolean)
     .join("\\")
     .replace(/\\+/g, "\\")
-    .replace(/\\$/,"");
+    .replace(/\\$/, "");
 }
 
 function updateDestPreview() {
@@ -932,7 +1050,7 @@ function updateDestPreview() {
     const dest = row.querySelector(".cat-dest").value;
     return `${key} → ${resolveDest(dest, folder, key)}`;
   });
-  el.textContent = "Пример: " + lines.join("  ·  ");
+  el.textContent = t("cats.preview") + lines.join("  ·  ");
 }
 
 function applyConfigToForm(cfg) {
@@ -963,35 +1081,38 @@ function bindForm() {
 }
 
 function fmtNum(n) {
-  return new Intl.NumberFormat("ru-RU").format(n);
+  return new Intl.NumberFormat(LANG === "ru" ? "ru-RU" : "en-US").format(n);
 }
 
 function renderLm(data) {
+  lastLm = data;
   const dot = $("lmDot");
   if (data.connected) {
     dot.className = "dot on";
-    $("lmTitle").textContent = "подключён";
+    $("lmTitle").textContent = t("lm.connected");
   } else {
     dot.className = "dot off";
-    $("lmTitle").textContent = "недоступен, запусти LM Studio";
+    $("lmTitle").textContent = t("lm.disconnected");
   }
   $("lmUrl").textContent = (data.url || "").replace(/^https?:\/\//, "");
   $("lmModel").textContent = data.active_model || (data.models && data.models[0]?.id) || "—";
-  $("lmCtx").textContent = data.context_length ? `${fmtNum(data.context_length)} токенов` : "—";
+  $("lmCtx").textContent = data.context_length ? t("lm.tokens", { n: fmtNum(data.context_length) }) : "—";
   $("lmQuant").textContent = data.quant || "—";
   $("lmParams").textContent = data.params_b ? String(data.params_b) : "—";
   if (data.vram_used_gb != null) {
-    $("lmVram").textContent = `${data.vram_used_gb} / ${data.vram_total_gb ?? "?"} ГБ`;
+    $("lmVram").textContent = `${data.vram_used_gb} / ${data.vram_total_gb ?? "?"} GB`;
   } else {
     $("lmVram").textContent = "—";
   }
   $("lmSpeed").textContent = data.sec_per_image
-    ? `${data.sec_per_image} с на фото`
-    : (data.speed_tps ? `${data.speed_tps} ток/с` : "—");
-  $("lmState").textContent = data.load_state || (data.connected ? "готова" : "нет связи");
+    ? t("lm.secPerImage", { n: data.sec_per_image })
+    : (data.speed_tps ? t("lm.tps", { n: data.speed_tps }) : "—");
+  $("lmState").textContent = data.load_state || (data.connected ? t("lm.ready") : t("lm.noLink"));
 }
 
 function renderJob(job, logLines) {
+  lastJob = job;
+  lastLog = logLines;
   $("stDone").textContent = fmtNum(job.done || 0);
   $("stOk").textContent = fmtNum(job.ok || 0);
   $("stBad").textContent = fmtNum(job.bad || 0);
@@ -1000,8 +1121,8 @@ function renderJob(job, logLines) {
   $("stripFill").style.width = pct + "%";
   $("stripPct").textContent = pct.toFixed(1) + "%";
   $("stripCaption").textContent = job.running
-    ? (job.current_file || "работаю…")
-    : (job.message || "готов к запуску");
+    ? (job.current_file || t("strip.working"))
+    : (job.message || t("strip.ready"));
   $("btnStart").disabled = !!job.running;
   $("btnStop").disabled = !job.running;
 
@@ -1010,10 +1131,10 @@ function renderJob(job, logLines) {
   if (job.total > 0) {
     const ticks = Math.min(job.bad || 0, 36);
     for (let i = 0; i < ticks; i++) {
-      const t = document.createElement("div");
-      t.className = "bad-tick";
-      t.style.left = (2 + Math.random() * Math.max(pct, 2)) + "%";
-      strip.appendChild(t);
+      const tick = document.createElement("div");
+      tick.className = "bad-tick";
+      tick.style.left = (2 + Math.random() * Math.max(pct, 2)) + "%";
+      strip.appendChild(tick);
     }
   }
 
@@ -1023,7 +1144,7 @@ function renderJob(job, logLines) {
       let cls = "";
       if (/^\d{2}:\d{2}:\d{2}\s+bad/.test(line)) cls = "bad";
       else if (/^\d{2}:\d{2}:\d{2}\s+ok\s/.test(line)) cls = "ok";
-      else if (/ERR|Ошибка|Критическая/.test(line)) cls = "err";
+      else if (/ERR|Error|Critical/.test(line)) cls = "err";
       return `<div class="${cls}">${escapeHtml(line)}</div>`;
     }).join("");
     logEl.scrollTop = logEl.scrollHeight;
@@ -1049,9 +1170,12 @@ async function poll() {
 }
 
 async function init() {
-  // сначала рисуем списки с дефолтами, чтобы блоки не были пустыми
+  await loadLang(LANG);
+  setTheme(localStorage.getItem("yarophoto-theme") || "lab");
+
   renderFormats(DEFAULT_FORMATS);
   renderCategories(DEFAULT_CATEGORIES);
+  $("stripCaption").textContent = t("strip.ready");
 
   try {
     const data = await api.get("/api/config");
@@ -1074,7 +1198,7 @@ async function init() {
         updateDestPreview();
       }
     } catch (e) {
-      alert("Не получилось открыть диалог: " + e.message);
+      alert(t("alert.browseFail") + e.message);
     }
   });
 
@@ -1108,7 +1232,7 @@ async function init() {
       updateDestPreview();
     } else if (file) {
       $("inputFolder").value = file.name;
-      dz.textContent = `Принято «${file.name}», но браузер не отдал полный путь. Нажми «Обзор…» или впиши путь вручную.`;
+      dz.textContent = t("dropzone.pathFail", { name: file.name });
     }
   });
 
@@ -1117,8 +1241,8 @@ async function init() {
     try {
       const res = await api.get("/api/scan");
       $("stripCaption").textContent = res.ok
-        ? `подходит файлов: ${fmtNum(res.count)}`
-        : (res.error || "не посчитать");
+        ? t("strip.countPrefix") + fmtNum(res.count)
+        : (res.error || "—");
     } catch (e) {
       alert(e.message);
     }
@@ -1126,12 +1250,12 @@ async function init() {
 
   $("btnStart").addEventListener("click", async () => {
     await saveConfigNow();
-    if (!confirm("Запустить сортировку?")) return;
+    if (!confirm(t("confirm.start"))) return;
     try {
       await api.post("/api/start");
       poll();
     } catch (e) {
-      alert("Не удалось запустить: " + e.message);
+      alert(t("alert.startFail") + e.message);
     }
   });
 
@@ -1147,11 +1271,6 @@ async function init() {
   $("btnOpenPanel").addEventListener("click", () => {
     window.open("http://127.0.0.1:8460", "_blank");
   });
-
-  if (location.protocol === "file:") {
-    $("alertTitle").textContent = "Страница открыта без сервера";
-    $("alertText").innerHTML = "Нажми «Запустить сервер», потом обнови страницу (F5).";
-  }
 }
 
 init();

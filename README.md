@@ -1,178 +1,191 @@
 # yaroPhotoSort
 
-Локальная панель для разбора большого архива фотографий: отсеивает брак и раскладывает снимки по категориям с помощью vision-модели в [LM Studio](https://lmstudio.ai).
+**Languages:** 🇬🇧 [English](README.md) · 🇷🇺 [Русский](README.ru.md)
 
-Задача, под которую это сделано: ~15 000 личных фото, из которых нужно быстро отделить размытые/пересвеченные/случайные кадры и разложить остальное (люди, документы, скриншоты и т.д.) по папкам. Всё работает на своей машине, без API и без токенов.
+A local panel for cleaning up a large photo archive: flags rejects and sorts shots into folders using a vision model in [LM Studio](https://lmstudio.ai).
+
+Built for this job: ~15,000 personal photos, quickly separate blurred / blown-out / accidental frames and distribute the rest (people, documents, screenshots, etc.) into folders. Everything runs on your machine — no API, no tokens.
 
 ---
 
-## Как это работает
+## How it works
 
 ```
-папка с фото ──► server.py ──► LM Studio (gemma-3-12b) ──► вердикт JSON
+photo folder ──► server.py ──► LM Studio (gemma-3-12b) ──► JSON verdict
                   │                                            │
                   ├─ results/analysis.csv  ◄───────────────────┤
-                  ├─ на_удаление/          (если включено)     │
-                  └─ _sorted/<категория>/  (если включено) ─────┘
+                  ├─ на_удаление/          (if enabled)        │
+                  └─ _sorted/<category>/   (if enabled) ────────┘
 ```
 
-1. Выбираете папку с фото в браузерной панели.
-2. Сервер обходит файлы, каждое фото ужимается до разумного размера и отправляется в LM Studio.
-3. Модель отвечает JSON: качество (`ok`/`bad`), причина, оценка 1–5, категория содержимого.
-4. Результат пишется в CSV; плохие можно перенести в `на_удаление`, категории — скопировать/перенести по папкам.
-5. Прерванный прогон можно продолжить: уже обработанные пути из CSV пропускаются.
+1. Pick a photo folder in the browser panel.
+2. The server walks the files, downscales each photo and sends it to LM Studio.
+3. The model replies with JSON: quality (`ok`/`bad`), reason, score 1–5, content category.
+4. Results go to CSV; rejects can be moved to `на_удаление`, categories can be copied/moved into their own folders.
+5. An interrupted run can be resumed: paths already in the CSV are skipped.
 
 ---
 
-## Зависимости
+## Requirements
 
-| Что | Зачем |
+| What | Why |
 |---|---|
-| **Python 3.10+** | бэкенд |
-| **LM Studio** с моделью **gemma-3-12b** (или другой vision-моделью) | разбор фото |
-| **GPU с ~8–12 ГБ VRAM** (уверенно на RTX 4070 и подобных) | чтобы vision-модель крутилась комфортно |
-| Python-пакеты из `requirements.txt` | FastAPI, uvicorn, requests, pillow, pillow-heif |
+| **Python 3.10+** | backend |
+| **LM Studio** with **gemma-3-12b** (or any vision model) | photo analysis |
+| **GPU with ~8–12 GB VRAM** (comfortable on RTX 4070-class) | smooth vision inference |
+| Python packages from `requirements.txt` | FastAPI, uvicorn, requests, pillow, pillow-heif |
 
-Первый запуск `start.bat` сам создаёт `venv` и ставит пакеты.
+The first `start.bat` run creates `venv` and installs packages by itself.
 
 ### LM Studio
 
-1. Откройте LM Studio.
-2. Загрузите **google/gemma-3-12b** (Q4_K_M — нормально) или другую vision-модель.
-3. Включите локальный сервер на `http://127.0.0.1:1234` (Server → Start).
+1. Open LM Studio.
+2. Load **google/gemma-3-12b** (Q4_K_M is fine) or another vision model.
+3. Start the local server on `http://127.0.0.1:1234` (Server → Start).
 
-Панель сама показывает: доступен ли сервер, имя модели, контекст, квант, занятую память GPU.
+The panel shows live status: server reachability, model name, context, quant, GPU memory.
 
-> Текстовые модели без 👁 (vision) не подходят — картинку они не примут.
+> Text-only models without a 👁 (vision) badge cannot take images.
 
 ---
 
-## Установка и запуск
+## Install and run
 
-### 1. Разовый запуск
+### 1. Quick start
 
-Двойной клик по **`start.bat`**:
+Double-click **`start.bat`**:
 
-- создаст `venv` (если его нет) и поставит зависимости
-- поднимет сервер
-- откроет панель в браузере: `http://127.0.0.1:8460`
+- creates `venv` (if missing) and installs dependencies
+- starts the server
+- opens the panel in your browser at `http://127.0.0.1:8460`
 
-Остановка — закрыть окно консоли.
+Stop: close the console window.
 
-### 2. Кнопка «Запустить сервер» из HTML
+### 2. “Start server” button in the HTML
 
-Чтобы кнопка в `index.html` могла запускать терминал, один раз выполните **`install.bat`**.
+To let the page launch a terminal, run **`install.bat`** once.
 
-Он сам подставит путь к текущей папке, создаст `register-yarophoto.reg` и зарегистрирует в реестре (HKCU, без админа) протокол `yarophoto://`:
+It registers the `yarophoto://` protocol under HKCU (no admin) using the **current** project path, and writes `register-yarophoto.reg` for reference:
 
 ```
-yarophoto://start   — поднять сервер (или открыть панель, если уже живёт)
-yarophoto://stop    — остановить сервер
-yarophoto://open    — открыть панель в браузере
+yarophoto://start   — start the server (or open the panel if it is already running)
+yarophoto://stop    — stop the server
+yarophoto://open    — open the panel in the browser
 ```
 
-Обработчик: `launch-hidden.vbs` → `launch.ps1`. Произвольные команды не выполняются — только три действия выше.
+Handler chain: `launch-hidden.vbs` → `launch.ps1`. No arbitrary commands are allowed — only the three above.
 
-> Если проект перенесли в другую папку — просто запустите `install.bat` заново, путь перепишется сам.
+> If you move the project folder, run `install.bat` again; the path is rewritten automatically.
 
-### 3. Вручную из терминала
+### 3. Manual start
 
 ```bat
-cd путь\к\папке\yaroPhotoSort
+cd path\to\yaroPhotoSort
 venv\Scripts\activate
 python server.py
 ```
 
-### Почему порт 8460, а не 8000
+### Why port 8460, not 8000
 
-Порт 8000 часто попадает в зарезервированные диапазоны Windows (Hyper-V и т.п.) и не открывается. Порт по умолчанию — **8460**. Сменить можно так:
+Port 8000 often falls into reserved Windows ranges (Hyper-V, etc.) and will not bind. Default port is **8460**. To change it:
 
 ```bat
 set YAROPHOTO_PORT=9000
 python server.py
 ```
 
-(заодно поменяйте URL в `start.bat`, `launch.ps1` и кнопке в `index.html`)
+(also update the URL in `start.bat` and the panel’s “Open panel” button)
 
 ---
 
-## Панель: что куда писать
+## Panel: what goes where
 
-### Папка с фото
+### Photo folder
 
-Полный путь к каталогу, который разбираем. Способы указать:
+Full path to the directory to process:
 
-- **Обзор…** — системный диалог выбора папки
-- **Вписать руками** + Enter
-- **Drag & drop** — только если браузер отдал путь (Chrome/Edge); Firefox путь не отдаёт — используйте «Обзор…»
+- **Browse…** — system folder dialog
+- **Type it in** + Enter
+- **Drag & drop** — only when the browser exposes the path (Chrome/Edge); Firefox does not, use Browse…
 
-Рекурсивно обходятся подпапки (можно выключить). Видео и RAW-файлы не обрабатываются.
+Subfolders are walked recursively (can be disabled). Video and RAW are not processed.
 
-### Форматы
+### Formats
 
-Какие расширения считать фотографиями: `.jpg/.jpeg`, `.png`, `.webp`, `.heic/.heif`, `.bmp`, `.gif`, `.tif/.tiff`.
+Which extensions count as photos: `.jpg/.jpeg`, `.png`, `.webp`, `.heic/.heif`, `.bmp`, `.gif`, `.tif/.tiff`.
 
-- HEIC/HEIF конвертируется на лету (нужен `pillow-heif`)
-- RAW (CR2/NEF/ARW и т.п.) в первой версии пропускается
+- HEIC/HEIF is converted on the fly (needs `pillow-heif`)
+- RAW (CR2/NEF/ARW, …) is skipped in the current version
 
-### Что считаем браком
+### What counts as a reject
 
-Критерии, которые модель учитывает при `quality=bad`:
+Rules the model uses for `quality=bad`:
 
-- размытие
-- пересвет / недосвет
-- мусорный кадр (случайный снимок, руки, пол, потолок)
+- blur
+- over- or underexposure
+- junk frame (accidental shot, hands, floor, ceiling)
 
-Порог: **брак, если score ≤ N** (по умолчанию 2; шкала 1–5, где 5 — отлично).
+Threshold: **reject if score ≤ N** (default 2; scale 1–5, 5 is best).
 
-### Что делать с плохими
+### What to do with rejects
 
-- **Только CSV** — ничего не двигаем, смотрите список сами
-- **Перенести в «на_удаление»** — папка создаётся внутри «Папки с фото»
+- **CSV only** — nothing is moved, you review the list yourself
+- **Move to «на_удаление»** — folder is created inside the photo folder
 
-### Категории и папки
+### Categories and folders
 
-Модель определяет содержимое: люди, документы, скриншоты, еда, пейзаж, животные, транспорт, интерьер, прочее.
+The model tags content: people, documents, screenshots, food, landscape, animals, transport, interior, other.
 
-Путь в строке категории — **гибридный**:
+The path in a category row is **hybrid**:
 
-| Поле «Папка» | Куда положит |
+| «Folder» value | Destination |
 |---|---|
-| пусто | `<Папка с фото>\_sorted\<категория>` |
-| относительный (`_sorted/people`) | `<Папка с фото>\_sorted\people` |
-| абсолютный (`E:\Sorted\People`) | `E:\Sorted\People` |
+| empty | `<photo folder>\_sorted\<category>` |
+| relative (`_sorted/people`) | `<photo folder>\_sorted\people` |
+| absolute (`E:\Sorted\People`) | `E:\Sorted\People` |
 
-Действие: `копия` / `перенос` / `не трогать`. Снятая галка строки (или главный тумблер категоризации) блокирует путь и действие.
+Action: `copy` / `move` / `leave alone`. Unchecking a row (or the master switch) disables its path and action.
 
-Есть опция сохранять структуру подпапок при копировании.
+Optionally keep the source subfolder layout when copying.
 
-### Прочее
+### More
 
-- **Resume** — не трогать файлы, уже записанные в CSV
-- **Dry-run** — посчитать вердикты, ничего не переносить и не копировать (режим «посмотреть, что будет»)
-- **Причина в имени файла** — при переносе брака добавлять в имя причину: `IMG_1823_bad_размытие.jpg`
+- **Resume** — skip files already listed in the CSV
+- **Dry-run** — score and write CSV, never move or copy
+- **Reason in filename** — when moving rejects: `IMG_1823_bad_blur.jpg`
 
 ---
 
-## Файлы проекта
+## Project files
 
-| Файл | Роль |
+| File | Role |
 |---|---|
-| `server.py` | бэкенд: API, обход папок, запросы к LM Studio, запись CSV, перенос/копирование |
-| `index.html` | панель управления (один файл, статика + JS) |
-| `start.bat` | запуск сервера + открытие браузера |
-| `install.bat` | одноразовая регистрация протокола `yarophoto://` (генерирует `.reg` под текущий путь) |
-| `register-yarophoto.reg` | создаётся `install.bat`, в git не входит |
-| `launch.ps1` | обработчик `yarophoto://start\|stop\|open` |
-| `launch-hidden.vbs` | запуск `launch.ps1` без окна PowerShell |
-| `requirements.txt` | Python-зависимости |
-| `config.json` | сохранённые настройки (создаётся панелью, в git не входит) |
-| `results/analysis.csv` | итог разбора (в git не входит) |
-| `results/run.log` | журнал прогона |
+| `server.py` | backend: API, folder walk, LM Studio calls, CSV, copy/move |
+| `index.html` | control panel (single file, static + JS) |
+| `locales/en.js`, `locales/ru.js` | UI translations (loaded by the page; works from `file://` too) |
+| `start.bat` | start server + open browser |
+| `install.bat` | one-shot `yarophoto://` registration (generates `.reg` for the current path) |
+| `register-yarophoto.reg` | generated by `install.bat`, not in git |
+| `launch.ps1` | `yarophoto://start\|stop\|open` handler |
+| `launch-hidden.vbs` | runs `launch.ps1` without a PowerShell window |
+| `requirements.txt` | Python dependencies |
+| `config.json` | saved settings (created by the panel, not in git) |
+| `results/analysis.csv` | parse results (not in git) |
+| `results/run.log` | run log (not in git) |
 
 ---
 
-## Формат CSV
+## UI languages
+
+The panel ships in English (default) and Russian. Switch with the language button in the header — the choice is stored in `localStorage`. Server logs and CSV stay in English.
+
+## Themes
+
+A header dropdown switches **Darkroom** (graphite + safelight amber) and **Paper** (warm paper + red grease pencil). Choice is stored in `localStorage`.
+
+---
+
+## CSV format
 
 `results/analysis.csv`:
 
@@ -183,36 +196,36 @@ category_confidence, action, error, sec, ts
 
 - `quality` — `ok` / `bad`
 - `score` — 1–5
-- `action` — что сделали (или `csv_only`)
-- `error` — текст ошибки, если файл не разобрался
+- `action` — what was done (or `csv_only`)
+- `error` — error text if the file failed
 
-Повторный запуск с включённым Resume берёт из этого файла список уже обработанных путей.
+A rerun with Resume reads this file to learn which paths are already done.
 
 ---
 
-## Ответы API (для отладки)
+## API (for debugging)
 
-| Метод | Путь | Назначение |
+| Method | Path | Purpose |
 |---|---|---|
-| GET | `/` | панель |
-| GET | `/api/ping` | проверка связи |
-| GET | `/api/config` | текущие настройки |
-| POST | `/api/config` | сохранить настройки |
-| POST | `/api/browse-folder` | системный диалог выбора папки |
-| GET | `/api/scan` | сколько файлов подходит под фильтры |
-| GET | `/api/lmstudio` | состояние LM Studio |
-| POST | `/api/start` | запустить разбор |
-| POST | `/api/stop` | остановить после текущего файла |
-| GET | `/api/status` | прогресс + хвост лога |
-| POST | `/api/shutdown` | остановить сервер |
+| GET | `/` | panel |
+| GET | `/api/ping` | health check |
+| GET | `/api/config` | current settings |
+| POST | `/api/config` | save settings |
+| POST | `/api/browse-folder` | system folder dialog |
+| GET | `/api/scan` | how many files match the filters |
+| GET | `/api/lmstudio` | LM Studio status |
+| POST | `/api/start` | start a run |
+| POST | `/api/stop` | stop after the current file |
+| GET | `/api/status` | progress + log tail |
+| POST | `/api/shutdown` | stop the server |
 
 ---
 
-## Структура после разбора (пример)
+## Layout after a run (example)
 
 ```
 D:\Photos\2024\
-├── ... исходники ...
+├── ... sources ...
 ├── на_удаление\
 │   └── IMG_1823.jpg
 └── _sorted\
@@ -223,13 +236,13 @@ D:\Photos\2024\
 
 ---
 
-## Ограничения
+## Limitations
 
-- Firefox не отдаёт полный путь при перетаскивании папки — используйте «Обзор…» или ввод пути
-- Качество вердикта зависит от модели; для архива достаточно gemma-3-12b, но не ждите продакшн-точности
-- RAW не разбирается
-- Одновременно — один прогон (второй запуск откажется)
+- Firefox does not expose a dropped folder’s full path — use Browse… or type it
+- Verdict quality depends on the model; gemma-3-12b is enough for an archive, not production-grade
+- RAW is not parsed
+- One run at a time (a second start is refused)
 
-## Лицензия
+## License
 
-Пока без лицензии — личный инструмент.
+None yet — personal tool.
