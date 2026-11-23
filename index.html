@@ -181,6 +181,18 @@ body {
 .col > section:last-child { border-bottom: 0; }
 .col + .col { border-left: 1px solid var(--line); }
 
+/* на десктопе блок «Прогон» держится в поле зрения */
+@media (min-width: 941px) {
+  .col + .col > section:last-child {
+    position: sticky;
+    top: 12px;
+    max-height: calc(100vh - 24px);
+    overflow: auto;
+    background: var(--bg-2);
+    z-index: 5;
+  }
+}
+
 @media (max-width: 940px) {
   .grid { grid-template-columns: 1fr; }
   .col + .col { border-left: 0; border-top: 1px solid var(--line); }
