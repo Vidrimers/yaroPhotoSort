@@ -1,6 +1,7 @@
 #FOLDERS
 temp/
 tasks/
+test/
 venv/
 results/
 __pycache__/
