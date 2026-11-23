@@ -8,6 +8,7 @@ if not exist "venv" (
     python -m venv venv
     if errorlevel 1 pause
     call venv\Scripts\activate.bat
+    python -m pip install --upgrade pip
     pip install -r requirements.txt
     if errorlevel 1 pause
 ) else (
