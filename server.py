@@ -1350,17 +1350,25 @@ def api_provider() -> dict[str, Any]:
 class ProviderKey(BaseModel):
     provider: str
     api_key: str = ""
+    base_url: str = ""
 
 
 @app.post("/api/provider/key")
 def api_provider_key(body: ProviderKey) -> dict[str, Any]:
-    if body.provider in providers.LOCAL_PROVIDERS:
-        return {"ok": True, "message": "local provider needs no key"}
-    if not body.api_key.strip():
+    saved = []
+    if body.base_url.strip():
+        saved.append(providers.save_base_url(body.provider, body.base_url.strip().rstrip("/")))
+        log(f"Base URL saved to .env ({saved[-1]})")
+    if body.provider in providers.LOCAL_PROVIDERS and not body.api_key.strip():
+        return {"ok": True, "env": saved}
+    if body.api_key.strip():
+        if body.provider in providers.LOCAL_PROVIDERS:
+            return {"ok": True, "env": saved}
+        saved.append(providers.save_api_key(body.provider, body.api_key.strip()))
+        log(f"API key saved to .env ({saved[-1]})")
+    if not saved and not body.base_url.strip():
         raise HTTPException(400, "Empty key")
-    name = providers.save_api_key(body.provider, body.api_key.strip())
-    log(f"API key saved to .env ({name})")
-    return {"ok": True, "env": name}
+    return {"ok": True, "env": saved}
 
 
 @app.post("/api/provider/test")

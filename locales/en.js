@@ -219,5 +219,11 @@ window.YARO_I18N = {
   "provider.test": "Test connection",
   "provider.testing": "Testing…",
   "provider.testOk": "OK — {detail}",
-  "provider.testFail": "Failed — {detail}"
+  "provider.testFail": "Failed — {detail}",
+  "provider.remoteGroup": "Your own GPU",
+  "provider.baseUrl": "Base URL",
+  "provider.baseUrlPh": "https://xxxx.ngrok-free.app/v1",
+  "provider.colabGuideBtn": "How to connect",
+  "provider.colabGuideTitle": "Google Colab",
+  "provider.colabGuideText": "Colab is a free Jupyter notebook on Google GPU. You launch the model yourself, then paste the tunnel URL here.\n\n1. Open colab.research.google.com\n2. New notebook → Runtime → Change runtime type → GPU (T4 is fine)\n3. In a cell, install an OpenAI-compatible server, e.g.:\n   !pip install llama-cpp-python[server]\n   !python -m llama_cpp.server --model /content/model.gguf --port 8000\n   (or ollama / vLLM — anything with /v1/chat/completions)\n4. In another cell, start a tunnel:\n   !pip install cloudflared\n   !cloudflared tunnel --url http://localhost:8000\n5. Copy the https://....trycloudflare.com URL, add /v1 at the end\n   and paste it into Base URL above. Save, then Test connection.\n\nSession life: free Colab disconnects after ~12 hours or idle time. When it drops, the URL dies — rerun the notebook and paste the new one. Do not use for long unattended runs."
 };

@@ -1124,6 +1124,8 @@ legend {
               <li class="select-group" data-i18n="provider.localGroup"></li>
               <li role="option" data-value="lmstudio">LM Studio</li>
               <li role="option" data-value="ollama">Ollama</li>
+              <li class="select-group" data-i18n="provider.remoteGroup"></li>
+              <li role="option" data-value="colab">Google Colab</li>
               <li class="select-group" data-i18n="provider.cloudGroup"></li>
               <li role="option" data-value="openai">ChatGPT</li>
               <li role="option" data-value="anthropic">Claude</li>
@@ -1142,6 +1144,13 @@ legend {
           <label for="modelName" data-i18n="provider.model"></label>
           <input class="folder-input" id="modelName" type="text" spellcheck="false" list="modelList" style="width:100%;max-width:280px;">
           <datalist id="modelList"></datalist>
+        </div>
+
+        <div id="baseUrlRow" class="num-row" style="margin: 0 0 12px;" hidden>
+          <label for="baseUrl" data-i18n="provider.baseUrl"></label>
+          <input class="folder-input" id="baseUrl" type="text" spellcheck="false" style="width:100%;max-width:280px;" data-i18n-placeholder="provider.baseUrlPh">
+          <button class="btn" type="button" id="btnBaseUrlSave" data-i18n="provider.keySave"></button>
+          <button class="btn btn-ghost" type="button" id="btnColabGuide" data-i18n="provider.colabGuideBtn"></button>
         </div>
 
         <div id="apiKeyRow" class="num-row" style="margin: 0 0 12px;">
@@ -1371,6 +1380,7 @@ function setProvider(value) {
   $("providerSelect").querySelector(".select-value").textContent =
     value === "lmstudio" ? "LM Studio"
     : value === "ollama" ? "Ollama"
+    : value === "colab" ? "Google Colab"
     : value === "openai" ? "ChatGPT"
     : value === "anthropic" ? "Claude"
     : value === "gemini" ? "Gemini"
@@ -1382,7 +1392,10 @@ function setProvider(value) {
     li.setAttribute("aria-selected", li.dataset.value === value ? "true" : "false");
   });
   const isLocal = value === "lmstudio" || value === "ollama";
-  $("apiKeyRow").style.display = isLocal ? "none" : "";
+  const isColab = value === "colab";
+  $("apiKeyRow").style.display = (isLocal || isColab) ? "none" : "";
+  $("baseUrlRow").hidden = !isColab;
+  $("btnColabGuide").style.display = isColab ? "" : "none";
   $("limitsRow").hidden = isLocal;
   $("usageLine").hidden = isLocal;
   $("btnUsageReset").hidden = isLocal;
@@ -1395,6 +1408,7 @@ function defaultModelFor(p) {
   return ({
     lmstudio: "google/gemma-3-12b",
     ollama: "llava",
+    colab: "google/gemma-3-12b",
     openai: "gpt-4o-mini",
     anthropic: "claude-3-5-sonnet-latest",
     gemini: "gemini-2.0-flash",
@@ -1691,14 +1705,17 @@ function bindForm() {
   });
   $("btnKeySave").addEventListener("click", async () => {
     const key = $("apiKey").value.trim();
-    if (!key) {
+    const base = $("baseUrl") ? $("baseUrl").value.trim() : "";
+    const provider = window.__provider || "lmstudio";
+    if (!key && !(provider === "colab" && base)) {
       uiAlert(t("provider.apiKey"), t("provider.keyEmpty"));
       return;
     }
     try {
       await api.post("/api/provider/key", {
-        provider: window.__provider || "lmstudio",
+        provider,
         api_key: key,
+        base_url: base,
       });
       $("apiKey").value = "";
       $("testResult").textContent = t("provider.keySaved");
@@ -1706,6 +1723,27 @@ function bindForm() {
     } catch (e) {
       uiAlert("Error", e.message);
     }
+  });
+  $("btnBaseUrlSave").addEventListener("click", async () => {
+    const base = $("baseUrl").value.trim();
+    if (!base) {
+      uiAlert(t("provider.baseUrl"), t("provider.keyEmpty"));
+      return;
+    }
+    try {
+      await api.post("/api/provider/key", {
+        provider: window.__provider || "colab",
+        api_key: "",
+        base_url: base,
+      });
+      $("testResult").textContent = t("provider.keySaved");
+      poll();
+    } catch (e) {
+      uiAlert("Error", e.message);
+    }
+  });
+  $("btnColabGuide").addEventListener("click", () => {
+    uiAlert(t("provider.colabGuideTitle"), t("provider.colabGuideText"));
   });
   $("btnTestProvider").addEventListener("click", async () => {
     $("testResult").textContent = t("provider.testing");

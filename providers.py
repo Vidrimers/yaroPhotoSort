@@ -63,12 +63,14 @@ PRICING: dict[str, dict[str, float]] = {
         "mimo-v2.6-flash": {"in": 0.0, "out": 0.0},
         "mimo-v2.6-pro-ultraspeed": {"in": 0.0, "out": 0.0},
     },
+    "colab": {},
     "openrouter": {},
 }
 
 DEFAULT_MODELS: dict[str, str] = {
     "lmstudio": "google/gemma-3-12b",
     "ollama": "llava",
+    "colab": "google/gemma-3-12b",
     "openai": "gpt-4o-mini",
     "anthropic": "claude-3-5-sonnet-latest",
     "gemini": "gemini-2.0-flash",
@@ -80,6 +82,7 @@ DEFAULT_MODELS: dict[str, str] = {
 DEFAULT_BASES: dict[str, str] = {
     "lmstudio": "http://127.0.0.1:1234",
     "ollama": "http://127.0.0.1:11434",
+    "colab": "",
     "openai": "https://api.openai.com",
     "anthropic": "https://api.anthropic.com",
     "gemini": "https://generativelanguage.googleapis.com",
@@ -92,6 +95,7 @@ DEFAULT_BASES: dict[str, str] = {
 ENV_KEYS: dict[str, str] = {
     "lmstudio": "",
     "ollama": "",
+    "colab": "COLAB_API_KEY",
     "openai": "OPENAI_API_KEY",
     "anthropic": "ANTHROPIC_API_KEY",
     "gemini": "GEMINI_API_KEY",
@@ -103,6 +107,7 @@ ENV_KEYS: dict[str, str] = {
 PROVIDER_LABELS: dict[str, str] = {
     "lmstudio": "LM Studio",
     "ollama": "Ollama",
+    "colab": "Google Colab",
     "openai": "ChatGPT",
     "anthropic": "Claude",
     "gemini": "Gemini",
@@ -208,6 +213,28 @@ def save_api_key(provider: str, key: str) -> str:
         if out and out[-1].strip():
             out.append("")
         out.append(f"{env_name}={key}")
+    ENV_PATH.write_text("\n".join(out) + "\n", encoding="utf-8")
+    return env_name
+
+
+def save_base_url(provider: str, url: str) -> str:
+    """Пишет base URL в .env, например COLAB_BASE_URL=..."""
+    env_name = f"{provider.upper()}_BASE_URL"
+    lines: list[str] = []
+    if ENV_PATH.exists():
+        lines = ENV_PATH.read_text(encoding="utf-8").splitlines()
+    found = False
+    out: list[str] = []
+    for line in lines:
+        if line.strip().startswith(env_name + "="):
+            out.append(f"{env_name}={url}")
+            found = True
+        else:
+            out.append(line)
+    if not found:
+        if out and out[-1].strip():
+            out.append("")
+        out.append(f"{env_name}={url}")
     ENV_PATH.write_text("\n".join(out) + "\n", encoding="utf-8")
     return env_name
 
@@ -421,7 +448,10 @@ def provider_status(provider: str, model: str | None = None) -> dict[str, Any]:
         "detail": "",
         "usage": load_stats(),
     }
-    if provider in LOCAL_PROVIDERS:
+    if provider in LOCAL_PROVIDERS or provider == "colab":
+        if provider == "colab" and not base_for(provider):
+            out["detail"] = "Base URL is empty"
+            return out
         try:
             r = requests.get(f"{out['base']}/v1/models", timeout=3)
             out["ok"] = r.status_code == 200
@@ -452,6 +482,9 @@ def test_connection(provider: str, model: str | None = None) -> dict[str, Any]:
         "detail": "",
         "models": [],
     }
+    if provider == "colab" and not base:
+        out["detail"] = "Base URL is empty - paste the tunnel URL first"
+        return out
     try:
         headers = {"Accept": "application/json"}
         if key:
