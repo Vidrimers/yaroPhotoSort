@@ -980,6 +980,56 @@ legend {
         </table>
         <p class="hint" id="destPreview" style="margin: 12px 0 0;"></p>
       </section>
+
+      <section id="eventsSection">
+        <h2 data-i18n="events.title"></h2>
+        <p class="hint" data-i18n="events.hint"></p>
+        <label class="cat-toggle" data-i18n-title="events.enableTip">
+          <input type="checkbox" id="optEvents">
+          <span data-i18n="events.enable"></span>
+        </label>
+
+        <fieldset>
+          <legend data-i18n="events.methodTitle"></legend>
+          <div class="radio-row" id="eventMethod">
+            <label data-i18n-title="events.methodTimeTip">
+              <input type="radio" name="eventMethod" value="time" checked>
+              <span data-i18n="events.methodTime"></span>
+            </label>
+            <label data-i18n-title="events.methodSimilarTip">
+              <input type="radio" name="eventMethod" value="similar">
+              <span data-i18n="events.methodSimilar"></span>
+            </label>
+            <label data-i18n-title="events.methodTimeAiTip">
+              <input type="radio" name="eventMethod" value="time_ai">
+              <span data-i18n="events.methodTimeAi"></span>
+            </label>
+          </div>
+          <div class="num-row">
+            <label for="eventGap" data-i18n="events.gapLabel" data-i18n-title="events.gapTip"></label>
+            <input type="number" id="eventGap" min="0.5" max="72" step="0.5" value="3">
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend data-i18n="events.nameTitle"></legend>
+          <div class="radio-row" id="eventName">
+            <label data-i18n-title="events.nameDateTip">
+              <input type="radio" name="eventName" value="date" checked>
+              <span data-i18n="events.nameDate"></span>
+            </label>
+            <label data-i18n-title="events.nameAiTip">
+              <input type="radio" name="eventName" value="ai">
+              <span data-i18n="events.nameAi"></span>
+            </label>
+          </div>
+        </fieldset>
+
+        <label class="check" data-i18n-title="events.screensTip">
+          <input type="checkbox" id="optScreensDocs">
+          <span data-i18n="events.screens"></span>
+        </label>
+      </section>
     </div>
 
     <div class="col">
@@ -1256,6 +1306,13 @@ function currentConfigPatch() {
     resume: $("optResume").checked,
     dry_run: $("optDry").checked,
     categorization: $("optCategories").checked,
+    events_enabled: $("optEvents").checked,
+    event_method: document.querySelector('input[name="eventMethod"]:checked')?.value || "time",
+    event_name: document.querySelector('input[name="eventName"]:checked')?.value || "date",
+    event_base: "_event",
+    event_gap_hours: Math.max(0.5, Math.min(72, parseFloat($("eventGap").value || "3"))),
+    always_sort_screens_docs: $("optScreensDocs").checked,
+    ui_lang: LANG,
     categories: collectCategories(),
     add_reason_to_name: $("optReasonName").checked,
     preserve_structure: $("optPreserve").checked,
@@ -1312,6 +1369,24 @@ function syncReviewTiming() {
   const box = $("reviewTiming");
   box.classList.toggle("disabled", !ask);
   box.querySelectorAll("input").forEach((el) => { el.disabled = !ask; });
+}
+
+function syncEventsCategories() {
+  const evOn = $("optEvents").checked;
+  const catOn = $("optCategories").checked;
+
+  const catSection = $("optCategories").closest("section");
+  catSection.classList.toggle("cats-locked", evOn);
+  catSection.querySelectorAll("input, select").forEach((el) => {
+    el.disabled = evOn;
+  });
+
+  $("eventsSection").classList.toggle("cats-locked", catOn);
+  $("eventsSection").querySelectorAll("input").forEach((el) => {
+    el.disabled = catOn;
+  });
+
+  syncAllCatRows();
 }
 
 function renderCategories(cats) {
@@ -1405,6 +1480,14 @@ function applyConfigToForm(cfg) {
   $("optResume").checked = !!cfg.resume;
   $("optDry").checked = !!cfg.dry_run;
   $("optCategories").checked = !!cfg.categorization;
+  $("optEvents").checked = !!cfg.events_enabled;
+  const evMethod = document.querySelector(`input[name="eventMethod"][value="${cfg.event_method || "time"}"]`);
+  if (evMethod) evMethod.checked = true;
+  const evName = document.querySelector(`input[name="eventName"][value="${cfg.event_name || "date"}"]`);
+  if (evName) evName.checked = true;
+  $("optScreensDocs").checked = !!cfg.always_sort_screens_docs;
+  $("eventGap").value = cfg.event_gap_hours ?? 3;
+  syncEventsCategories();
   $("optReasonName").checked = !!cfg.add_reason_to_name;
   $("optPreserve").checked = !!cfg.preserve_structure;
   renderCategories((cfg.categories && cfg.categories.length) ? cfg.categories : DEFAULT_CATEGORIES);
@@ -1414,15 +1497,28 @@ function bindForm() {
   [
     "inputFolder", "scoreThreshold", "serverPort", "ruleBlur", "ruleExposure", "ruleJunk",
     "optRecursive", "optResume", "optDry", "optCategories", "optReasonName", "optPreserve",
+    "optEvents", "optScreensDocs", "eventGap",
   ].forEach((id) => $(id).addEventListener("change", scheduleSave));
-  $("optCategories").addEventListener("change", syncAllCatRows);
+  $("optCategories").addEventListener("change", () => {
+    if ($("optCategories").checked) $("optEvents").checked = false;
+    syncEventsCategories();
+    scheduleSave();
+  });
+  $("optEvents").addEventListener("change", () => {
+    if ($("optEvents").checked) $("optCategories").checked = false;
+    syncEventsCategories();
+    scheduleSave();
+  });
   document.querySelectorAll('input[name="outputMode"]').forEach((el) => el.addEventListener("change", scheduleSave));
   document.querySelectorAll('input[name="reviewMode"]').forEach((el) => el.addEventListener("change", () => {
     syncReviewTiming();
     scheduleSave();
   }));
   document.querySelectorAll('input[name="reviewTiming"]').forEach((el) => el.addEventListener("change", scheduleSave));
+  document.querySelectorAll('input[name="eventMethod"]').forEach((el) => el.addEventListener("change", scheduleSave));
+  document.querySelectorAll('input[name="eventName"]').forEach((el) => el.addEventListener("change", scheduleSave));
   syncReviewTiming();
+  syncEventsCategories();
 }
 
 function fmtNum(n) {

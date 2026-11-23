@@ -132,6 +132,12 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "resume": True,
     "dry_run": False,
     "categorization": False,
+    "events_enabled": False,
+    "event_method": "time",             # time | similar | time_ai (mutually exclusive)
+    "event_name": "date",               # date | ai (mutually exclusive)
+    "event_base": "_event",
+    "event_gap_hours": 3.0,
+    "always_sort_screens_docs": False,
     "categories": [
         {
             "key": c["key"],
@@ -146,6 +152,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "preserve_structure": True,
     "max_image_side": 1280,
     "port": 8460,
+    "ui_lang": "en",
 }
 
 
@@ -376,6 +383,147 @@ def count_files(cfg: dict[str, Any]) -> dict[str, Any]:
         return {"ok": True, "count": len(files)}
     except Exception as e:
         return {"ok": False, "error": str(e), "count": 0}
+
+
+# ────────────────────────────── события ──────────────────────────────
+
+def photo_time(path: Path) -> datetime:
+    try:
+        img = Image.open(path)
+        exif = img.getexif()
+        raw = exif.get(36867) or exif.get(306)  # DateTimeOriginal / DateTime
+        if raw:
+            raw = str(raw).strip().replace("/", ":")
+            return datetime.strptime(raw, "%Y:%m:%d %H:%M:%S")
+    except Exception:
+        pass
+    try:
+        return datetime.fromtimestamp(path.stat().st_mtime)
+    except Exception:
+        return datetime.now()
+
+
+def looks_like_screenshot(path: Path, verdict_tags: list[str] | None = None) -> bool:
+    tags = set(verdict_tags or [])
+    if "screenshot" in tags or "docs" in tags:
+        return True
+    name = path.name.lower()
+    return name.startswith("screenshot") or name.startswith("скрин")
+
+
+def dhash(path: Path, hash_size: int = 8) -> int:
+    img = Image.open(path).convert("L").resize((hash_size + 1, hash_size), Image.LANCZOS)
+    px = list(img.getdata())
+    bits = 0
+    i = 0
+    for row in range(hash_size):
+        for col in range(hash_size):
+            left = row * (hash_size + 1) + col
+            if px[left] > px[left + 1]:
+                bits |= 1 << i
+            i += 1
+    return bits
+
+
+def assign_event_folders(files: list[Path], cfg: dict[str, Any]) -> dict[str, str]:
+    """path -> имя папки события (без базы)."""
+    method = cfg.get("event_method") or "time"
+    if method == "similar":
+        return _assign_by_similarity(files)
+    return _assign_by_time(files, cfg)
+
+
+def _assign_by_time(files: list[Path], cfg: dict[str, Any]) -> dict[str, str]:
+    gap = float(cfg.get("event_gap_hours") or 3.0)
+    timed = sorted(((photo_time(p), p) for p in files), key=lambda x: x[0])
+    mapping: dict[str, str] = {}
+    groups: list[list[tuple[datetime, Path]]] = []
+    for t, p in timed:
+        if not groups or (t - groups[-1][-1][0]).total_seconds() > gap * 3600:
+            groups.append([])
+        groups[-1].append((t, p))
+
+    # имена event_DD.MM.YYYY, при повторе дня — суффикс
+    day_counts: dict[str, int] = {}
+    for group in groups:
+        if not group:
+            continue
+        day = group[0][0].strftime("%d.%m.%Y")
+        day_counts[day] = day_counts.get(day, 0) + 1
+        name = f"event_{day}"
+        if day_counts[day] > 1:
+            name = f"event_{day}_{day_counts[day]}"
+        for _, p in group:
+            mapping[str(p)] = name
+    return mapping
+
+
+def _assign_by_similarity(files: list[Path], max_dist: int = 8) -> dict[str, str]:
+    """Простые цепочки по dHash: похожие кадры в одну группу."""
+    hashes: list[tuple[Path, int]] = []
+    for p in files:
+        try:
+            hashes.append((p, dhash(p)))
+        except Exception:
+            hashes.append((p, 0))
+    hashes.sort(key=lambda x: x[1])
+    mapping: dict[str, str] = {}
+    group_id = 0
+    used = [False] * len(hashes)
+    for i, (pi, hi) in enumerate(hashes):
+        if used[i]:
+            continue
+        group_id += 1
+        name = f"event_{group_id:03d}"
+        mapping[str(pi)] = name
+        used[i] = True
+        for j in range(i + 1, len(hashes)):
+            if used[j]:
+                continue
+            if bin(hi ^ hashes[j][1]).count("1") <= max_dist:
+                mapping[str(hashes[j][0])] = name
+                used[j] = True
+    return mapping
+
+
+def ask_event_name(sample: Path, lang: str, model: str) -> str:
+    """Одно короткое имя события по одному фото группы."""
+    prompt = (
+        "Это фото из серии одного события. "
+        "Придумай короткое имя папки для события (1-3 слова, без спецсимволов), "
+        f"язык названия: {'русский' if lang == 'ru' else 'english'}. "
+        "Только слово/фраза, без пояснений."
+    )
+    try:
+        data_url = prepare_image(sample, 512)
+        payload = {
+            "model": model,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {"type": "image_url", "image_url": {"url": data_url}},
+                    ],
+                }
+            ],
+            "temperature": 0.3,
+            "max_tokens": 20,
+        }
+        r = requests.post(f"{LM_BASE}/v1/chat/completions", json=payload, timeout=60)
+        if r.status_code != 200:
+            return ""
+        text = (
+            (r.json().get("choices") or [{}])[0]
+            .get("message", {})
+            .get("content", "")
+            .strip()
+        )
+        safe = re.sub(r'[<>:"/\\|?*]+', " ", text)
+        safe = re.sub(r"\s+", " ", safe).strip()
+        return safe[:40]
+    except Exception:
+        return ""
 
 
 # ────────────────────────────── промпт / VLM ──────────────────────────────
@@ -692,7 +840,12 @@ def signal_review_decision(path: str, decision: str) -> None:
         ev.set()
 
 
-def apply_actions(path: Path, verdict: dict[str, Any], cfg: dict[str, Any]) -> str:
+def apply_actions(
+    path: Path,
+    verdict: dict[str, Any],
+    cfg: dict[str, Any],
+    event_map: dict[str, str] | None = None,
+) -> str:
     """Возвращает описание действия. Уважает dry_run."""
     actions: list[str] = []
     dry = bool(cfg.get("dry_run"))
@@ -701,6 +854,42 @@ def apply_actions(path: Path, verdict: dict[str, Any], cfg: dict[str, Any]) -> s
     if needs_review(verdict, cfg):
         # в ask-режиме файл остаётся на месте, пока человек не решил
         return "review"
+
+    # события и категории взаимоисключающие: при событиях категории не работают
+    use_events = bool(cfg.get("events_enabled"))
+    use_categories = bool(cfg.get("categorization")) and not use_events
+
+    if use_events and cfg.get("always_sort_screens_docs"):
+        tags = verdict.get("category_tags") or []
+        if "docs" in tags:
+            tag = "docs"
+        elif "screenshot" in tags or path.name.lower().startswith(("screenshot", "скрин")):
+            tag = "screenshot"
+        else:
+            tag = ""
+        if tag:
+            dest_root = Path(input_folder) / "_sorted" / tag
+            dest = dest_root / path.name
+            actions.append(f"special->{tag}")
+            if not dry and path.exists():
+                dest_root.mkdir(parents=True, exist_ok=True)
+                if dest.exists():
+                    dest = dest_root / f"{path.stem}_{int(time.time())}{path.suffix}"
+                shutil.move(str(path), str(dest))
+            return ", ".join(actions)
+
+    if use_events:
+        ev = (event_map or {}).get(str(path))
+        if ev:
+            dest_root = Path(input_folder) / (cfg.get("event_base") or "_event") / ev
+            dest = dest_root / path.name
+            actions.append(f"event->{ev}")
+            if not dry and path.exists():
+                dest_root.mkdir(parents=True, exist_ok=True)
+                if dest.exists():
+                    dest = dest_root / f"{path.stem}_{int(time.time())}{path.suffix}"
+                shutil.move(str(path), str(dest))
+            return ", ".join(actions)
 
     if cfg.get("output_mode") == "move_bad" and verdict["quality"] == "bad":
         dest_root = Path(input_folder) / (cfg.get("bad_folder_name") or "_rejects")
@@ -715,7 +904,7 @@ def apply_actions(path: Path, verdict: dict[str, Any], cfg: dict[str, Any]) -> s
                 dest = dest_root / f"{path.stem}_{int(time.time())}{path.suffix}"
             shutil.move(str(path), str(dest))
 
-    if cfg.get("categorization"):
+    if use_categories:
         tags = verdict.get("category_tags") or [verdict.get("category") or "other"]
         # порядок строк в categories = приоритет; файл уезжает только в первую совпавшую
         for c in cfg.get("categories") or []:
@@ -774,6 +963,24 @@ def job_worker(cfg: dict[str, Any]) -> None:
 
         log(f"Started: {len(todo)} files (total {len(files)}, resume skipped {len(skip)}). Model: {model}")
 
+        event_map: dict[str, str] = {}
+        if cfg.get("events_enabled") and todo:
+            event_map = assign_event_folders(todo, cfg)
+            # ИИ-названия: один запрос на событие
+            want_ai_name = cfg.get("event_name") == "ai" or cfg.get("event_method") == "time_ai"
+            if want_ai_name:
+                lang = str(cfg.get("ui_lang") or "en")
+                samples: dict[str, Path] = {}
+                for p in todo:
+                    key = event_map.get(str(p))
+                    if key and key not in samples:
+                        samples[key] = p
+                for key, sample in samples.items():
+                    name = ask_event_name(sample, lang, model)
+                    if name:
+                        event_map = {k: (name if v == key else v) for k, v in event_map.items()}
+            log(f"Events: {len(set(event_map.values()))} folders")
+
         speeds: list[float] = []
         for path in todo:
             with JOB_LOCK:
@@ -799,7 +1006,7 @@ def job_worker(cfg: dict[str, Any]) -> None:
                     else:
                         action = "review"
                 else:
-                    action = apply_actions(path, verdict, cfg)
+                    action = apply_actions(path, verdict, cfg, event_map)
                 append_csv(
                     {
                         "path": str(path),
@@ -901,11 +1108,18 @@ class ConfigModel(BaseModel):
     resume: bool = True
     dry_run: bool = False
     categorization: bool = False
+    events_enabled: bool = False
+    event_method: str = "time"
+    event_name: str = "date"
+    event_base: str = "_event"
+    event_gap_hours: float = 3.0
+    always_sort_screens_docs: bool = False
     categories: list[dict[str, Any]] = []
     add_reason_to_name: bool = False
     preserve_structure: bool = True
     max_image_side: int = 1280
     port: int = 8460
+    ui_lang: str = "en"
 
 
 @app.get("/")
