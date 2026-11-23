@@ -523,6 +523,43 @@ legend {
   font-family: "JetBrains Mono", Consolas, monospace;
   font-size: 12px;
 }
+
+/* модальный confirm */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+}
+.modal-overlay[hidden] { display: none; }
+.modal {
+  width: min(420px, 100%);
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  border-radius: 3px;
+  padding: 20px 22px;
+  box-shadow: 0 18px 50px rgba(0,0,0,0.35);
+}
+.modal-title {
+  font-family: "Bitter", Georgia, serif;
+  font-size: 18px;
+  font-weight: 500;
+  margin: 0 0 8px;
+}
+.modal-text {
+  color: var(--muted);
+  font-size: 14px;
+  margin: 0 0 18px;
+}
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
 </style>
 </head>
 <body>
@@ -558,6 +595,7 @@ legend {
       </div>
 
       <a class="btn btn-primary" id="btnStartServer" href="yarophoto://start" data-i18n="btn.startServer"></a>
+      <button class="btn btn-danger" id="btnStopServer" type="button" data-i18n="btn.stopServer" hidden></button>
       <button class="btn" id="btnOpenPanel" type="button" data-i18n="btn.openPanel"></button>
     </div>
   </header>
@@ -565,6 +603,17 @@ legend {
   <div class="alert" id="serverAlert">
     <strong id="alertTitle"></strong>
     <span id="alertText"></span>
+  </div>
+
+  <div class="modal-overlay" id="modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-title" id="modalTitle"></div>
+      <div class="modal-text" id="modalText"></div>
+      <div class="modal-actions">
+        <button class="btn" type="button" id="modalCancel"></button>
+        <button class="btn btn-primary" type="button" id="modalOk"></button>
+      </div>
+    </div>
   </div>
 
   <div class="grid">
@@ -888,7 +937,8 @@ let lastLog = null;
 
 function serverOffline(show) {
   $("serverAlert").classList.toggle("show", !!show);
-  $("btnStartServer").style.display = show ? "" : "none";
+  $("btnStartServer").hidden = !show;
+  $("btnStopServer").hidden = !!show;
   $("btnOpenPanel").style.display = (!show && location.protocol === "file:") ? "" : "none";
   if (show) {
     const fileMode = location.protocol === "file:";
@@ -1085,6 +1135,36 @@ function fmtNum(n) {
   return new Intl.NumberFormat(LANG === "ru" ? "ru-RU" : "en-US").format(n);
 }
 
+/* кастомный confirm */
+function uiConfirm(title, message, okLabel) {
+  return new Promise((resolve) => {
+    const overlay = $("modal");
+    $("modalTitle").textContent = title;
+    $("modalText").textContent = message;
+    $("modalCancel").textContent = t("modal.cancel");
+    $("modalOk").textContent = okLabel || t("modal.confirm");
+    overlay.hidden = false;
+
+    const done = (val) => {
+      overlay.hidden = true;
+      $("modalOk").onclick = null;
+      $("modalCancel").onclick = null;
+      overlay.onclick = null;
+      document.removeEventListener("keydown", onKey);
+      resolve(val);
+    };
+    const onKey = (e) => {
+      if (e.key === "Escape") done(false);
+      if (e.key === "Enter") done(true);
+    };
+    $("modalOk").onclick = () => done(true);
+    $("modalCancel").onclick = () => done(false);
+    overlay.onclick = (e) => { if (e.target === overlay) done(false); };
+    document.addEventListener("keydown", onKey);
+    $("modalOk").focus();
+  });
+}
+
 function renderLm(data) {
   lastLm = data;
   const dot = $("lmDot");
@@ -1256,7 +1336,8 @@ async function init() {
 
   $("btnStart").addEventListener("click", async () => {
     await saveConfigNow();
-    if (!confirm(t("confirm.start"))) return;
+    const ok = await uiConfirm(t("btn.start"), t("confirm.start"), t("btn.start"));
+    if (!ok) return;
     try {
       await api.post("/api/start");
       poll();
@@ -1276,6 +1357,17 @@ async function init() {
 
   $("btnOpenPanel").addEventListener("click", () => {
     window.open("http://127.0.0.1:8460", "_blank");
+  });
+
+  $("btnStopServer").addEventListener("click", async () => {
+    const ok = await uiConfirm(t("btn.stopServer"), t("confirm.stopServer"), t("btn.stopServer"));
+    if (!ok) return;
+    try {
+      await api.post("/api/shutdown");
+    } catch (e) {
+      /* сервер мог успеть закрыть соединение — это норма */
+    }
+    setTimeout(() => { serverOffline(true); }, 600);
   });
 }
 

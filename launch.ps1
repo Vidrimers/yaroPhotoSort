@@ -1,4 +1,4 @@
-﻿# yarophoto:// handler - called by Windows when the page links to yarophoto://...
+# yarophoto:// handler - called by Windows when the page links to yarophoto://...
 # URL: yarophoto://start | yarophoto://stop | yarophoto://open
 # Fixed actions only, whitelist below. No arbitrary commands are executed.
 param(
@@ -38,7 +38,8 @@ switch ($u.Host) {
         }
         $bat = Join-Path $root 'start.bat'
         if (-not (Test-Path -LiteralPath $bat)) { Fail "start.bat not found:`n$bat" }
-        Start-Process -FilePath 'cmd.exe' -ArgumentList @('/k', "`"$bat`"") -WorkingDirectory $root
+        # /c — окно закроется само, когда сервер остановлен
+        Start-Process -FilePath 'cmd.exe' -ArgumentList @('/c', "`"$bat`"") -WorkingDirectory $root
         exit 0
     }
     'stop' {

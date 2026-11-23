@@ -105,5 +105,9 @@ window.YARO_I18N = {
   "lang.en": "🇬🇧 English",
   "lang.ru": "🇷🇺 Russian",
   "theme.label": "Theme",
-  "dropzone.needServer": "Open the page at http://127.0.0.1:8460 after starting the server (start.bat). Then Browse and the rest of the controls will work."
+  "dropzone.needServer": "Open the page at http://127.0.0.1:8460 after starting the server (start.bat). Then Browse and the rest of the controls will work.",
+  "btn.stopServer": "Stop server",
+  "confirm.stopServer": "Stop the server? The panel will lose connection until you start it again.",
+  "modal.confirm": "OK",
+  "modal.cancel": "Cancel"
 };
