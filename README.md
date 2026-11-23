@@ -73,10 +73,12 @@ yarophoto://open    — открыть панель в браузере
 
 Обработчик: `launch-hidden.vbs` → `launch.ps1`. Произвольные команды не выполняются — только три действия выше.
 
+> **После клонирования репозитория** поправьте путь к проекту в `register-yarophoto.reg` (строка `shell\open\command`) на свой — иначе протокол будет указывать на несуществующую папку.
+
 ### 3. Вручную из терминала
 
 ```bat
-cd X:\Programs\AI\yaroPhotoSort
+cd путь\к\папке\yaroPhotoSort
 venv\Scripts\activate
 python server.py
 ```
