@@ -57,7 +57,7 @@ window.YARO_I18N = {
   "behavior.preserve": "Keep subfolder structure when copying",
   "behavior.preserve.tip": "Copy the nesting too: photos/2024/IMG_1.jpg → _sorted/people/2024/IMG_1.jpg.",
   "cats.title": "Categories and folders",
-  "cats.hint": "The model says what is in the shot. Then copy, move, or leave alone. Empty or relative path (e.g. _sorted/people) is inside the photo folder. Absolute (e.g. E:\\Sorted\\People) goes where you point.",
+  "cats.hint": "The model tags 1-3 things in the shot (most important first). The photo goes to one folder: the first enabled row that matches a tag. Row order = priority. Empty or relative path (e.g. _sorted/people) is inside the photo folder. Absolute (e.g. E:\\Sorted\\People) goes where you point.",
   "cats.enable": "Enable categorization",
   "cats.enable.tip": "Besides quality, the model tags the content (people, documents, screenshots…) and files can be sorted into separate folders.",
   "cats.col.name": "Category",

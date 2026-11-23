@@ -402,14 +402,20 @@ def build_prompt(cfg: dict[str, Any]) -> str:
         keys = ", ".join(
             c["key"]
             for c in cfg.get("categories", [])
-            if c.get("enabled") and c.get("dest") and c.get("action") != "skip"
+            if c.get("enabled") and c.get("action") != "skip"
         ) or "people, docs, screenshot, food, nature, animals, transport, interior, other"
-        parts.append(f"Категория содержимого (category): одна из: {keys}.")
+        parts.append(
+            "Содержимое снимка: выпиши от 1 до 3 тегов category_tags из списка: "
+            f"{keys}. Самый важный — первым (например люди важнее пейзажа)."
+        )
+    else:
+        keys = "people, docs, screenshot, food, nature, animals, transport, interior, other"
 
     parts.append(
         "Ответь СТРОГО одним JSON-объектом без markdown, без пояснений:\n"
         '{"quality":"ok|bad","quality_reason":"причина если bad иначе пусто",'
-        f'"score":1-5,"category":"people|docs|screenshot|food|nature|animals|transport|interior|other",'
+        '"score":1-5,'
+        f'"category_tags":["{keys.split(", ")[0]}"],'
         '"category_confidence":0.0-1.0}'
     )
     return "\n".join(parts)
@@ -420,27 +426,26 @@ JSON_RE = re.compile(r"\{.*\}", re.S)
 
 def parse_verdict(text: str, score_threshold: int) -> dict[str, Any]:
     raw = (text or "").strip()
-    m = JSON_RE.search(raw)
-    if not m:
+    valid = {c["key"] for c in CATEGORIES}
+
+    def fail(reason: str) -> dict[str, Any]:
         return {
             "quality": "ok",
-            "quality_reason": "нет JSON в ответе модели",
+            "quality_reason": reason,
             "score": 3,
             "category": "other",
+            "category_tags": ["other"],
             "category_confidence": 0.0,
             "raw": raw[:300],
         }
+
+    m = JSON_RE.search(raw)
+    if not m:
+        return fail("no JSON in model reply")
     try:
         obj = json.loads(m.group(0))
     except Exception:
-        return {
-            "quality": "ok",
-            "quality_reason": "JSON не распарсился",
-            "score": 3,
-            "category": "other",
-            "category_confidence": 0.0,
-            "raw": raw[:300],
-        }
+        return fail("JSON parse error")
     try:
         score = int(obj.get("score", 3))
     except Exception:
@@ -451,10 +456,19 @@ def parse_verdict(text: str, score_threshold: int) -> dict[str, Any]:
         q = "bad" if score <= score_threshold else "ok"
     if score <= score_threshold:
         q = "bad"
-    cat = str(obj.get("category", "other")).lower().strip()
-    valid = {c["key"] for c in CATEGORIES}
-    if cat not in valid:
-        cat = "other"
+
+    tags_raw = obj.get("category_tags")
+    if not isinstance(tags_raw, list):
+        single = obj.get("category")
+        tags_raw = [single] if single else []
+    tags: list[str] = []
+    for tag in tags_raw:
+        key = str(tag).lower().strip()
+        if key in valid and key not in tags:
+            tags.append(key)
+    if not tags:
+        tags = ["other"]
+
     try:
         conf = float(obj.get("category_confidence", 0.0))
     except Exception:
@@ -463,7 +477,8 @@ def parse_verdict(text: str, score_threshold: int) -> dict[str, Any]:
         "quality": q,
         "quality_reason": str(obj.get("quality_reason", "") or ""),
         "score": score,
-        "category": cat,
+        "category": tags[0],
+        "category_tags": tags,
         "category_confidence": round(max(0.0, min(1.0, conf)), 3),
         "raw": raw[:300],
     }
@@ -576,6 +591,7 @@ CSV_HEADER = [
     "quality_reason",
     "score",
     "category",
+    "category_tags",
     "category_confidence",
     "action",
     "error",
@@ -641,30 +657,29 @@ def apply_actions(path: Path, verdict: dict[str, Any], cfg: dict[str, Any]) -> s
             shutil.move(str(path), str(dest))
 
     if cfg.get("categorization"):
-        cat = verdict.get("category") or "other"
+        tags = verdict.get("category_tags") or [verdict.get("category") or "other"]
+        # порядок строк в categories = приоритет; файл уезжает только в первую совпавшую
         for c in cfg.get("categories") or []:
-            if c.get("key") != cat:
-                continue
-            if not c.get("enabled") or c.get("action") in (None, "skip"):
+            if c.get("key") in tags and c.get("enabled") and c.get("action") not in (None, "skip"):
+                key = str(c.get("key"))
+                dest_root = resolve_dest(c.get("dest"), input_folder, key)
+                dest = dest_root / path.name
+                if cfg.get("preserve_structure"):
+                    try:
+                        rel = path.relative_to(input_folder)
+                        dest = dest_root / rel
+                    except Exception:
+                        pass
+                actions.append(f"{c.get('action')}->{key}")
+                if not dry and path.exists():
+                    dest.parent.mkdir(parents=True, exist_ok=True)
+                    if dest.exists():
+                        dest = dest.parent / f"{path.stem}_{int(time.time())}{path.suffix}"
+                    if c.get("action") == "move":
+                        shutil.move(str(path), str(dest))
+                    else:
+                        shutil.copy2(str(path), str(dest))
                 break
-            dest_root = resolve_dest(c.get("dest"), input_folder, str(c.get("key") or cat))
-            dest = dest_root / path.name
-            if cfg.get("preserve_structure"):
-                try:
-                    rel = path.relative_to(input_folder)
-                    dest = dest_root / rel
-                except Exception:
-                    pass
-            actions.append(f"{c.get('action')}->{cat}")
-            if not dry and path.exists():
-                dest.parent.mkdir(parents=True, exist_ok=True)
-                if dest.exists():
-                    dest = dest.parent / f"{path.stem}_{int(time.time())}{path.suffix}"
-                if c.get("action") == "move":
-                    shutil.move(str(path), str(dest))
-                else:
-                    shutil.copy2(str(path), str(dest))
-            break
 
     return ", ".join(actions) if actions else "csv_only"
 
@@ -719,6 +734,7 @@ def job_worker(cfg: dict[str, Any]) -> None:
                         "quality_reason": verdict["quality_reason"],
                         "score": verdict["score"],
                         "category": verdict["category"],
+                        "category_tags": "|".join(verdict.get("category_tags") or []),
                         "category_confidence": verdict["category_confidence"],
                         "action": action,
                         "error": "",
@@ -745,6 +761,7 @@ def job_worker(cfg: dict[str, Any]) -> None:
                         "quality_reason": "",
                         "score": "",
                         "category": "",
+                        "category_tags": "",
                         "category_confidence": "",
                         "action": "",
                         "error": str(e),
