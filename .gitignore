@@ -9,6 +9,7 @@ __pycache__/
 #Files
 .env
 config.json
+register-yarophoto.reg
 *.log
 *.pyc
 Thumbs.db
