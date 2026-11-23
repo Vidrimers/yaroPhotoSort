@@ -1,0 +1,15 @@
+#FOLDERS
+temp/
+tasks/
+venv/
+results/
+__pycache__/
+.mimocode/
+
+#Files
+.env
+config.json
+*.log
+*.pyc
+Thumbs.db
+.DS_Store

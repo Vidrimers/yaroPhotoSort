@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="lab">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>yaroPhotoSort</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bitter:wght@500;700&family=Source+Sans+3:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ─────────────────────────────────────────────────────────────
+   Тема «lab» — стол в проявочной: графит, лампа-амбер, без теней
+   Тема «paper» — контактный лист: бумага, чёрный, красный карандаш
+   ───────────────────────────────────────────────────────────── */
+:root, [data-theme="lab"] {
+  --bg: #22201d;
+  --bg-2: #2a2824;
+  --bg-3: #1a1816;
+  --line: #3c3832;
+  --line-2: #4a453c;
+  --text: #e7e2d8;
+  --muted: #a29b8c;
+  --faint: #776f62;
+  --amber: #d9a441;
+  --amber-ink: #241a05;
+  --ok: #8aa87c;
+  --bad: #c45c4c;
+  --paper: #2f2c27;
+  --paper-ink: var(--text);
+  --tick: var(--bad);
+  --btn-bg: #322e28;
+  --btn-hover: #3c3832;
+  --input-bg: #1a1816;
+  --focus: var(--amber);
+  --accent-only-run: var(--amber);
+  color-scheme: dark;
+}
+
+[data-theme="paper"] {
+  --bg: #e9e2d4;
+  --bg-2: #e2d9c8;
+  --bg-3: #f2ece1;
+  --line: #c4b8a2;
+  --line-2: #a89a80;
+  --text: #1c1914;
+  --muted: #6b6254;
+  --faint: #8d8271;
+  --amber: #b03a2e;
+  --amber-ink: #f7f1e7;
+  --ok: #2f6b4f;
+  --bad: #b03a2e;
+  --paper: #f2ece1;
+  --paper-ink: var(--text);
+  --tick: var(--bad);
+  --btn-bg: #ddd2bc;
+  --btn-hover: #d2c5ab;
+  --input-bg: #f4eee3;
+  --focus: var(--bad);
+  --accent-only-run: var(--bad);
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 400 15px/1.5 "Source Sans 3", "Segoe UI", sans-serif;
+  min-height: 100vh;
+}
+
+.wrap {
+  width: min(1200px, calc(100% - 36px));
+  margin: 0 auto;
+  padding: 22px 0 56px;
+}
+
+/* ── шапка: одна линия, без подсветки слов ── */
+.top {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 22px;
+}
+.brand {
+  font-family: "Bitter", Georgia, serif;
+  font-weight: 700;
+  font-size: clamp(22px, 3vw, 30px);
+  letter-spacing: -0.015em;
+  margin-right: auto;
+}
+.brand small {
+  display: block;
+  font-family: "Source Sans 3", sans-serif;
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: 0;
+  margin-top: 2px;
+}
+
+/* переключатель темы — сегменты, без скруглений «пилюль» */
+.theme-switch {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.theme-switch button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: 600 12.5px/1 "Source Sans 3", sans-serif;
+  padding: 10px 13px;
+  cursor: pointer;
+}
+.theme-switch button + button { border-left: 1px solid var(--line); }
+.theme-switch button[aria-pressed="true"] {
+  background: var(--text);
+  color: var(--bg);
+}
+
+/* ── кнопки ── */
+.btn {
+  appearance: none;
+  border: 1px solid var(--line-2);
+  background: var(--btn-bg);
+  color: var(--text);
+  font: 600 13.5px/1 "Source Sans 3", sans-serif;
+  padding: 11px 15px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.btn:hover { background: var(--btn-hover); }
+.btn:active { transform: translateY(1px); }
+.btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.btn-primary {
+  background: var(--accent-only-run);
+  border-color: var(--accent-only-run);
+  color: var(--amber-ink);
+}
+.btn-primary:hover { filter: brightness(1.07); }
+.btn-danger { color: var(--bad); border-color: var(--bad); background: transparent; }
+.btn-ghost { background: transparent; }
+.btn[disabled] { opacity: 0.42; cursor: not-allowed; transform: none; }
+.top-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ── сетка: не карточки, а полосы общей рамки ── */
+.grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 0 28px;
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+}
+.col { min-width: 0; }
+.col > section {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--line);
+}
+.col > section:last-child { border-bottom: 0; }
+.col + .col { border-left: 1px solid var(--line); }
+
+@media (max-width: 940px) {
+  .grid { grid-template-columns: 1fr; }
+  .col + .col { border-left: 0; border-top: 1px solid var(--line); }
+}
+
+/* заголовки секций: без CAPS, без «eyebrow» */
+section h2 {
+  font-family: "Bitter", Georgia, serif;
+  font-weight: 500;
+  font-size: 17px;
+  margin: 0 0 3px;
+  letter-spacing: -0.01em;
+}
+.hint {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 13.5px;
+  max-width: 52ch;
+}
+.hint code, .footer-note code {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 12px;
+  color: var(--faint);
+}
+
+/* ── поле папки ── */
+.folder-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+.folder-input {
+  width: 100%;
+  background: var(--input-bg);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font: 400 13px/1.4 "JetBrains Mono", Consolas, monospace;
+  padding: 11px 12px;
+  border-radius: 3px;
+}
+.folder-input:focus {
+  outline: none;
+  border-color: var(--focus);
+}
+.dropzone {
+  margin-top: 10px;
+  border: 1px dashed var(--line-2);
+  padding: 12px;
+  text-align: center;
+  color: var(--faint);
+  font-size: 13px;
+  background: var(--bg-3);
+}
+.dropzone.drag {
+  border-color: var(--accent-only-run);
+  color: var(--accent-only-run);
+  background: var(--bg);
+}
+
+/* ── LM Studio ── */
+.lm-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--faint);
+  flex: none;
+}
+.dot.on { background: var(--ok); }
+.dot.off { background: var(--bad); }
+.lm-title { font-weight: 600; }
+.lm-sub {
+  color: var(--faint);
+  font-size: 12px;
+  font-family: "JetBrains Mono", Consolas, monospace;
+}
+.kv {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 6px 12px;
+  font-size: 13.5px;
+  margin: 0;
+}
+.kv dt { color: var(--faint); }
+.kv dd {
+  margin: 0;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 12.5px;
+  word-break: break-all;
+}
+
+/* ── настройки ── */
+fieldset {
+  border: 0;
+  margin: 0 0 12px;
+  padding: 0;
+}
+fieldset:last-child { margin-bottom: 0; }
+legend {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 6px;
+  padding: 0;
+}
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 7px 0;
+  cursor: pointer;
+}
+.check input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent-only-run);
+  margin-top: 2px;
+  flex: none;
+}
+.check .sub {
+  display: block;
+  color: var(--faint);
+  font-size: 12.5px;
+  margin-top: 1px;
+}
+
+.radio-row { display: flex; flex-direction: column; gap: 2px; }
+.radio-row label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  cursor: pointer;
+  font-size: 14px;
+}
+.radio-row input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent-only-run);
+}
+
+.formats { display: flex; flex-wrap: wrap; gap: 6px; }
+.fmt {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  cursor: pointer;
+  font: 500 12px/1 "JetBrains Mono", Consolas, monospace;
+  background: var(--bg-3);
+  color: var(--muted);
+}
+.fmt:has(input:checked) {
+  border-color: var(--text);
+  color: var(--text);
+  background: var(--bg);
+}
+.fmt input { width: 14px; height: 14px; accent-color: var(--accent-only-run); }
+
+.num-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+.num-row label { color: var(--muted); font-size: 13.5px; }
+.num-row input[type="number"] {
+  width: 64px;
+  background: var(--input-bg);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font: 500 14px/1 "JetBrains Mono", Consolas, monospace;
+  padding: 8px;
+  border-radius: 3px;
+}
+
+/* ── категории ── */
+.cat-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.cat-table th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--faint);
+  font-size: 12px;
+  padding: 0 6px 8px;
+  border-bottom: 1px solid var(--line);
+}
+.cat-table td {
+  padding: 6px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+.cat-table tr:last-child td { border-bottom: 0; }
+.cat-table input[type="text"], .cat-table select {
+  width: 100%;
+  background: var(--input-bg);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font: 400 12px/1.3 "JetBrains Mono", Consolas, monospace;
+  padding: 7px 8px;
+  border-radius: 3px;
+}
+.cat-table input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--accent-only-run);
+}
+.cat-table .cat-off td { opacity: 0.45; }
+.cat-table .cat-off td:first-child { opacity: 1; }
+.cat-table input:disabled, .cat-table select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.cat-table.cats-locked tbody {
+  opacity: 0.45;
+  pointer-events: none;
+}
+.cat-toggle {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.cat-toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent-only-run);
+}
+
+/* ── прогон ── */
+.run-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border: 1px solid var(--line);
+  margin-bottom: 14px;
+}
+.stat {
+  padding: 12px 14px;
+  background: var(--bg-3);
+}
+.stat + .stat { border-left: 1px solid var(--line); }
+.stat b {
+  display: block;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 21px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+.stat span { color: var(--faint); font-size: 12px; }
+.stat.ok b { color: var(--ok); }
+.stat.bad b { color: var(--bad); }
+.stat.run b { color: var(--accent-only-run); }
+@media (max-width: 640px) {
+  .stats { grid-template-columns: 1fr 1fr; }
+  .stat:nth-child(3) { border-left: 0; }
+  .stat:nth-child(n+3) { border-top: 1px solid var(--line); }
+}
+
+/* контактная лента — единственный «выходной» акцент */
+.strip {
+  position: relative;
+  height: 38px;
+  border: 1px solid var(--line-2);
+  background: var(--bg-3);
+  overflow: hidden;
+  margin-bottom: 8px;
+  /* перфорация плёнки сверху и снизу */
+  background-image:
+    radial-gradient(circle at 8px 5px, var(--bg-2) 3px, transparent 3.5px),
+    radial-gradient(circle at 8px calc(100% - 5px), var(--bg-2) 3px, transparent 3.5px);
+  background-size: 16px 100%;
+  background-repeat: repeat-x;
+}
+.strip .fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0%;
+  background: var(--accent-only-run);
+  opacity: 0.22;
+  border-right: 2px solid var(--accent-only-run);
+  transition: width 0.35s ease;
+}
+.strip .bad-tick {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: var(--tick);
+}
+.strip-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--faint);
+  font: 400 12px/1.4 "JetBrains Mono", Consolas, monospace;
+  margin-bottom: 14px;
+}
+
+/* журнал */
+.log {
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  padding: 11px 12px;
+  font: 400 12px/1.55 "JetBrains Mono", Consolas, monospace;
+  color: var(--muted);
+  max-height: 250px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.log .bad { color: var(--bad); }
+.log .ok { color: var(--ok); }
+.log .err { color: var(--bad); }
+
+.footer-note {
+  margin-top: 12px;
+  color: var(--faint);
+  font-size: 12.5px;
+}
+
+.alert {
+  display: none;
+  margin: 0 0 18px;
+  padding: 13px 15px;
+  border: 1px solid var(--bad);
+  background: var(--bg-3);
+  color: var(--bad);
+  font-size: 14px;
+}
+.alert.show { display: block; }
+.alert strong { display: block; margin-bottom: 3px; }
+.alert code {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 12px;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      yaroPhotoSort
+      <small>разбор архива через LM Studio</small>
+    </div>
+
+    <div class="theme-switch" role="group" aria-label="Оформление">
+      <button type="button" id="themeLab" aria-pressed="true">Проявочная</button>
+      <button type="button" id="themePaper" aria-pressed="false">Контактный лист</button>
+    </div>
+
+    <div class="top-actions">
+      <a class="btn btn-primary" id="btnStartServer" href="yarophoto://start">Запустить сервер</a>
+      <button class="btn" id="btnOpenPanel" type="button">Открыть панель</button>
+    </div>
+  </header>
+
+  <div class="alert" id="serverAlert">
+    <strong id="alertTitle">Сервер не отвечает</strong>
+    <span id="alertText">Нажми «Запустить сервер» — откроется терминал с <code>start.bat</code>. Потом обнови страницу (F5).</span>
+  </div>
+
+  <div class="grid">
+    <!-- левая колонка -->
+    <div class="col">
+
+      <section>
+        <h2>Папка с фото</h2>
+        <p class="hint">Путь к архиву. Можно выбрать диалогом, вписать руками или перетащить папку сюда.</p>
+        <div class="folder-row">
+          <input class="folder-input" id="inputFolder" type="text" spellcheck="false"
+                 placeholder="D:\Photos\2024" autocomplete="off">
+          <button class="btn" id="btnBrowse" type="button">Обзор…</button>
+        </div>
+        <div class="dropzone" id="dropzone">
+          Перетащите папку в это поле, или впишите путь выше
+        </div>
+      </section>
+
+      <section>
+        <h2>Что считаем браком</h2>
+        <p class="hint">Включи критерии, по которым модель ставит <code>quality=bad</code>.</p>
+        <fieldset>
+          <label class="check">
+            <input type="checkbox" id="ruleBlur" checked>
+            <span>Размытие
+              <span class="sub">смаз, не в фокусе, тряска</span>
+            </span>
+          </label>
+          <label class="check">
+            <input type="checkbox" id="ruleExposure" checked>
+            <span>Пересвет или недосвет
+              <span class="sub">выбитое небо, чёрная масса без деталей</span>
+            </span>
+          </label>
+          <label class="check">
+            <input type="checkbox" id="ruleJunk" checked>
+            <span>Мусорный кадр
+              <span class="sub">случайный снимок, руки, пол, потолок</span>
+            </span>
+          </label>
+        </fieldset>
+        <div class="num-row">
+          <label for="scoreThreshold">Брак, если score не выше</label>
+          <input type="number" id="scoreThreshold" min="1" max="5" value="2">
+        </div>
+      </section>
+
+      <section>
+        <h2>Форматы</h2>
+        <p class="hint">Какие расширения обходим. HEIC конвертируется на лету, RAW пока пропускаем.</p>
+        <div class="formats" id="formats"></div>
+      </section>
+
+      <section>
+        <h2>Поведение</h2>
+        <fieldset>
+          <legend>Что делать с плохими</legend>
+          <div class="radio-row" id="outputMode">
+            <label>
+              <input type="radio" name="outputMode" value="csv_only" checked>
+              <span>Только CSV, сам посмотрю</span>
+            </label>
+            <label>
+              <input type="radio" name="outputMode" value="move_bad">
+              <span>Перенести в «на_удаление»</span>
+            </label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Ещё</legend>
+          <label class="check">
+            <input type="checkbox" id="optRecursive" checked>
+            <span>Обходить подпапки</span>
+          </label>
+          <label class="check">
+            <input type="checkbox" id="optResume" checked>
+            <span>Resume — пропускать уже обработанные из CSV</span>
+          </label>
+          <label class="check">
+            <input type="checkbox" id="optDry">
+            <span>Dry-run — считать вердикты, ничего не двигать
+              <span class="sub">удобно перед первым реальным проходом</span>
+            </span>
+          </label>
+          <label class="check">
+            <input type="checkbox" id="optReasonName">
+            <span>В имя файла при переносе добавлять причину брака</span>
+          </label>
+          <label class="check">
+            <input type="checkbox" id="optPreserve" checked>
+            <span>Сохранять структуру подпапок при копировании</span>
+          </label>
+        </fieldset>
+      </section>
+
+      <section>
+        <h2>Категории и папки</h2>
+        <p class="hint">
+          Модель определит, что на снимке. Дальше — копия, перенос или не трогать.
+          Пустой путь или относительный (например <code>_sorted/people</code>) — внутри «Папки с фото».
+          Абсолютный (например <code>E:\Sorted\People</code>) — куда указал.
+        </p>
+        <label class="cat-toggle">
+          <input type="checkbox" id="optCategories">
+          <span>Включить категоризацию</span>
+        </label>
+        <table class="cat-table">
+          <thead>
+            <tr>
+              <th style="width:28px"></th>
+              <th>Категория</th>
+              <th>Папка</th>
+              <th style="width:110px">Действие</th>
+            </tr>
+          </thead>
+          <tbody id="cats"></tbody>
+        </table>
+        <p class="hint" id="destPreview" style="margin: 12px 0 0;"></p>
+      </section>
+    </div>
+
+    <!-- правая колонка -->
+    <div class="col">
+
+      <section id="lmCard">
+        <h2>LM Studio</h2>
+        <div class="lm-head">
+          <div class="dot" id="lmDot"></div>
+          <div class="lm-title" id="lmTitle">Проверяю…</div>
+          <div class="lm-sub" id="lmUrl">127.0.0.1:1234</div>
+        </div>
+        <dl class="kv">
+          <dt>Модель</dt><dd id="lmModel">—</dd>
+          <dt>Контекст</dt><dd id="lmCtx">—</dd>
+          <dt>Квант</dt><dd id="lmQuant">—</dd>
+          <dt>Параметры</dt><dd id="lmParams">—</dd>
+          <dt>Память</dt><dd id="lmVram">—</dd>
+          <dt>Скорость</dt><dd id="lmSpeed">—</dd>
+          <dt>Состояние</dt><dd id="lmState">—</dd>
+        </dl>
+      </section>
+
+      <section>
+        <h2>Прогон</h2>
+        <div class="run-bar">
+          <button class="btn btn-primary" id="btnStart" type="button">Запустить</button>
+          <button class="btn btn-danger" id="btnStop" type="button" disabled>Остановить</button>
+          <button class="btn btn-ghost" id="btnScan" type="button">Сколько файлов</button>
+        </div>
+
+        <div class="stats">
+          <div class="stat"><b id="stDone">0</b><span>обработано</span></div>
+          <div class="stat ok"><b id="stOk">0</b><span>ok</span></div>
+          <div class="stat bad"><b id="stBad">0</b><span>bad</span></div>
+          <div class="stat run"><b id="stEta">—</b><span>осталось</span></div>
+        </div>
+
+        <div class="strip" id="strip" aria-hidden="true"><div class="fill" id="stripFill"></div></div>
+        <div class="strip-label">
+          <span id="stripCaption">готов к запуску</span>
+          <span id="stripPct">0%</span>
+        </div>
+
+        <div class="log" id="log">—</div>
+        <div class="footer-note">
+          CSV лежит в <code>results/analysis.csv</code>, настройки — в <code>config.json</code>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const api = {
+  async get(path) {
+    const r = await fetch(path);
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.status);
+    return r.json();
+  },
+  async post(path, body) {
+    const r = await fetch(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.status);
+    return r.json();
+  },
+};
+
+/* тема */
+function setTheme(name) {
+  document.documentElement.dataset.theme = name;
+  localStorage.setItem("yarophoto-theme", name);
+  $("themeLab").setAttribute("aria-pressed", name === "lab" ? "true" : "false");
+  $("themePaper").setAttribute("aria-pressed", name === "paper" ? "true" : "false");
+}
+$("themeLab").addEventListener("click", () => setTheme("lab"));
+$("themePaper").addEventListener("click", () => setTheme("paper"));
+setTheme(localStorage.getItem("yarophoto-theme") || "lab");
+
+const FORMAT_LIST = [
+  { ext: ".jpg", label: ".jpg/.jpeg", match: [".jpg", ".jpeg"] },
+  { ext: ".png", label: ".png", match: [".png"] },
+  { ext: ".webp", label: ".webp", match: [".webp"] },
+  { ext: ".heic", label: ".heic/.heif", match: [".heic", ".heif"] },
+  { ext: ".bmp", label: ".bmp", match: [".bmp"] },
+  { ext: ".gif", label: ".gif", match: [".gif"] },
+  { ext: ".tif", label: ".tif/.tiff", match: [".tif", ".tiff"] },
+];
+
+const DEFAULT_FORMATS = [".jpg", ".jpeg", ".png", ".webp"];
+
+const DEFAULT_CATEGORIES = [
+  { key: "people", name: "Люди / портреты" },
+  { key: "docs", name: "Документы / сканы" },
+  { key: "screenshot", name: "Скриншоты" },
+  { key: "food", name: "Еда" },
+  { key: "nature", name: "Пейзаж / природа" },
+  { key: "animals", name: "Животные" },
+  { key: "transport", name: "Транспорт" },
+  { key: "interior", name: "Интерьер / вещи" },
+  { key: "other", name: "Прочее" },
+].map((c) => ({ ...c, enabled: true, dest: "", action: "copy" }));
+
+let config = null;
+let saveTimer = null;
+let polling = false;
+
+function serverOffline(show) {
+  $("serverAlert").classList.toggle("show", !!show);
+  $("btnStartServer").style.display = show ? "" : "none";
+  $("btnOpenPanel").style.display = (!show && location.protocol === "file:") ? "" : "none";
+}
+
+function collectFormats() {
+  const out = [];
+  document.querySelectorAll("#formats input:checked").forEach((input) => {
+    const item = FORMAT_LIST.find((f) => f.ext === input.dataset.ext);
+    if (item) out.push(...item.match);
+  });
+  return out.length ? out : [".jpg", ".jpeg", ".png", ".webp"];
+}
+
+function collectCategories() {
+  return Array.from(document.querySelectorAll("#cats tr")).map((row) => ({
+    key: row.dataset.key,
+    name: row.dataset.name,
+    enabled: row.querySelector(".cat-on").checked,
+    dest: row.querySelector(".cat-dest").value.trim(),
+    action: row.querySelector(".cat-action").value,
+  }));
+}
+
+function currentConfigPatch() {
+  return {
+    input_folder: $("inputFolder").value.trim(),
+    output_mode: document.querySelector('input[name="outputMode"]:checked')?.value || "csv_only",
+    bad_folder_name: "на_удаление",
+    score_threshold: Math.max(1, Math.min(5, parseInt($("scoreThreshold").value || "2", 10))),
+    quality_rules: {
+      blur: $("ruleBlur").checked,
+      exposure: $("ruleExposure").checked,
+      junk: $("ruleJunk").checked,
+    },
+    formats: collectFormats(),
+    recursive: $("optRecursive").checked,
+    resume: $("optResume").checked,
+    dry_run: $("optDry").checked,
+    categorization: $("optCategories").checked,
+    categories: collectCategories(),
+    add_reason_to_name: $("optReasonName").checked,
+    preserve_structure: $("optPreserve").checked,
+    max_image_side: 1280,
+  };
+}
+
+async function saveConfigNow() {
+  try {
+    await api.post("/api/config", currentConfigPatch());
+  } catch (e) {
+    console.warn("save config", e);
+  }
+}
+
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveConfigNow, 350);
+}
+
+function renderFormats(selected) {
+  const box = $("formats");
+  box.innerHTML = "";
+  const sel = new Set((selected || []).map((s) => s.toLowerCase()));
+  FORMAT_LIST.forEach((f) => {
+    const on = f.match.some((m) => sel.has(m));
+    const label = document.createElement("label");
+    label.className = "fmt";
+    label.innerHTML = `<input type="checkbox" data-ext="${f.ext}" ${on ? "checked" : ""}><span>${f.label}</span>`;
+    label.querySelector("input").addEventListener("change", scheduleSave);
+    box.appendChild(label);
+  });
+}
+
+function syncCatRow(row) {
+  const on = row.querySelector(".cat-on").checked;
+  const master = $("optCategories").checked;
+  const enabled = on && master;
+  row.querySelector(".cat-dest").disabled = !enabled;
+  row.querySelector(".cat-action").disabled = !enabled;
+  row.classList.toggle("cat-off", !on);
+}
+
+function syncAllCatRows() {
+  document.querySelectorAll("#cats tr").forEach(syncCatRow);
+  $("cats").closest("table").classList.toggle("cats-locked", !$("optCategories").checked);
+}
+
+function renderCategories(cats) {
+  const body = $("cats");
+  body.innerHTML = "";
+  (cats || []).forEach((c) => {
+    const row = document.createElement("tr");
+    row.dataset.key = c.key;
+    row.dataset.name = c.name;
+    row.innerHTML = `
+      <td><input type="checkbox" class="cat-on" ${c.enabled ? "checked" : ""} aria-label="${escapeAttr(c.name)}"></td>
+      <td>${escapeHtml(c.name)}</td>
+      <td><input type="text" class="cat-dest" placeholder="_sorted/${c.key}" value="${escapeAttr(c.dest || "")}" spellcheck="false"></td>
+      <td>
+        <select class="cat-action">
+          <option value="skip" ${c.action === "skip" ? "selected" : ""}>не трогать</option>
+          <option value="copy" ${c.action === "copy" ? "selected" : ""}>копия</option>
+          <option value="move" ${c.action === "move" ? "selected" : ""}>перенос</option>
+        </select>
+      </td>`;
+    row.querySelectorAll("input, select").forEach((el) => el.addEventListener("change", scheduleSave));
+    row.querySelector(".cat-on").addEventListener("change", () => {
+      syncCatRow(row);
+      scheduleSave();
+    });
+    row.querySelector(".cat-dest").addEventListener("input", updateDestPreview);
+    body.appendChild(row);
+    syncCatRow(row);
+  });
+  syncAllCatRows();
+  updateDestPreview();
+}
+
+function escapeAttr(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+}
+function escapeHtml(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/* гибрид путей: как resolve_dest в server.py */
+function resolveDest(dest, inputFolder, key) {
+  const raw = (dest || "").trim();
+  const base = (inputFolder || "").trim() || "…";
+  if (!raw) return joinPath(base, "_sorted", key);
+  if (/^([a-zA-Z]:[\\/]|\\\\)/.test(raw)) return raw;
+  return joinPath(base, raw);
+}
+function joinPath(...parts) {
+  return parts
+    .filter(Boolean)
+    .join("\\")
+    .replace(/\\+/g, "\\")
+    .replace(/\\$/,"");
+}
+
+function updateDestPreview() {
+  const el = $("destPreview");
+  if (!el) return;
+  const folder = $("inputFolder").value.trim();
+  const rows = Array.from(document.querySelectorAll("#cats tr")).slice(0, 3);
+  if (!rows.length) {
+    el.textContent = "";
+    return;
+  }
+  const lines = rows.map((row) => {
+    const key = row.dataset.key;
+    const dest = row.querySelector(".cat-dest").value;
+    return `${key} → ${resolveDest(dest, folder, key)}`;
+  });
+  el.textContent = "Пример: " + lines.join("  ·  ");
+}
+
+function applyConfigToForm(cfg) {
+  $("inputFolder").value = cfg.input_folder || "";
+  const mode = document.querySelector(`input[name="outputMode"][value="${cfg.output_mode || "csv_only"}"]`);
+  if (mode) mode.checked = true;
+  $("scoreThreshold").value = cfg.score_threshold ?? 2;
+  $("ruleBlur").checked = !!(cfg.quality_rules && cfg.quality_rules.blur);
+  $("ruleExposure").checked = !!(cfg.quality_rules && cfg.quality_rules.exposure);
+  $("ruleJunk").checked = !!(cfg.quality_rules && cfg.quality_rules.junk);
+  renderFormats((cfg.formats && cfg.formats.length) ? cfg.formats : DEFAULT_FORMATS);
+  $("optRecursive").checked = !!cfg.recursive;
+  $("optResume").checked = !!cfg.resume;
+  $("optDry").checked = !!cfg.dry_run;
+  $("optCategories").checked = !!cfg.categorization;
+  $("optReasonName").checked = !!cfg.add_reason_to_name;
+  $("optPreserve").checked = !!cfg.preserve_structure;
+  renderCategories((cfg.categories && cfg.categories.length) ? cfg.categories : DEFAULT_CATEGORIES);
+}
+
+function bindForm() {
+  [
+    "inputFolder", "scoreThreshold", "ruleBlur", "ruleExposure", "ruleJunk",
+    "optRecursive", "optResume", "optDry", "optCategories", "optReasonName", "optPreserve",
+  ].forEach((id) => $(id).addEventListener("change", scheduleSave));
+  $("optCategories").addEventListener("change", syncAllCatRows);
+  document.querySelectorAll('input[name="outputMode"]').forEach((el) => el.addEventListener("change", scheduleSave));
+}
+
+function fmtNum(n) {
+  return new Intl.NumberFormat("ru-RU").format(n);
+}
+
+function renderLm(data) {
+  const dot = $("lmDot");
+  if (data.connected) {
+    dot.className = "dot on";
+    $("lmTitle").textContent = "подключён";
+  } else {
+    dot.className = "dot off";
+    $("lmTitle").textContent = "недоступен, запусти LM Studio";
+  }
+  $("lmUrl").textContent = (data.url || "").replace(/^https?:\/\//, "");
+  $("lmModel").textContent = data.active_model || (data.models && data.models[0]?.id) || "—";
+  $("lmCtx").textContent = data.context_length ? `${fmtNum(data.context_length)} токенов` : "—";
+  $("lmQuant").textContent = data.quant || "—";
+  $("lmParams").textContent = data.params_b ? String(data.params_b) : "—";
+  if (data.vram_used_gb != null) {
+    $("lmVram").textContent = `${data.vram_used_gb} / ${data.vram_total_gb ?? "?"} ГБ`;
+  } else {
+    $("lmVram").textContent = "—";
+  }
+  $("lmSpeed").textContent = data.sec_per_image
+    ? `${data.sec_per_image} с на фото`
+    : (data.speed_tps ? `${data.speed_tps} ток/с` : "—");
+  $("lmState").textContent = data.load_state || (data.connected ? "готова" : "нет связи");
+}
+
+function renderJob(job, logLines) {
+  $("stDone").textContent = fmtNum(job.done || 0);
+  $("stOk").textContent = fmtNum(job.ok || 0);
+  $("stBad").textContent = fmtNum(job.bad || 0);
+  $("stEta").textContent = job.eta || "—";
+  const pct = job.percent || 0;
+  $("stripFill").style.width = pct + "%";
+  $("stripPct").textContent = pct.toFixed(1) + "%";
+  $("stripCaption").textContent = job.running
+    ? (job.current_file || "работаю…")
+    : (job.message || "готов к запуску");
+  $("btnStart").disabled = !!job.running;
+  $("btnStop").disabled = !job.running;
+
+  const strip = $("strip");
+  strip.querySelectorAll(".bad-tick").forEach((n) => n.remove());
+  if (job.total > 0) {
+    const ticks = Math.min(job.bad || 0, 36);
+    for (let i = 0; i < ticks; i++) {
+      const t = document.createElement("div");
+      t.className = "bad-tick";
+      t.style.left = (2 + Math.random() * Math.max(pct, 2)) + "%";
+      strip.appendChild(t);
+    }
+  }
+
+  const logEl = $("log");
+  if (logLines && logLines.length) {
+    logEl.innerHTML = logLines.map((line) => {
+      let cls = "";
+      if (/^\d{2}:\d{2}:\d{2}\s+bad/.test(line)) cls = "bad";
+      else if (/^\d{2}:\d{2}:\d{2}\s+ok\s/.test(line)) cls = "ok";
+      else if (/ERR|Ошибка|Критическая/.test(line)) cls = "err";
+      return `<div class="${cls}">${escapeHtml(line)}</div>`;
+    }).join("");
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+}
+
+async function poll() {
+  if (polling) return;
+  polling = true;
+  try {
+    const [lm, st] = await Promise.all([
+      api.get("/api/lmstudio").catch(() => ({ connected: false })),
+      api.get("/api/status"),
+    ]);
+    renderLm(lm);
+    renderJob(st.job || {}, st.log || []);
+    serverOffline(false);
+  } catch (e) {
+    serverOffline(true);
+  } finally {
+    polling = false;
+  }
+}
+
+async function init() {
+  // сначала рисуем списки с дефолтами, чтобы блоки не были пустыми
+  renderFormats(DEFAULT_FORMATS);
+  renderCategories(DEFAULT_CATEGORIES);
+
+  try {
+    const data = await api.get("/api/config");
+    config = data.config;
+    applyConfigToForm(config);
+    serverOffline(false);
+  } catch (e) {
+    serverOffline(true);
+  }
+  bindForm();
+  poll();
+  setInterval(poll, 2500);
+
+  $("btnBrowse").addEventListener("click", async () => {
+    try {
+      const res = await api.post("/api/browse-folder");
+      if (res.path) {
+        $("inputFolder").value = res.path;
+        scheduleSave();
+        updateDestPreview();
+      }
+    } catch (e) {
+      alert("Не получилось открыть диалог: " + e.message);
+    }
+  });
+
+  $("inputFolder").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      saveConfigNow();
+    }
+  });
+  $("inputFolder").addEventListener("input", updateDestPreview);
+
+  const dz = $("dropzone");
+  ["dragenter", "dragover"].forEach((ev) => {
+    dz.addEventListener(ev, (e) => {
+      e.preventDefault();
+      dz.classList.add("drag");
+    });
+  });
+  ["dragleave", "drop"].forEach((ev) => {
+    dz.addEventListener(ev, (e) => {
+      e.preventDefault();
+      dz.classList.remove("drag");
+    });
+  });
+  dz.addEventListener("drop", (e) => {
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    const path = file && (file.path || file.webkitFullPath);
+    if (path) {
+      $("inputFolder").value = path;
+      scheduleSave();
+      updateDestPreview();
+    } else if (file) {
+      $("inputFolder").value = file.name;
+      dz.textContent = `Принято «${file.name}», но браузер не отдал полный путь. Нажми «Обзор…» или впиши путь вручную.`;
+    }
+  });
+
+  $("btnScan").addEventListener("click", async () => {
+    await saveConfigNow();
+    try {
+      const res = await api.get("/api/scan");
+      $("stripCaption").textContent = res.ok
+        ? `подходит файлов: ${fmtNum(res.count)}`
+        : (res.error || "не посчитать");
+    } catch (e) {
+      alert(e.message);
+    }
+  });
+
+  $("btnStart").addEventListener("click", async () => {
+    await saveConfigNow();
+    if (!confirm("Запустить сортировку?")) return;
+    try {
+      await api.post("/api/start");
+      poll();
+    } catch (e) {
+      alert("Не удалось запустить: " + e.message);
+    }
+  });
+
+  $("btnStop").addEventListener("click", async () => {
+    try {
+      await api.post("/api/stop");
+      poll();
+    } catch (e) {
+      alert(e.message);
+    }
+  });
+
+  $("btnOpenPanel").addEventListener("click", () => {
+    window.open("http://127.0.0.1:8460", "_blank");
+  });
+
+  if (location.protocol === "file:") {
+    $("alertTitle").textContent = "Страница открыта без сервера";
+    $("alertText").innerHTML = "Нажми «Запустить сервер», потом обнови страницу (F5).";
+  }
+}
+
+init();
+</script>
+</body>
+</html>
