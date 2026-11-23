@@ -833,6 +833,16 @@ legend {
     </div>
   </div>
 
+  <div class="modal-overlay" id="dupesModal" hidden>
+    <div class="modal-help" role="dialog" aria-modal="true" aria-labelledby="dupesModalTitle">
+      <div class="modal-help-head">
+        <h2 id="dupesModalTitle" data-i18n="dupes.title"></h2>
+        <button class="btn" type="button" id="dupesClose" data-i18n="modal.confirm"></button>
+      </div>
+      <div class="modal-help-body" id="dupesBody"></div>
+    </div>
+  </div>
+
   <div class="grid">
     <div class="col">
 
@@ -1029,6 +1039,46 @@ legend {
           <input type="checkbox" id="optScreensDocs">
           <span data-i18n="events.screens"></span>
         </label>
+      </section>
+
+      <section id="dupesSection">
+        <h2 data-i18n="dupes.title"></h2>
+        <p class="hint" data-i18n="dupes.hint"></p>
+        <fieldset>
+          <legend data-i18n="dupes.actionTitle"></legend>
+          <div class="radio-row" id="dupesAction">
+            <label data-i18n-title="dupes.markTip">
+              <input type="radio" name="dupesAction" value="mark" checked>
+              <span data-i18n="dupes.mark"></span>
+            </label>
+            <label data-i18n-title="dupes.groupTip">
+              <input type="radio" name="dupesAction" value="group">
+              <span data-i18n="dupes.group"></span>
+            </label>
+            <label data-i18n-title="dupes.rejectTip">
+              <input type="radio" name="dupesAction" value="reject_extra">
+              <span data-i18n="dupes.reject"></span>
+            </label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend data-i18n="dupes.keeperTitle"></legend>
+          <div class="radio-row" id="dupesKeeper">
+            <label data-i18n-title="dupes.keeperResTip">
+              <input type="radio" name="dupesKeeper" value="resolution" checked>
+              <span data-i18n="dupes.keeperRes"></span>
+            </label>
+            <label data-i18n-title="dupes.keeperTimeTip">
+              <input type="radio" name="dupesKeeper" value="time">
+              <span data-i18n="dupes.keeperTime"></span>
+            </label>
+          </div>
+        </fieldset>
+        <div class="run-bar" style="margin: 12px 0 0;">
+          <button class="btn" id="btnDupes" type="button" data-i18n="dupes.scan"></button>
+          <button class="btn btn-ghost" id="btnDupesView" type="button" data-i18n="dupes.view" hidden></button>
+        </div>
+        <p class="hint" id="dupesStatus" style="margin: 10px 0 0;"></p>
       </section>
     </div>
 
@@ -1312,6 +1362,8 @@ function currentConfigPatch() {
     event_base: "_event",
     event_gap_hours: Math.max(0.5, Math.min(72, parseFloat($("eventGap").value || "3"))),
     always_sort_screens_docs: $("optScreensDocs").checked,
+    dupes_action: document.querySelector('input[name="dupesAction"]:checked')?.value || "mark",
+    dupes_keeper: document.querySelector('input[name="dupesKeeper"]:checked')?.value || "resolution",
     ui_lang: LANG,
     categories: collectCategories(),
     add_reason_to_name: $("optReasonName").checked,
@@ -1487,6 +1539,10 @@ function applyConfigToForm(cfg) {
   if (evName) evName.checked = true;
   $("optScreensDocs").checked = !!cfg.always_sort_screens_docs;
   $("eventGap").value = cfg.event_gap_hours ?? 3;
+  const dupesAction = document.querySelector(`input[name="dupesAction"][value="${cfg.dupes_action || "mark"}"]`);
+  if (dupesAction) dupesAction.checked = true;
+  const dupesKeeper = document.querySelector(`input[name="dupesKeeper"][value="${cfg.dupes_keeper || "resolution"}"]`);
+  if (dupesKeeper) dupesKeeper.checked = true;
   syncEventsCategories();
   $("optReasonName").checked = !!cfg.add_reason_to_name;
   $("optPreserve").checked = !!cfg.preserve_structure;
@@ -1517,8 +1573,11 @@ function bindForm() {
   document.querySelectorAll('input[name="reviewTiming"]').forEach((el) => el.addEventListener("change", scheduleSave));
   document.querySelectorAll('input[name="eventMethod"]').forEach((el) => el.addEventListener("change", scheduleSave));
   document.querySelectorAll('input[name="eventName"]').forEach((el) => el.addEventListener("change", scheduleSave));
+  document.querySelectorAll('input[name="dupesAction"]').forEach((el) => el.addEventListener("change", scheduleSave));
+  document.querySelectorAll('input[name="dupesKeeper"]').forEach((el) => el.addEventListener("change", scheduleSave));
   syncReviewTiming();
   syncEventsCategories();
+  bindDupes();
 }
 
 function fmtNum(n) {
@@ -1892,6 +1951,72 @@ function bindReview() {
     if (e.key === "Escape" && !modal.hidden) close();
   });
   window.__openReviewPending = openPending;
+}
+
+/* ── duplicates ── */
+async function refreshDupesStatus() {
+  try {
+    const st = await api.get("/api/dupes/status");
+    const s = st.state || {};
+    const el = $("dupesStatus");
+    if (s.running) {
+      el.textContent = `${t("dupes.scanning")} ${s.done || 0}/${s.total || 0}`;
+      $("btnDupes").disabled = true;
+    } else {
+      $("btnDupes").disabled = false;
+      el.textContent = s.message || "";
+      if (s.groups > 0) $("btnDupesView").hidden = false;
+    }
+  } catch (e) { /* ignore */ }
+}
+
+function bindDupes() {
+  $("btnDupes").addEventListener("click", async () => {
+    await saveConfigNow();
+    try {
+      await api.post("/api/dupes/scan");
+      refreshDupesStatus();
+    } catch (e) {
+      alert(e.message);
+    }
+  });
+
+  const modal = $("dupesModal");
+  $("btnDupesView").addEventListener("click", async () => {
+    try {
+      const res = await api.get("/api/dupes");
+      const body = $("dupesBody");
+      const groups = res.groups || [];
+      if (!groups.length) {
+        body.innerHTML = `<div class="review-empty">${escapeHtml(t("dupes.empty"))}</div>`;
+      } else {
+        body.innerHTML = groups.map((g) => `
+          <div class="help-step">
+            <div class="help-num">${g.id}</div>
+            <div>
+              <h3>${escapeHtml(g.keeper_name || "")} · ${g.files.length} ${escapeHtml(t("dupes.filesWord"))}</h3>
+              <p>${escapeHtml((g.names || []).join(", "))}</p>
+            </div>
+          </div>`).join("");
+      }
+      modal.hidden = false;
+      document.body.style.overflow = "hidden";
+    } catch (e) {
+      alert(e.message);
+    }
+  });
+  $("dupesClose").addEventListener("click", () => {
+    modal.hidden = true;
+    document.body.style.overflow = "";
+  });
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      modal.hidden = true;
+      document.body.style.overflow = "";
+    }
+  });
+  refreshDupesStatus();
+  setInterval(refreshDupesStatus, 2500);
 }
 
 init();

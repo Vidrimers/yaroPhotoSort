@@ -48,6 +48,7 @@ RESULTS_DIR = ROOT / "results"
 CSV_PATH = RESULTS_DIR / "analysis.csv"
 LOG_PATH = RESULTS_DIR / "run.log"
 REVIEW_PATH = RESULTS_DIR / "review_queue.jsonl"
+DUPES_PATH = RESULTS_DIR / "dupes.json"
 
 LM_BASE = os.environ.get("LMSTUDIO_URL", "http://127.0.0.1:1234")
 
@@ -138,6 +139,8 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "event_base": "_event",
     "event_gap_hours": 3.0,
     "always_sort_screens_docs": False,
+    "dupes_action": "mark",              # mark | group | reject_extra
+    "dupes_keeper": "resolution",        # resolution | time
     "categories": [
         {
             "key": c["key"],
@@ -423,6 +426,136 @@ def dhash(path: Path, hash_size: int = 8) -> int:
                 bits |= 1 << i
             i += 1
     return bits
+
+
+# ────────────────────────────── дубликаты ──────────────────────────────
+
+DUPES_LOCK = threading.Lock()
+DUPES_STATE: dict[str, Any] = {
+    "running": False,
+    "done": 0,
+    "total": 0,
+    "groups": 0,
+    "message": "",
+}
+
+
+def dupes_snapshot() -> dict[str, Any]:
+    with DUPES_LOCK:
+        return dict(DUPES_STATE)
+
+
+def image_megapixels(path: Path) -> float:
+    try:
+        with Image.open(path) as img:
+            w, h = img.size
+            return w * h / 1_000_000
+    except Exception:
+        return 0.0
+
+
+def find_duplicate_groups(files: list[Path], max_dist: int = 6) -> list[list[Path]]:
+    """Группы почти одинаковых кадров по dHash + проверка размера кадра."""
+    scored: list[tuple[Path, int]] = []
+    for p in files:
+        try:
+            scored.append((p, dhash(p)))
+        except Exception:
+            continue
+        with DUPES_LOCK:
+            DUPES_STATE["done"] += 1
+
+    scored.sort(key=lambda x: x[1])
+    used = [False] * len(scored)
+    groups: list[list[Path]] = []
+    for i in range(len(scored)):
+        if used[i]:
+            continue
+        group = [scored[i][0]]
+        used[i] = True
+        for j in range(i + 1, len(scored)):
+            if used[j]:
+                continue
+            if bin(scored[i][1] ^ scored[j][1]).count("1") <= max_dist:
+                group.append(scored[j][0])
+                used[j] = True
+        if len(group) > 1:
+            groups.append(group)
+    return groups
+
+
+def pick_keeper(group: list[Path], mode: str) -> Path:
+    if mode == "time":
+        return max(group, key=lambda p: p.stat().st_mtime)
+    return max(group, key=image_megapixels)
+
+
+def run_dupes_scan(cfg: dict[str, Any]) -> None:
+    try:
+        files = iter_images(cfg)
+        with DUPES_LOCK:
+            DUPES_STATE.update(
+                running=True, done=0, total=len(files), groups=0,
+                message="hashing",
+            )
+        groups = find_duplicate_groups(files)
+        action = cfg.get("dupes_action") or "mark"
+        keeper_mode = cfg.get("dupes_keeper") or "resolution"
+        input_folder = cfg.get("input_folder") or ""
+        payload = []
+
+        for gi, group in enumerate(groups, 1):
+            keeper = pick_keeper(group, keeper_mode)
+            entry = {
+                "id": gi,
+                "keeper": str(keeper),
+                "keeper_name": keeper.name,
+                "files": [str(p) for p in group],
+                "names": [p.name for p in group],
+            }
+            payload.append(entry)
+
+            if action == "group":
+                dest_root = Path(input_folder) / "_dupes" / f"group_{gi:03d}"
+                for p in group:
+                    if not p.is_file():
+                        continue
+                    dest = dest_root / p.name
+                    dest_root.mkdir(parents=True, exist_ok=True)
+                    if dest.exists():
+                        dest = dest_root / f"{p.stem}_{int(time.time())}{p.suffix}"
+                    shutil.move(str(p), str(dest))
+                entry["action"] = f"group->{dest_root.name}"
+            elif action == "reject_extra":
+                rej = Path(input_folder) / (cfg.get("bad_folder_name") or "_rejects")
+                rej.mkdir(parents=True, exist_ok=True)
+                for p in group:
+                    if p == keeper or not p.is_file():
+                        continue
+                    dest = rej / p.name
+                    if dest.exists():
+                        dest = rej / f"{p.stem}_{int(time.time())}{p.suffix}"
+                    shutil.move(str(p), str(dest))
+                entry["action"] = "reject_extra"
+            else:
+                entry["action"] = "mark"
+
+            with DUPES_LOCK:
+                DUPES_STATE["groups"] = gi
+
+        DUPES_PATH.write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+        with DUPES_LOCK:
+            DUPES_STATE.update(
+                running=False,
+                message=f"done: {len(groups)} groups",
+            )
+        log(f"Duplicates: {len(groups)} groups ({action})")
+    except Exception as e:
+        with DUPES_LOCK:
+            DUPES_STATE.update(running=False, message=f"error: {e}")
+        log(f"Duplicates error: {e}")
 
 
 def assign_event_folders(files: list[Path], cfg: dict[str, Any]) -> dict[str, str]:
@@ -1114,6 +1247,8 @@ class ConfigModel(BaseModel):
     event_base: str = "_event"
     event_gap_hours: float = 3.0
     always_sort_screens_docs: bool = False
+    dupes_action: str = "mark"
+    dupes_keeper: str = "resolution"
     categories: list[dict[str, Any]] = []
     add_reason_to_name: bool = False
     preserve_structure: bool = True
@@ -1260,6 +1395,36 @@ def api_review_list() -> dict[str, Any]:
 class ReviewDecision(BaseModel):
     path: str
     decision: str  # keep | reject | skip
+
+
+@app.post("/api/dupes/scan")
+def api_dupes_scan() -> dict[str, Any]:
+    with DUPES_LOCK:
+        if DUPES_STATE.get("running"):
+            raise HTTPException(409, "Duplicate scan is already running")
+    cfg = load_config()
+    if not cfg.get("input_folder"):
+        raise HTTPException(400, "No folder selected")
+    if not Path(cfg["input_folder"]).is_dir():
+        raise HTTPException(400, f"Folder not found: {cfg['input_folder']}")
+    threading.Thread(target=run_dupes_scan, args=(cfg,), daemon=True).start()
+    return {"ok": True}
+
+
+@app.get("/api/dupes/status")
+def api_dupes_status() -> dict[str, Any]:
+    return {"ok": True, "state": dupes_snapshot()}
+
+
+@app.get("/api/dupes")
+def api_dupes_list() -> dict[str, Any]:
+    if not DUPES_PATH.exists():
+        return {"ok": True, "count": 0, "groups": []}
+    try:
+        groups = json.loads(DUPES_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        groups = []
+    return {"ok": True, "count": len(groups), "groups": groups}
 
 
 @app.get("/api/review/image")
