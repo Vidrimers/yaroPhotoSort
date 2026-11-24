@@ -123,16 +123,39 @@ def do_copy(src: Path, dest: Path, run_id: str | None = None) -> None:
     journal_record("copy", str(src), str(dest), run_id)
 
 
+def cleanup_empty_dirs(input_folder: str, paths: list[str]) -> list[str]:
+    """Удаляет только пустые папки вдоль этих путей (не глубже input_folder)."""
+    removed: list[str] = []
+    base = Path(input_folder) if input_folder else None
+    candidates: set[Path] = set()
+    for raw in paths:
+        d = Path(raw).parent
+        while base and d != base and str(d).startswith(str(base)):
+            candidates.add(d)
+            d = d.parent
+    for d in sorted(candidates, key=lambda x: len(str(x)), reverse=True):
+        try:
+            if d.is_dir() and not any(d.iterdir()):
+                d.rmdir()
+                removed.append(str(d))
+        except Exception:
+            continue
+    return removed
+
+
 def undo_run(run_id: str) -> dict[str, Any]:
     """Разворачивает операции прогона в обратном порядке."""
     rows = load_journal()
     ops = [r for r in rows if r.get("run") == run_id]
     undone = 0
     errors: list[str] = []
+    touched: list[str] = []
     for rec in reversed(ops):
         src = Path(str(rec.get("from") or ""))
         dest = Path(str(rec.get("to") or ""))
         op = rec.get("op")
+        touched.append(str(src))
+        touched.append(str(dest))
         try:
             if op == "move":
                 if dest.is_file() and not src.exists():
@@ -148,7 +171,15 @@ def undo_run(run_id: str) -> dict[str, Any]:
         except Exception as e:
             errors.append(f"{rec.get('from')}: {e}")
     rewrite_journal([r for r in rows if r.get("run") != run_id])
-    return {"ok": not errors, "run": run_id, "undone": undone, "errors": errors}
+    cfg = load_config()
+    removed = cleanup_empty_dirs(cfg.get("input_folder") or "", touched)
+    return {
+        "ok": not errors,
+        "run": run_id,
+        "undone": undone,
+        "removed_dirs": removed,
+        "errors": errors,
+    }
 
 LM_BASE = os.environ.get("LMSTUDIO_URL", "http://127.0.0.1:1234")
 
@@ -1823,20 +1854,24 @@ class UndoOne(BaseModel):
 def undo_single(op: str, from_path: str, to_path: str) -> dict[str, Any]:
     src = Path(from_path)
     dest = Path(to_path)
+    action = "skip"
     if op == "move":
         if dest.is_file() and not src.exists():
             src.parent.mkdir(parents=True, exist_ok=True)
             if src.exists():
                 src = src.parent / f"{dest.stem}_undo_{int(time.time())}{dest.suffix}"
             shutil.move(str(dest), str(src))
-            return {"ok": True, "action": f"restored->{src}"}
-        return {"ok": True, "action": "skip"}
-    if op == "copy":
+            action = f"restored->{src}"
+    elif op == "copy":
         if dest.is_file():
             dest.unlink()
-            return {"ok": True, "action": "copy-deleted"}
-        return {"ok": True, "action": "skip"}
-    return {"ok": False, "action": "unknown-op"}
+            action = "copy-deleted"
+    else:
+        return {"ok": False, "action": "unknown-op"}
+
+    cfg = load_config()
+    cleanup_empty_dirs(cfg.get("input_folder") or "", [from_path, to_path])
+    return {"ok": True, "action": action}
 
 
 def drop_journal_record(op: str, from_path: str, to_path: str) -> None:
