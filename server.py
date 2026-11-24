@@ -105,13 +105,15 @@ def rewrite_journal(rows: list[dict[str, Any]]) -> None:
             f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
-def do_move(src: Path, dest: Path, run_id: str | None = None) -> None:
+def do_move(src: Path, dest: Path, run_id: str | None = None) -> Path:
+    """Перемещает файл, возвращает реальный путь назначения."""
     run_id = run_id or CURRENT_RUN
     dest.parent.mkdir(parents=True, exist_ok=True)
     if dest.exists():
         dest = dest.parent / f"{src.stem}_{int(time.time())}{src.suffix}"
     shutil.move(str(src), str(dest))
     journal_record("move", str(src), str(dest), run_id)
+    return dest
 
 
 def do_copy(src: Path, dest: Path, run_id: str | None = None) -> None:
@@ -121,6 +123,28 @@ def do_copy(src: Path, dest: Path, run_id: str | None = None) -> None:
         dest = dest.parent / f"{src.stem}_{int(time.time())}{src.suffix}"
     shutil.copy2(str(src), str(dest))
     journal_record("copy", str(src), str(dest), run_id)
+
+
+def drop_dupes_groups_for_paths(paths: list[str]) -> int:
+    """Убирает из dupes.json группы, где есть хоть один из этих файлов."""
+    if not DUPES_PATH.exists() or not paths:
+        return 0
+    try:
+        groups = json.loads(DUPES_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return 0
+    touched = set(paths)
+    keep = []
+    removed = 0
+    for g in groups:
+        gfiles = {str(f) for f in (g.get("files") or [])}
+        if gfiles & touched:
+            removed += 1
+            continue
+        keep.append(g)
+    if removed:
+        DUPES_PATH.write_text(json.dumps(keep, ensure_ascii=False, indent=2), encoding="utf-8")
+    return removed
 
 
 def cleanup_empty_dirs(input_folder: str, paths: list[str]) -> list[str]:
@@ -179,6 +203,8 @@ def undo_run(run_id: str) -> dict[str, Any]:
             DUPES_PATH.write_text("[]", encoding="utf-8")
         except Exception:
             pass
+    else:
+        drop_dupes_groups_for_paths(touched)
     return {
         "ok": not errors,
         "run": run_id,
@@ -810,20 +836,33 @@ def run_dupes_scan(cfg: dict[str, Any]) -> None:
 
             if action == "group":
                 dest_root = Path(input_folder) / "_dupes" / f"group_{gi:03d}"
+                new_files = []
                 for p in group:
                     if not p.is_file():
                         continue
                     dest = dest_root / p.name
-                    do_move(p, dest)
+                    real = do_move(p, dest)
+                    new_files.append(str(real))
+                    if str(p) == str(keeper):
+                        entry["keeper"] = str(real)
+                if new_files:
+                    entry["files"] = new_files
+                    entry["original_files"] = [str(x) for x in group]
                 entry["action"] = f"group->{dest_root.name}"
             elif action == "reject_extra":
                 rej = Path(input_folder) / (cfg.get("bad_folder_name") or "_rejects")
                 rej.mkdir(parents=True, exist_ok=True)
+                current = []
                 for p in group:
                     if p == keeper or not p.is_file():
                         continue
                     dest = rej / p.name
-                    do_move(p, dest)
+                    real = do_move(p, dest)
+                    current.append(str(real))
+                if keeper.is_file():
+                    current.insert(0, str(keeper))
+                entry["files"] = current or [str(x) for x in group]
+                entry["original_files"] = [str(x) for x in group]
                 entry["action"] = "reject_extra"
             else:
                 entry["action"] = "mark"
@@ -1973,6 +2012,7 @@ def undo_single(op: str, from_path: str, to_path: str) -> dict[str, Any]:
 
     cfg = load_config()
     cleanup_empty_dirs(cfg.get("input_folder") or "", [from_path, to_path])
+    drop_dupes_groups_for_paths([from_path, to_path])
     return {"ok": True, "action": action}
 
 

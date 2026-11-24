@@ -276,5 +276,11 @@ window.YARO_I18N = {
   "donate.title": "Поддержать автора",
   "donate.copy": "Скопировать адрес",
   "donate.openLink": "Перейти",
-  "donate.copied": "Адрес скопирован"
+  "donate.copied": "Адрес скопирован",
+  "provider.modelSynced": "Подставлено из LM Studio: {model}",
+  "provider.modelDiffers": "В LM Studio сейчас: {loaded} · в поле указано: {field}",
+  "dupes.applyGroupTip": "Выбранное фото остаётся на месте, остальные из группы уходят в удалённые (_rejects).",
+  "dupes.keepThisTip": "Отметить это фото как то, которое оставим (звёздочка). Пока ничего не переносится.",
+  "dupes.deleteThisTip": "Убрать только это фото в удалённые (_rejects). Остальные в группе не трогаются.",
+  "dupes.viewTip": "Открыть группы почти одинаковых кадров и выбрать, какой оставить."
 };

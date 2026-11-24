@@ -682,6 +682,9 @@ legend {
   padding: 18px 22px 14px;
   border-bottom: 1px solid var(--line);
 }
+.modal-help-head .lb-x {
+  margin-left: auto;
+}
 .modal-help-head h2 {
   margin: 0;
   font-family: "Bitter", Georgia, serif;
@@ -907,50 +910,109 @@ legend {
   background: rgba(0,0,0,0.88);
   z-index: 250;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
 }
 #lightbox[hidden] { display: none !important; }
+.lb-frame {
+  width: min(1100px, 100%);
+  max-height: 94vh;
+  display: flex;
+  flex-direction: column;
+  color: #fff;
+}
 .lb-top {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 18px;
-  color: #fff;
+  padding: 0 4px 10px;
 }
 .lb-top h3 {
   margin: 0;
   flex: 1;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   font-family: "JetBrains Mono", monospace;
   word-break: break-all;
 }
+.lb-x {
+  appearance: none;
+  border: 0;
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font: 400 22px/1 "Source Sans 3", sans-serif;
+  cursor: pointer;
+  flex: none;
+}
+.lb-x:hover { background: rgba(255,255,255,0.18); }
+.lb-body {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 0;
+}
+.lb-arrow {
+  appearance: none;
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(0,0,0,0.35);
+  color: #fff;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  font: 400 26px/1 "Source Sans 3", sans-serif;
+  cursor: pointer;
+  flex: none;
+}
+.lb-arrow:hover { background: rgba(255,255,255,0.14); }
 .lb-stage {
+  position: relative;
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 0;
-  padding: 0 18px;
+  min-height: 220px;
+  min-width: 0;
+}
+.lb-badge {
+  top: 14px;
+  left: 22px;
+  z-index: 2;
+  font-size: 12px;
+  padding: 5px 8px;
+}
+.lb-badge.user {
+  background: var(--ok);
+  color: var(--bg);
 }
 .lb-stage img {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
 }
+.lb-count {
+  text-align: center;
+  color: #cfc9bd;
+  font: 400 12.5px/1.4 "JetBrains Mono", monospace;
+  padding: 8px 0 2px;
+}
 .lb-side {
   color: #cfc9bd;
   font-size: 12.5px;
   line-height: 1.5;
-  padding: 0 18px 10px;
+  padding: 6px 4px 10px;
   font-family: "JetBrains Mono", monospace;
+  text-align: center;
 }
 .lb-actions {
   display: flex;
   gap: 8px;
   justify-content: center;
   flex-wrap: wrap;
-  padding: 14px 18px 20px;
+  padding: 4px 0 6px;
 }
 
 .footer-donate {
@@ -1131,11 +1193,11 @@ legend {
       <div class="modal-help-head">
         <h2 id="dupesModalTitle" data-i18n="dupes.title"></h2>
         <span class="review-count" id="dupeGroupCount"></span>
-        <button class="btn" type="button" id="dupesClose" data-i18n="modal.confirm"></button>
+        <button class="lb-x" type="button" id="dupesClose" aria-label="Close" data-i18n-title="undo.closeTip">×</button>
       </div>
       <div class="modal-help-body" id="dupesBody"></div>
       <div class="review-actions" id="dupeGroupActions">
-        <button class="btn btn-primary" type="button" id="dupeApplyGroup" data-i18n="dupes.applyGroup"></button>
+        <button class="btn btn-primary" type="button" id="dupeApplyGroup" data-i18n="dupes.applyGroup" data-i18n-title="dupes.applyGroupTip"></button>
         <button class="btn" type="button" id="dupePrevGroup" data-i18n="undo.prev"></button>
         <button class="btn" type="button" id="dupeNextGroup" data-i18n="undo.next"></button>
       </div>
@@ -1143,20 +1205,25 @@ legend {
   </div>
 
   <div id="lightbox" hidden>
-    <div class="lb-top">
-      <h3 id="lbName">—</h3>
-      <div class="lb-nav">
-        <button class="btn" type="button" id="lbPrev" data-i18n="undo.prev"></button>
-        <span class="lb-count" id="lbCount"></span>
-        <button class="btn" type="button" id="lbNext" data-i18n="undo.next"></button>
+    <div class="lb-frame" id="lbFrame">
+      <div class="lb-top">
+        <h3 id="lbName">—</h3>
+        <button class="lb-x" type="button" id="lbClose" aria-label="Close" data-i18n-title="undo.closeTip">×</button>
       </div>
-      <button class="btn" type="button" id="lbClose" data-i18n="modal.confirm"></button>
-    </div>
-    <div class="lb-stage"><img id="lbImg" alt=""></div>
-    <div class="lb-side" id="lbInfo">—</div>
-    <div class="lb-actions">
-      <button class="btn btn-primary" type="button" id="lbKeep" data-i18n="dupes.keepThis"></button>
-      <button class="btn btn-danger" type="button" id="lbDelete" data-i18n="review.reject"></button>
+      <div class="lb-body">
+        <button class="lb-arrow" type="button" id="lbPrev" aria-label="Previous" data-i18n-title="undo.prevTip">‹</button>
+        <div class="lb-stage">
+          <img id="lbImg" alt="">
+          <div class="dupe-badge lb-badge" id="lbBadge" hidden></div>
+        </div>
+        <button class="lb-arrow" type="button" id="lbNext" aria-label="Next" data-i18n-title="undo.nextTip">›</button>
+      </div>
+      <div class="lb-count" id="lbCount"></div>
+      <div class="lb-side" id="lbInfo">—</div>
+      <div class="lb-actions">
+        <button class="btn btn-primary" type="button" id="lbKeep" data-i18n="dupes.keepThis" data-i18n-title="dupes.keepThisTip"></button>
+        <button class="btn btn-danger" type="button" id="lbDelete" data-i18n="review.reject" data-i18n-title="dupes.deleteThisTip"></button>
+      </div>
     </div>
   </div>
 
@@ -1481,7 +1548,7 @@ legend {
         </fieldset>
         <div class="run-bar" style="margin: 12px 0 0;">
           <button class="btn" id="btnDupes" type="button" data-i18n="dupes.scan"></button>
-          <button class="btn btn-ghost" id="btnDupesView" type="button" data-i18n="dupes.view" hidden></button>
+          <button class="btn btn-ghost" id="btnDupesView" type="button" data-i18n="dupes.view" data-i18n-title="dupes.viewTip" hidden></button>
         </div>
         <p class="hint" id="dupesStatus" style="margin: 10px 0 0;"></p>
       </div>
@@ -1518,11 +1585,12 @@ legend {
           <div class="lm-sub" id="lmUrl"></div>
         </div>
 
-        <div class="num-row" style="margin: 4px 0 12px;">
+        <div class="num-row" style="margin: 4px 0 4px;">
           <label for="modelName" data-i18n="provider.model"></label>
           <input class="folder-input" id="modelName" type="text" spellcheck="false" list="modelList" style="width:100%;max-width:280px;">
           <datalist id="modelList"></datalist>
         </div>
+        <p class="hint" id="modelHint" style="margin: 0 0 12px;"></p>
 
         <div id="baseUrlRow" class="num-row" style="margin: 0 0 12px;" hidden>
           <label for="baseUrl" data-i18n="provider.baseUrl"></label>
@@ -2153,6 +2221,10 @@ function bindForm() {
     "optRecursive", "optResume", "optDry", "optCategories", "optReasonName", "optPreserve",
     "optEvents", "optScreensDocs", "eventGap", "modelName", "maxRequests", "maxCost",
   ].forEach((id) => $(id).addEventListener("change", scheduleSave));
+  $("modelName").addEventListener("input", () => {
+    $("modelName").dataset.manual = "1";
+    if ($("modelHint")) $("modelHint").textContent = "";
+  });
   $("btnKeyHint").addEventListener("click", () => {
     uiAlert(t("provider.keyHint"), t("provider.keyHintText"));
   });
@@ -2321,6 +2393,27 @@ function uiAlert(title, message) {
   });
 }
 
+function syncModelFromLocal(data) {
+  const active = data.active_model || (data.models && data.models[0] && data.models[0].id) || "";
+  if (!active) return;
+  const input = $("modelName");
+  const hint = $("modelHint");
+  const cur = input.value.trim();
+  const manual = input.dataset.manual === "1";
+  if (manual && cur && cur !== active) {
+    hint.textContent = t("provider.modelDiffers", { loaded: active, field: cur });
+    return;
+  }
+  if (cur !== active) {
+    input.value = active;
+    hint.textContent = t("provider.modelSynced", { model: active });
+  } else if (!manual) {
+    hint.textContent = t("provider.modelSynced", { model: active });
+  } else {
+    hint.textContent = "";
+  }
+}
+
 function renderLm(data) {
   lastLm = data;
   const dot = $("lmDot");
@@ -2333,6 +2426,7 @@ function renderLm(data) {
     if (data.connected) {
       dot.className = "dot on";
       $("lmTitle").textContent = t("lm.connected");
+      syncModelFromLocal(data);
     } else {
       dot.className = "dot off";
       $("lmTitle").textContent = t("lm.disconnected");
@@ -2882,6 +2976,19 @@ function openLightbox() {
     `${t("dupes.aiBest")}: ${(g.keeper_name || "")}`,
   ].join("\n");
   $("lbKeep").style.display = path === dupeSelected ? "" : "";
+  const badge = $("lbBadge");
+  if (path === g.keeper) {
+    badge.hidden = false;
+    badge.className = "dupe-badge lb-badge";
+    badge.textContent = `★ ${t("dupes.aiBest")}`;
+  } else if (path === dupeSelected) {
+    badge.hidden = false;
+    badge.className = "dupe-badge lb-badge user";
+    badge.textContent = t("dupes.keepThis");
+  } else {
+    badge.hidden = true;
+    badge.textContent = "";
+  }
   $("lightbox").hidden = false;
   document.body.style.overflow = "hidden";
 }
@@ -2991,6 +3098,9 @@ function bindDupes() {
   });
 
   $("lbClose").addEventListener("click", closeLightbox);
+  $("lightbox").addEventListener("click", (e) => {
+    if (e.target === $("lightbox") || e.target === $("lbFrame")) closeLightbox();
+  });
   $("lbPrev").addEventListener("click", () => {
     lbIdx -= 1;
     openLightbox();

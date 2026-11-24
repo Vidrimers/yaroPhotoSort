@@ -276,5 +276,11 @@ window.YARO_I18N = {
   "donate.title": "Support the author",
   "donate.copy": "Copy address",
   "donate.openLink": "Open",
-  "donate.copied": "Address copied"
+  "donate.copied": "Address copied",
+  "provider.modelSynced": "Taken from LM Studio: {model}",
+  "provider.modelDiffers": "In LM Studio now: {loaded} · field says: {field}",
+  "dupes.applyGroupTip": "Keep the selected photo in place, move the rest of the group to deleted (_rejects).",
+  "dupes.keepThisTip": "Mark this photo as the one to keep (star). Nothing is moved yet.",
+  "dupes.deleteThisTip": "Move only this photo to deleted (_rejects). The rest of the group stays.",
+  "dupes.viewTip": "Open groups of near-identical frames and pick which one to keep."
 };
