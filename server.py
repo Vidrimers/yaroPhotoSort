@@ -394,6 +394,9 @@ def lm_status() -> dict[str, Any]:
         "vram_used_gb": None,
         "vram_total_gb": None,
         "gpu_name": None,
+        "gpu_temp_c": None,
+        "gpu_util_pct": None,
+        "gpu_power_w": None,
         "ram_used_gb": None,
         "load_state": None,
         "raw": {},
@@ -472,16 +475,36 @@ def lm_status() -> dict[str, Any]:
     except Exception as e:
         info["error"] = str(e)
 
-    # VRAM + имя видеокарты: пробуем через nvidia-smi
+    # GPU: имя, температура, загрузка, потребление — через nvidia-smi
     try:
-        gname = subprocess.check_output(
-            ["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"],
+        out = subprocess.check_output(
+            [
+                "nvidia-smi",
+                "--query-gpu=name,temperature.gpu,utilization.gpu,power.draw",
+                "--format=csv,noheader,nounits",
+            ],
             timeout=3,
             stderr=subprocess.DEVNULL,
             encoding="utf-8",
         ).strip().splitlines()
-        if gname:
-            info["gpu_name"] = gname[0].strip()
+        if out:
+            parts = [x.strip() for x in out[0].split(",")]
+            info["gpu_name"] = parts[0]
+            if len(parts) > 1:
+                try:
+                    info["gpu_temp_c"] = int(float(parts[1]))
+                except Exception:
+                    pass
+            if len(parts) > 2:
+                try:
+                    info["gpu_util_pct"] = int(float(parts[2]))
+                except Exception:
+                    pass
+            if len(parts) > 3:
+                try:
+                    info["gpu_power_w"] = round(float(parts[3]), 1)
+                except Exception:
+                    pass
     except Exception:
         pass
     if info["vram_used_gb"] is None:

@@ -117,7 +117,7 @@ body {
 .btn[disabled] { opacity: 0.42; cursor: not-allowed; transform: none; }
 .top-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 
-/* Р С”Р В°РЎРѓРЎвЂљР С•Р СР Р…РЎвЂ№Р в„– РЎРѓР ВµР В»Р ВµР С”РЎвЂљ */
+/* Р С”Р В°РЎРѓРЎ‚Р С•Р СР Р…РЎ‹Р № РЎРѓР ВµР В»Р ВµР С”РЎ‚ */
 .select { position: relative; }
 .select-btn {
   appearance: none;
@@ -194,7 +194,7 @@ body {
 .col > section:last-child { border-bottom: 0; }
 .col + .col { border-left: 1px solid var(--line); }
 
-/* Р Р…Р В° Р Т‘Р ВµРЎРѓР С”РЎвЂљР С•Р С—Р Вµ Р В±Р В»Р С•Р С” Р’В«Р СџРЎР‚Р С•Р С–Р С•Р Р…Р’В» Р Т‘Р ВµРЎР‚Р В¶Р С‘РЎвЂљРЎРѓРЎРЏ Р Р† Р С—Р С•Р В»Р Вµ Р ·РЎР‚Р ВµР Р…Р С‘РЎРЏ */
+/* Р Р…Р В° Р Т‘Р ВµРЎРѓР С”РЎ‚Р С•Р С—Р Вµ Р В±Р В»Р С•Р С” Р’В«Р СџРЎР‚Р С•Р С–Р С•Р Р…Р’В» Р Т‘Р ВµРЎР‚Р В¶Р С‘РЎ‚РЎРѓРЎРЏ Р Р† Р С—Р С•Р В»Р Вµ Р ·РЎР‚Р ВµР Р…Р С‘РЎРЏ */
 @media (min-width: 941px) {
   .col + .col > section:last-child {
     position: sticky;
@@ -624,7 +624,7 @@ legend {
   font-size: 12px;
 }
 
-/* Р СР С•Р Т‘Р В°Р В»РЎРЉР Р…РЎвЂ№Р в„– confirm */
+/* Р СР С•Р Т‘Р В°Р В»РЎРЉР Р…РЎ‹Р № confirm */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -664,7 +664,7 @@ legend {
   justify-content: flex-end;
 }
 
-/* Р СР С•Р Т‘Р В°Р В»Р С”Р В° Р’В«Р С™Р В°Р С” Р С—Р С•Р В»РЎРЉР ·Р С•Р Р†Р В°РЎвЂљРЎРЉРЎРѓРЎРЏР’В» */
+/* Р СР С•Р Т‘Р В°Р В»Р С”Р В° Р’В«Р С™Р В°Р С” Р С—Р С•Р В»РЎРЉР ·Р С•Р Р†Р В°РЎ‚РЎРЉРЎРѓРЎРЏР’В» */
 .modal-help {
   width: min(640px, 100%);
   max-height: min(84vh, 860px);
@@ -848,7 +848,7 @@ legend {
   transform: translateX(-50%) translateY(0);
 }
 
-/* Р С—РЎР‚Р С•РЎРѓР СР С•РЎвЂљРЎР‚РЎвЂ°Р С‘Р С” Р Т‘РЎС“Р В±Р В»Р С‘Р С”Р В°РЎвЂљР С•Р Р† */
+/* Р С—РЎР‚Р С•РЎРѓР СР С•РЎ‚РЎР‚РЎ‰Р С‘Р С” Р Т‘РЎС“Р В±Р В»Р С‘Р С”Р В°РЎ‚Р С•Р Р† */
 .dupe-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -1556,7 +1556,7 @@ function applyI18n() {
   document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
     el.placeholder = t(el.dataset.i18nPlaceholder);
   });
-  // Р В»Р С•Р С”Р В°Р В»Р С‘Р ·РЎС“Р ВµР С РЎРѓР С–Р ВµР Р…Р ВµРЎР‚Р С‘РЎР‚Р С•Р Р†Р В°Р Р…Р Р…РЎвЂ№Р в„– Р С”Р С•Р Р…РЎвЂљР ВµР Р…РЎвЂљ
+  // Р В»Р С•Р С”Р В°Р В»Р С‘Р ·РЎС“Р ВµР С РЎРѓР С–Р ВµР Р…Р ВµРЎР‚Р С‘РЎР‚Р С•Р Р†Р В°Р Р…Р Р…РЎ‹Р № Р С”Р С•Р Р…РЎ‚Р ВµР Р…РЎ‚
   renderFormats(collectFormats());
   renderCategories(collectCategories().length ? collectCategories() : DEFAULT_CATEGORIES);
   updateDestPreview();
@@ -1609,7 +1609,7 @@ function loadLang(lang) {
       scheduleSave();
       resolve();
     };
-    // <script src> РЎР‚Р В°Р В±Р С•РЎвЂљР В°Р ВµРЎвЂљ Р С‘ РЎРѓ file://, Р С‘ РЎвЂЎР ВµРЎР‚Р ВµР · РЎРѓР ВµРЎР‚Р Р†Р ВµРЎР‚ — Р Р† Р С•РЎвЂљР В»Р С‘РЎвЂЎР С‘Р Вµ Р С•РЎвЂљ fetch
+    // <script src> РЎР‚Р В°Р В±Р С•РЎ‚Р В°Р ВµРЎ‚ Р С‘ РЎРѓ file://, Р С‘ РЎ‡Р ВµРЎР‚Р ВµР · РЎРѓР ВµРЎР‚Р Р†Р ВµРЎР‚ — Р Р† Р С•РЎ‚Р В»Р С‘РЎ‡Р С‘Р Вµ Р С•РЎ‚ fetch
     const prev = document.getElementById("i18n-script");
     if (prev) prev.remove();
     const s = document.createElement("script");
@@ -2180,7 +2180,7 @@ function errText(e) {
   return raw;
 }
 
-/* Р С”Р В°РЎРѓРЎвЂљР С•Р СР Р…РЎвЂ№Р в„– confirm */
+/* Р С”Р В°РЎРѓРЎ‚Р С•Р СР Р…РЎ‹Р № confirm */
 function uiConfirm(title, message, okLabel) {
   return new Promise((resolve) => {
     const overlay = $("modal");
@@ -2258,7 +2258,9 @@ function renderLm(data) {
     $("lmUrl").textContent = (data.url || "").replace(/^https?:\/\//, "");
     const gpuRow = $("lmGpu") ? $("lmGpu").closest("dt") : null;
     const gpuVal = $("lmGpu");
-    if (gpuVal) gpuVal.textContent = data.gpu_name || "—";
+  if (gpuVal) gpuVal.textContent = data.gpu_name
+    ? (data.gpu_temp_c != null ? `${data.gpu_name} · ${data.gpu_temp_c}°C` : data.gpu_name)
+    : "—";
     if (gpuRow && gpuVal) {
       // GPU интересен только для локальных моделей
       const showGpu = isLocal && !!data.gpu_name;
@@ -2268,7 +2270,7 @@ function renderLm(data) {
     $("lmCtx").textContent = data.context_length ? t("lm.tokens", { n: fmtNum(data.context_length) }) : "—";
     $("lmQuant").textContent = data.quant || "—";
     $("lmVram").textContent = data.vram_used_gb != null
-      ? `${data.vram_used_gb} / ${data.vram_total_gb ?? "?"} GB`
+      ? `${data.vram_used_gb} / ${data.vram_total_gb ?? "?"} GB${data.gpu_util_pct != null ? " · " + data.gpu_util_pct + "%" : ""}${data.gpu_power_w != null ? " · " + data.gpu_power_w + "W" : ""}`
       : "—";
     $("lmState").textContent = data.load_state || (data.connected ? t("lm.ready") : t("lm.noLink"));
     return;
@@ -2285,14 +2287,18 @@ function renderLm(data) {
   $("lmUrl").textContent = data.base || "";
   const gpuRow2 = $("lmGpu") ? $("lmGpu").closest("dt") : null;
   const gpuVal2 = $("lmGpu");
-  if (gpuVal2) gpuVal2.textContent = data.gpu_name || "—";
+  if (gpuVal2) gpuVal2.textContent = data.gpu_name
+    ? (data.gpu_temp_c != null ? `${data.gpu_name} · ${data.gpu_temp_c}°C` : data.gpu_name)
+    : "—";
   if (gpuRow2 && gpuVal2) {
     const showGpu2 = isLocal && !!data.gpu_name;
     gpuRow2.hidden = !showGpu2;
     gpuVal2.hidden = !showGpu2;
   }
   $("lmQuant").textContent = data.has_key ? t("provider.keyOk") : (isLocal ? "—" : t("provider.keyMissing"));
-  $("lmVram").textContent = "—";
+  $("lmVram").textContent = data.vram_used_gb != null
+    ? `${data.vram_used_gb} / ${data.vram_total_gb ?? "?"} GB${data.gpu_util_pct != null ? " · " + data.gpu_util_pct + "%" : ""}${data.gpu_power_w != null ? " · " + data.gpu_power_w + "W" : ""}`
+    : "—";
   $("lmCtx").textContent = "—";
   $("lmState").textContent = data.detail || "—";
 }
@@ -2472,7 +2478,7 @@ async function init() {
     try {
       await api.post("/api/shutdown");
     } catch (e) {
-      /* РЎРѓР ВµРЎР‚Р Р†Р ВµРЎР‚ Р СР С•Р С– РЎС“РЎРѓР С—Р ВµРЎвЂљРЎРЉ Р ·Р В°Р С”РЎР‚РЎвЂ№РЎвЂљРЎРЉ РЎРѓР С•Р ВµР Т‘Р С‘Р Р…Р ВµР Р…Р С‘Р Вµ — РЎРЊРЎвЂљР С• Р Р…Р С•РЎР‚Р СР В° */
+      /* РЎРѓР ВµРЎР‚Р Р†Р ВµРЎР‚ Р СР С•Р С– РЎС“РЎРѓР С—Р ВµРЎ‚РЎРЉ Р ·Р В°Р С”РЎР‚РЎ‹РЎ‚РЎРЉ РЎРѓР С•Р ВµР Т‘Р С‘Р Р…Р ВµР Р…Р С‘Р Вµ — РЎРЊРЎ‚Р С• Р Р…Р С•РЎР‚Р СР В° */
     }
     setTimeout(() => { serverOffline(true); }, 600);
   });
@@ -2571,7 +2577,7 @@ async function decideReview(decision) {
     setReviewCountBadge(reviewItems.length);
     if (reviewIdx >= reviewItems.length) reviewIdx = Math.max(0, reviewItems.length - 1);
   } else if (reviewItems.length === 1) {
-    // live-РЎР‚Р ВµР В¶Р С‘Р С: Р’В«Р С—РЎР‚Р С•Р С—РЎС“РЎРѓРЎвЂљР С‘РЎвЂљРЎРЉР’В» Р С•РЎвЂљР С—РЎС“РЎРѓР С”Р В°Р ВµРЎвЂљ Р С•РЎвЂЎР ВµРЎР‚Р ВµР Т‘РЎРЉ, Р СР С•Р Т‘Р В°Р В»Р С”РЎС“ Р ·Р В°Р С”РЎР‚РЎвЂ№Р Р†Р В°Р ВµР С
+    // live-РЎР‚Р ВµР В¶Р С‘Р С: Р’В«Р С—РЎР‚Р С•Р С—РЎС“РЎРѓРЎ‚Р С‘РЎ‚РЎРЉР’В» Р С•РЎ‚Р С—РЎС“РЎРѓР С”Р В°Р ВµРЎ‚ Р С•РЎ‡Р ВµРЎР‚Р ВµР Т‘РЎРЉ, Р СР С•Р Т‘Р В°Р В»Р С”РЎС“ Р ·Р В°Р С”РЎР‚РЎ‹Р Р†Р В°Р ВµР С
     $("reviewModal").hidden = true;
     document.body.style.overflow = "";
     return;
@@ -2825,7 +2831,7 @@ function bindDupes() {
     try {
       await api.post("/api/dupes/delete-single", { path });
       showToast(t("toast.toDeleted"));
-      // РЎвЂћР В°Р в„–Р В» РЎС“Р В±РЎР‚Р В°Р Р… Р С‘Р · Р С–РЎР‚РЎС“Р С—Р С—РЎвЂ№
+      // РЎ„Р В°Р №Р В» РЎС“Р В±РЎР‚Р В°Р Р… Р С‘Р · Р С–РЎР‚РЎС“Р С—Р С—РЎ‹
       if (g.files) g.files.splice(lbIdx, 1);
       if (g.names) g.names.splice(lbIdx, 1);
       if (g.keeper === path) g.keeper = (g.files || [])[0] || "";
