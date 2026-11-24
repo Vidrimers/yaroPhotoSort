@@ -254,5 +254,11 @@ window.YARO_I18N = {
   "dupes.similar": "Similar subject or scene",
   "dupes.similarTip": "Same cat / place / thing but pose or angle changed. Candidates are filtered by hash, then the model compares two photos and answers yes/no. Slower and spends tokens.",
   "dupes.burst": "Near-identical frames",
-  "dupes.burstTip": "Same shot taken one after another: burst, seconds apart. Small hash distance (<=2)."
+  "dupes.burstTip": "Same shot taken one after another: burst, seconds apart. Small hash distance (<=2).",
+  "undo.one": "Undo this file",
+  "undo.keep": "Keep as is",
+  "undo.op": "Operation",
+  "toast.undoOne": "File restored",
+  "toast.undoAll": "Last run undone",
+  "toast.undoSkipped": "Left as is"
 };

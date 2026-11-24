@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" data-theme="lab">
 <head>
 <meta charset="utf-8">
@@ -117,7 +117,7 @@ body {
 .btn[disabled] { opacity: 0.42; cursor: not-allowed; transform: none; }
 .top-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 
-/* кастомный селект */
+/* РєР°СЃС‚РѕРјРЅС‹Р№ СЃРµР»РµРєС‚ */
 .select { position: relative; }
 .select-btn {
   appearance: none;
@@ -194,7 +194,7 @@ body {
 .col > section:last-child { border-bottom: 0; }
 .col + .col { border-left: 1px solid var(--line); }
 
-/* на десктопе блок «Прогон» держится в поле зрения */
+/* РЅР° РґРµСЃРєС‚РѕРїРµ Р±Р»РѕРє В«РџСЂРѕРіРѕРЅВ» РґРµСЂР¶РёС‚СЃСЏ РІ РїРѕР»Рµ Р·СЂРµРЅРёСЏ */
 @media (min-width: 941px) {
   .col + .col > section:last-child {
     position: sticky;
@@ -565,7 +565,7 @@ legend {
   font-size: 12px;
 }
 
-/* модальный confirm */
+/* РјРѕРґР°Р»СЊРЅС‹Р№ confirm */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -604,7 +604,7 @@ legend {
   justify-content: flex-end;
 }
 
-/* модалка «Как пользоваться» */
+/* РјРѕРґР°Р»РєР° В«РљР°Рє РїРѕР»СЊР·РѕРІР°С‚СЊСЃСЏВ» */
 .modal-help {
   width: min(640px, 100%);
   max-height: min(84vh, 860px);
@@ -679,7 +679,7 @@ legend {
   background: var(--bg-3);
 }
 
-/* экран проверки */
+/* СЌРєСЂР°РЅ РїСЂРѕРІРµСЂРєРё */
 .modal-review {
   width: min(760px, 100%);
   max-height: min(90vh, 920px);
@@ -788,7 +788,7 @@ legend {
   transform: translateX(-50%) translateY(0);
 }
 
-/* просмотрщик дубликатов */
+/* РїСЂРѕСЃРјРѕС‚СЂС‰РёРє РґСѓР±Р»РёРєР°С‚РѕРІ */
 .dupe-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -984,11 +984,11 @@ legend {
         <div class="review-photo"><img id="reviewImg" alt=""></div>
         <div class="review-meta">
           <dl>
-            <dt data-i18n="review.file"></dt><dd id="reviewFile">—</dd>
-            <dt data-i18n="review.score"></dt><dd id="reviewScore">—</dd>
-            <dt data-i18n="review.quality"></dt><dd id="reviewQuality">—</dd>
-            <dt data-i18n="review.reason"></dt><dd id="reviewReason">—</dd>
-            <dt data-i18n="review.tags"></dt><dd id="reviewTags">—</dd>
+            <dt data-i18n="review.file"></dt><dd id="reviewFile">вЂ”</dd>
+            <dt data-i18n="review.score"></dt><dd id="reviewScore">вЂ”</dd>
+            <dt data-i18n="review.quality"></dt><dd id="reviewQuality">вЂ”</dd>
+            <dt data-i18n="review.reason"></dt><dd id="reviewReason">вЂ”</dd>
+            <dt data-i18n="review.tags"></dt><dd id="reviewTags">вЂ”</dd>
           </dl>
         </div>
       </div>
@@ -1019,7 +1019,7 @@ legend {
 
   <div id="lightbox" hidden>
     <div class="lb-top">
-      <h3 id="lbName">—</h3>
+      <h3 id="lbName">вЂ”</h3>
       <div class="lb-nav">
         <button class="btn" type="button" id="lbPrev" data-i18n="undo.prev"></button>
         <span class="lb-count" id="lbCount"></span>
@@ -1028,7 +1028,7 @@ legend {
       <button class="btn" type="button" id="lbClose" data-i18n="modal.confirm"></button>
     </div>
     <div class="lb-stage"><img id="lbImg" alt=""></div>
-    <div class="lb-side" id="lbInfo">—</div>
+    <div class="lb-side" id="lbInfo">вЂ”</div>
     <div class="lb-actions">
       <button class="btn btn-primary" type="button" id="lbKeep" data-i18n="dupes.keepThis"></button>
       <button class="btn btn-danger" type="button" id="lbDelete" data-i18n="review.reject"></button>
@@ -1044,9 +1044,22 @@ legend {
         <span class="review-count" id="undoCount"></span>
         <button class="btn" type="button" id="undoClose" data-i18n="modal.cancel"></button>
       </div>
-      <div class="modal-help-body" id="undoBody" style="min-height: 220px;"></div>
+      <div class="review-body" id="undoBody">
+        <div class="review-photo"><img id="undoImg" alt=""></div>
+        <div class="review-meta">
+          <dl>
+            <dt data-i18n="undo.from"></dt><dd id="undoFrom">вЂ”</dd>
+            <dt data-i18n="undo.to"></dt><dd id="undoTo">вЂ”</dd>
+            <dt data-i18n="undo.result"></dt><dd id="undoResult">вЂ”</dd>
+            <dt data-i18n="undo.op"></dt><dd id="undoOp">вЂ”</dd>
+          </dl>
+        </div>
+      </div>
+      <div class="review-empty" id="undoEmpty" hidden></div>
       <div class="review-actions">
+        <button class="btn btn-primary" type="button" id="undoOne" data-i18n="undo.one"></button>
         <button class="btn btn-danger" type="button" id="undoApply" data-i18n="undo.apply"></button>
+        <button class="btn" type="button" id="undoKeep" data-i18n="undo.keep"></button>
         <button class="btn" type="button" id="undoPrev" data-i18n="undo.prev"></button>
         <button class="btn" type="button" id="undoNext" data-i18n="undo.next"></button>
       </div>
@@ -1358,10 +1371,10 @@ legend {
         </div>
 
         <dl class="kv" id="lmKv">
-          <dt data-i18n="lm.context"></dt><dd id="lmCtx">—</dd>
-          <dt data-i18n="lm.quant"></dt><dd id="lmQuant">—</dd>
-          <dt data-i18n="lm.memory"></dt><dd id="lmVram">—</dd>
-          <dt data-i18n="lm.state"></dt><dd id="lmState">—</dd>
+          <dt data-i18n="lm.context"></dt><dd id="lmCtx">вЂ”</dd>
+          <dt data-i18n="lm.quant"></dt><dd id="lmQuant">вЂ”</dd>
+          <dt data-i18n="lm.memory"></dt><dd id="lmVram">вЂ”</dd>
+          <dt data-i18n="lm.state"></dt><dd id="lmState">вЂ”</dd>
         </dl>
 
         <div class="hint" id="usageLine" style="margin: 12px 0 0;" hidden></div>
@@ -1392,7 +1405,7 @@ legend {
           <div class="stat"><b id="stDone">0</b><span data-i18n="stat.processed"></span></div>
           <div class="stat ok"><b id="stOk">0</b><span data-i18n="stat.ok"></span></div>
           <div class="stat bad"><b id="stBad">0</b><span data-i18n="stat.bad"></span></div>
-          <div class="stat run"><b id="stEta">—</b><span data-i18n="stat.left"></span></div>
+          <div class="stat run"><b id="stEta">вЂ”</b><span data-i18n="stat.left"></span></div>
         </div>
 
         <div class="strip" id="strip" aria-hidden="true"><div class="fill" id="stripFill"></div></div>
@@ -1401,7 +1414,7 @@ legend {
           <span id="stripPct">0%</span>
         </div>
 
-        <div class="log" id="log">—</div>
+        <div class="log" id="log">вЂ”</div>
         <div class="footer-note" data-i18n="footer.note"></div>
       </section>
     </div>
@@ -1427,7 +1440,7 @@ const api = {
   },
 };
 
-/* ── i18n ── */
+/* в”Ђв”Ђ i18n в”Ђв”Ђ */
 let I18N = {};
 let LANG = localStorage.getItem("yarophoto-lang") || "en";
 
@@ -1452,7 +1465,7 @@ function applyI18n() {
   document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
     el.placeholder = t(el.dataset.i18nPlaceholder);
   });
-  // локализуем сгенерированный контент
+  // Р»РѕРєР°Р»РёР·СѓРµРј СЃРіРµРЅРµСЂРёСЂРѕРІР°РЅРЅС‹Р№ РєРѕРЅС‚РµРЅС‚
   renderFormats(collectFormats());
   renderCategories(collectCategories().length ? collectCategories() : DEFAULT_CATEGORIES);
   updateDestPreview();
@@ -1505,7 +1518,7 @@ function loadLang(lang) {
       scheduleSave();
       resolve();
     };
-    // <script src> работает и с file://, и через сервер — в отличие от fetch
+    // <script src> СЂР°Р±РѕС‚Р°РµС‚ Рё СЃ file://, Рё С‡РµСЂРµР· СЃРµСЂРІРµСЂ вЂ” РІ РѕС‚Р»РёС‡РёРµ РѕС‚ fetch
     const prev = document.getElementById("i18n-script");
     if (prev) prev.remove();
     const s = document.createElement("script");
@@ -1521,7 +1534,7 @@ function loadLang(lang) {
   });
 }
 
-/* ── theme + language selects ── */
+/* в”Ђв”Ђ theme + language selects в”Ђв”Ђ */
 function setTheme(name) {
   document.documentElement.dataset.theme = name;
   localStorage.setItem("yarophoto-theme", name);
@@ -1826,7 +1839,7 @@ function escapeHtml(s) {
 
 function resolveDest(dest, inputFolder, key) {
   const raw = (dest || "").trim();
-  const base = (inputFolder || "").trim() || "…";
+  const base = (inputFolder || "").trim() || "вЂ¦";
   if (!raw) return joinPath(base, "_sorted", key);
   if (/^([a-zA-Z]:[\\/]|\\\\)/.test(raw)) return raw;
   return joinPath(base, raw);
@@ -1851,9 +1864,9 @@ function updateDestPreview() {
   const lines = rows.map((row) => {
     const key = row.dataset.key;
     const dest = row.querySelector(".cat-dest").value;
-    return `${key} → ${resolveDest(dest, folder, key)}`;
+    return `${key} в†’ ${resolveDest(dest, folder, key)}`;
   });
-  el.textContent = t("cats.preview") + lines.join("  ·  ");
+  el.textContent = t("cats.preview") + lines.join("  В·  ");
 }
 
 function applyConfigToForm(cfg) {
@@ -2015,7 +2028,7 @@ function errText(e) {
   return raw;
 }
 
-/* кастомный confirm */
+/* РєР°СЃС‚РѕРјРЅС‹Р№ confirm */
 function uiConfirm(title, message, okLabel) {
   return new Promise((resolve) => {
     const overlay = $("modal");
@@ -2091,11 +2104,11 @@ function renderLm(data) {
       $("lmTitle").textContent = t("lm.disconnected");
     }
     $("lmUrl").textContent = (data.url || "").replace(/^https?:\/\//, "");
-    $("lmCtx").textContent = data.context_length ? t("lm.tokens", { n: fmtNum(data.context_length) }) : "—";
-    $("lmQuant").textContent = data.quant || "—";
+    $("lmCtx").textContent = data.context_length ? t("lm.tokens", { n: fmtNum(data.context_length) }) : "вЂ”";
+    $("lmQuant").textContent = data.quant || "вЂ”";
     $("lmVram").textContent = data.vram_used_gb != null
       ? `${data.vram_used_gb} / ${data.vram_total_gb ?? "?"} GB`
-      : "—";
+      : "вЂ”";
     $("lmState").textContent = data.load_state || (data.connected ? t("lm.ready") : t("lm.noLink"));
     return;
   }
@@ -2109,10 +2122,10 @@ function renderLm(data) {
     $("lmTitle").textContent = data.detail || t("provider.fail");
   }
   $("lmUrl").textContent = data.base || "";
-  $("lmQuant").textContent = data.has_key ? t("provider.keyOk") : (isLocal ? "—" : t("provider.keyMissing"));
-  $("lmVram").textContent = "—";
-  $("lmCtx").textContent = "—";
-  $("lmState").textContent = data.detail || "—";
+  $("lmQuant").textContent = data.has_key ? t("provider.keyOk") : (isLocal ? "вЂ”" : t("provider.keyMissing"));
+  $("lmVram").textContent = "вЂ”";
+  $("lmCtx").textContent = "вЂ”";
+  $("lmState").textContent = data.detail || "вЂ”";
 }
 
 function renderJob(job, logLines) {
@@ -2121,7 +2134,7 @@ function renderJob(job, logLines) {
   $("stDone").textContent = fmtNum(job.done || 0);
   $("stOk").textContent = fmtNum(job.ok || 0);
   $("stBad").textContent = fmtNum(job.bad || 0);
-  $("stEta").textContent = job.eta || "—";
+  $("stEta").textContent = job.eta || "вЂ”";
   const pct = job.percent || 0;
   $("stripFill").style.width = pct + "%";
   $("stripPct").textContent = pct.toFixed(1) + "%";
@@ -2161,7 +2174,7 @@ async function poll() {
   polling = true;
   try {
     const [prov, st, usage] = await Promise.all([
-      api.get("/api/provider").catch(() => ({ ok: false, detail: "—" })),
+      api.get("/api/provider").catch(() => ({ ok: false, detail: "вЂ”" })),
       api.get("/api/status"),
       api.get("/api/usage").catch(() => ({ usage: null })),
     ]);
@@ -2276,7 +2289,7 @@ async function init() {
       const res = await api.get("/api/scan");
       $("stripCaption").textContent = res.ok
         ? t("strip.countPrefix") + fmtNum(res.count)
-        : (res.error || "—");
+        : (res.error || "вЂ”");
     } catch (e) {
       uiAlert("Error", errText(e));
     }
@@ -2314,7 +2327,7 @@ async function init() {
     try {
       await api.post("/api/shutdown");
     } catch (e) {
-      /* сервер мог успеть закрыть соединение — это норма */
+      /* СЃРµСЂРІРµСЂ РјРѕРі СѓСЃРїРµС‚СЊ Р·Р°РєСЂС‹С‚СЊ СЃРѕРµРґРёРЅРµРЅРёРµ вЂ” СЌС‚Рѕ РЅРѕСЂРјР° */
     }
     setTimeout(() => { serverOffline(true); }, 600);
   });
@@ -2353,7 +2366,7 @@ async function init() {
   bindReview();
 }
 
-/* ── review queue ── */
+/* в”Ђв”Ђ review queue в”Ђв”Ђ */
 let reviewItems = [];
 let reviewIdx = 0;
 
@@ -2385,15 +2398,15 @@ function showReviewItem() {
   actions.hidden = false;
   const item = reviewItems[reviewIdx] || reviewItems[0];
   $("reviewCount").textContent = `${reviewIdx + 1} / ${reviewItems.length}`;
-  $("reviewFile").textContent = item.filename || item.path || "—";
-  $("reviewScore").textContent = item.score != null ? String(item.score) : "—";
-  $("reviewQuality").textContent = item.quality || "—";
-  $("reviewReason").textContent = item.quality_reason || "—";
-  $("reviewTags").textContent = (item.category_tags || []).join(", ") || "—";
+  $("reviewFile").textContent = item.filename || item.path || "вЂ”";
+  $("reviewScore").textContent = item.score != null ? String(item.score) : "вЂ”";
+  $("reviewQuality").textContent = item.quality || "вЂ”";
+  $("reviewReason").textContent = item.quality_reason || "вЂ”";
+  $("reviewTags").textContent = (item.category_tags || []).join(", ") || "вЂ”";
   $("reviewImg").src = `/api/review/image?path=${encodeURIComponent(item.path)}`;
   $("reviewImg").onerror = () => {
     $("reviewImg").removeAttribute("src");
-    $("reviewFile").textContent = (item.filename || "") + " · " + t("review.noPreview");
+    $("reviewFile").textContent = (item.filename || "") + " В· " + t("review.noPreview");
   };
 }
 
@@ -2411,7 +2424,7 @@ async function decideReview(decision) {
     setReviewCountBadge(reviewItems.length);
     if (reviewIdx >= reviewItems.length) reviewIdx = Math.max(0, reviewItems.length - 1);
   } else if (reviewItems.length === 1) {
-    // live-режим: «пропустить» отпускает очередь, модалку закрываем
+    // live-СЂРµР¶РёРј: В«РїСЂРѕРїСѓСЃС‚РёС‚СЊВ» РѕС‚РїСѓСЃРєР°РµС‚ РѕС‡РµСЂРµРґСЊ, РјРѕРґР°Р»РєСѓ Р·Р°РєСЂС‹РІР°РµРј
     $("reviewModal").hidden = true;
     document.body.style.overflow = "";
     return;
@@ -2459,7 +2472,7 @@ function bindReview() {
   window.__openReviewPending = openPending;
 }
 
-/* ── toast ── */
+/* в”Ђв”Ђ toast в”Ђв”Ђ */
 let toastTimer = null;
 function showToast(msg) {
   const el = $("toast");
@@ -2469,7 +2482,7 @@ function showToast(msg) {
   toastTimer = setTimeout(() => el.classList.remove("show"), 2600);
 }
 
-/* ── duplicates viewer ── */
+/* в”Ђв”Ђ duplicates viewer в”Ђв”Ђ */
 let dupeGroups = [];
 let dupeIdx = 0;
 let dupeSelected = "";
@@ -2503,7 +2516,7 @@ function renderDupeGroup() {
       ${files.map((f, i) => `
         <div class="dupe-thumb ${f === g.keeper ? "keeper" : ""} ${f === dupeSelected ? "selected" : ""}" data-path="${escapeAttr(f)}" data-idx="${i}">
           <img src="/api/dupes/image?path=${encodeURIComponent(f)}" alt="" loading="lazy">
-          ${f === g.keeper ? `<span class="dupe-badge">★ ${escapeHtml(t("dupes.aiBest"))}</span>` : ""}
+          ${f === g.keeper ? `<span class="dupe-badge">в… ${escapeHtml(t("dupes.aiBest"))}</span>` : ""}
           <div class="dupe-name">${escapeHtml(names[i] || "")}</div>
         </div>`).join("")}
     </div>`;
@@ -2553,7 +2566,7 @@ async function refreshDupesGroups() {
   }
 }
 
-/* ── duplicates ── */
+/* в”Ђв”Ђ duplicates в”Ђв”Ђ */
 async function refreshDupesStatus() {
   try {
     const st = await api.get("/api/dupes/status");
@@ -2663,7 +2676,7 @@ function bindDupes() {
     try {
       await api.post("/api/dupes/delete-single", { path });
       showToast(t("toast.toDeleted"));
-      // файл убран из группы
+      // С„Р°Р№Р» СѓР±СЂР°РЅ РёР· РіСЂСѓРїРїС‹
       if (g.files) g.files.splice(lbIdx, 1);
       if (g.names) g.names.splice(lbIdx, 1);
       if (g.keeper === path) g.keeper = (g.files || [])[0] || "";
@@ -2679,41 +2692,47 @@ function bindDupes() {
   setInterval(refreshDupesStatus, 2500);
 }
 
-/* ── undo last run ── */
+/* в”Ђв”Ђ undo last run в”Ђв”Ђ */
 let undoOps = [];
 let undoIdx = 0;
 
+function undoItem() {
+  return undoOps[undoIdx] || null;
+}
+
 function renderUndoPage() {
+  const el = undoItem();
   const body = $("undoBody");
-  const el = undoOps[undoIdx];
+  const empty = $("undoEmpty");
   $("undoCount").textContent = undoOps.length
     ? `${undoIdx + 1} / ${undoOps.length}`
     : "0 / 0";
   if (!el) {
-    body.innerHTML = `<div class="review-empty">${escapeHtml(t("undo.empty"))}</div>`;
+    body.hidden = true;
+    empty.hidden = false;
+    empty.textContent = t("undo.empty");
     return;
   }
-  const op = el.op === "copy" ? t("undo.opCopy") : t("undo.opMove");
-  const back = el.op === "copy"
-    ? t("undo.backCopy")
-    : t("undo.backMove");
-  body.innerHTML = `
-    <div class="help-step">
-      <div class="help-num">${undoIdx + 1}</div>
-      <div>
-        <h3>${escapeHtml(op)}</h3>
-        <p><b>${escapeHtml(t("undo.from"))}:</b> ${escapeHtml(el.from)}</p>
-        <p><b>${escapeHtml(t("undo.to"))}:</b> ${escapeHtml(el.to)}</p>
-        <p><b>${escapeHtml(t("undo.result"))}:</b> ${escapeHtml(back)}</p>
-      </div>
-    </div>`;
+  body.hidden = false;
+  empty.hidden = true;
+  const srcExists = false;
+  const imgPath = el.to || el.from;
+  $("undoImg").src = `/api/journal/image?path=${encodeURIComponent(imgPath)}`;
+  $("undoImg").onerror = () => {
+    $("undoImg").removeAttribute("src");
+    $("undoFrom").textContent = (el.from || "") + " В· " + t("review.noPreview");
+  };
+  $("undoFrom").textContent = el.from || "вЂ”";
+  $("undoTo").textContent = el.to || "вЂ”";
+  $("undoResult").textContent = el.op === "copy" ? t("undo.backCopy") : t("undo.backMove");
+  $("undoOp").textContent = el.op === "copy" ? t("undo.opCopy") : t("undo.opMove");
 }
 
 async function refreshUndo() {
   try {
     const res = await api.get("/api/journal");
     undoOps = res.ops || [];
-    undoIdx = 0;
+    if (undoIdx >= undoOps.length) undoIdx = Math.max(0, undoOps.length - 1);
     const btn = $("btnUndo");
     btn.hidden = undoOps.length === 0;
     btn.textContent = `${t("btn.undo")} (${undoOps.length})`;
@@ -2731,6 +2750,8 @@ function bindUndo() {
   $("undoClose").addEventListener("click", () => {
     modal.hidden = true;
     document.body.style.overflow = "";
+    refreshUndo();
+    poll();
   });
   $("undoPrev").addEventListener("click", () => {
     if (undoIdx > 0) {
@@ -2744,6 +2765,31 @@ function bindUndo() {
       renderUndoPage();
     }
   });
+  $("undoOne").addEventListener("click", async () => {
+    const el = undoItem();
+    if (!el) return;
+    try {
+      await api.post("/api/journal/undo-one", {
+        op: el.op,
+        from_path: el.from,
+        to_path: el.to,
+      });
+      showToast(t("toast.undoOne"));
+      undoOps.splice(undoIdx, 1);
+      if (undoIdx >= undoOps.length) undoIdx = Math.max(0, undoOps.length - 1);
+      renderUndoPage();
+      refreshUndo();
+    } catch (e) {
+      uiAlert("Error", errText(e));
+    }
+  });
+  $("undoKeep").addEventListener("click", () => {
+    // РѕСЃС‚Р°РІРёС‚СЊ РєР°Рє РµСЃС‚СЊ: РїСЂРѕСЃС‚Рѕ РїСЂРѕРїСѓСЃРєР°РµРј, Р±РµР· РѕРїРµСЂР°С†РёРё
+    undoOps.splice(undoIdx, 1);
+    if (undoIdx >= undoOps.length) undoIdx = Math.max(0, undoOps.length - 1);
+    renderUndoPage();
+    showToast(t("toast.undoSkipped"));
+  });
   $("undoApply").addEventListener("click", async () => {
     const ok = await uiConfirm(t("undo.title"), t("confirm.undo"), t("undo.apply"));
     if (!ok) return;
@@ -2751,13 +2797,194 @@ function bindUndo() {
       await api.post("/api/journal/undo");
       modal.hidden = true;
       document.body.style.overflow = "";
-      refreshUndo();
+      showToast(t("toast.undoAll"));
+      await refreshUndo();
       poll();
     } catch (e) {
       uiAlert("Error", errText(e));
     }
   });
   refreshUndo();
+}
+
+function uiConfirm(title, message, okLabel) {
+  return new Promise((resolve) => {
+    const overlay = $("modal");
+    $("modalTitle").textContent = title;
+    $("modalText").textContent = message;
+    $("modalCancel").hidden = false;
+    $("modalCancel").textContent = t("modal.cancel");
+    $("modalOk").textContent = okLabel || t("modal.confirm");
+    overlay.hidden = false;
+    document.body.style.overflow = "hidden";
+
+    const done = (val) => {
+      overlay.hidden = true;
+      document.body.style.overflow = "";
+      $("modalOk").onclick = null;
+      $("modalCancel").onclick = null;
+      overlay.onclick = null;
+      document.removeEventListener("keydown", onKey);
+      resolve(val);
+    };
+    const onKey = (e) => {
+      if (e.key === "Escape") done(false);
+      if (e.key === "Enter") done(true);
+    };
+    $("modalOk").onclick = () => done(true);
+    $("modalCancel").onclick = () => done(false);
+    overlay.onclick = (e) => { if (e.target === overlay) done(false); };
+    document.addEventListener("keydown", onKey);
+    $("modalOk").focus();
+  });
+}
+
+function uiAlert(title, message) {
+  return new Promise((resolve) => {
+    const overlay = $("modal");
+    $("modalTitle").textContent = title;
+    $("modalText").textContent = message;
+    $("modalCancel").hidden = true;
+    $("modalOk").textContent = t("modal.confirm");
+    overlay.hidden = false;
+    document.body.style.overflow = "hidden";
+
+    const done = () => {
+      overlay.hidden = true;
+      document.body.style.overflow = "";
+      $("modalOk").onclick = null;
+      overlay.onclick = null;
+      document.removeEventListener("keydown", onKey);
+      resolve();
+    };
+    const onKey = (e) => { if (e.key === "Escape" || e.key === "Enter") done(); };
+    $("modalOk").onclick = done;
+    overlay.onclick = (e) => { if (e.target === overlay) done(); };
+    document.addEventListener("keydown", onKey);
+    $("modalOk").focus();
+  });
+}
+
+function renderLm(data) {
+  lastLm = data;
+  const dot = $("lmDot");
+  const provider = document.querySelector("#providerSelect .select-value")
+    ? (window.__provider || "lmstudio") : "lmstudio";
+  const isLocal = provider === "lmstudio";
+
+  if (data.connected != null) {
+    // legacy lmstudio payload
+    if (data.connected) {
+      dot.className = "dot on";
+      $("lmTitle").textContent = t("lm.connected");
+    } else {
+      dot.className = "dot off";
+      $("lmTitle").textContent = t("lm.disconnected");
+    }
+    $("lmUrl").textContent = (data.url || "").replace(/^https?:\/\//, "");
+    $("lmCtx").textContent = data.context_length ? t("lm.tokens", { n: fmtNum(data.context_length) }) : "вЂ”";
+    $("lmQuant").textContent = data.quant || "вЂ”";
+    $("lmVram").textContent = data.vram_used_gb != null
+      ? `${data.vram_used_gb} / ${data.vram_total_gb ?? "?"} GB`
+      : "вЂ”";
+    $("lmState").textContent = data.load_state || (data.connected ? t("lm.ready") : t("lm.noLink"));
+    return;
+  }
+
+  // provider payload
+  if (data.ok) {
+    dot.className = "dot on";
+    $("lmTitle").textContent = t("provider.ok");
+  } else {
+    dot.className = "dot off";
+    $("lmTitle").textContent = data.detail || t("provider.fail");
+  }
+  $("lmUrl").textContent = data.base || "";
+  $("lmQuant").textContent = data.has_key ? t("provider.keyOk") : (isLocal ? "вЂ”" : t("provider.keyMissing"));
+  $("lmVram").textContent = "вЂ”";
+  $("lmCtx").textContent = "вЂ”";
+  $("lmState").textContent = data.detail || "вЂ”";
+}
+
+function renderJob(job, logLines) {
+  lastJob = job;
+  lastLog = logLines;
+  $("stDone").textContent = fmtNum(job.done || 0);
+  $("stOk").textContent = fmtNum(job.ok || 0);
+  $("stBad").textContent = fmtNum(job.bad || 0);
+  $("stEta").textContent = job.eta || "вЂ”";
+  const pct = job.percent || 0;
+  $("stripFill").style.width = pct + "%";
+  $("stripPct").textContent = pct.toFixed(1) + "%";
+  $("stripCaption").textContent = job.running
+    ? (job.current_file || t("strip.working"))
+    : (job.message || t("strip.ready"));
+  $("btnStart").disabled = !!job.running;
+  $("btnStop").disabled = !job.running;
+
+  const strip = $("strip");
+  strip.querySelectorAll(".bad-tick").forEach((n) => n.remove());
+  if (job.total > 0) {
+    const ticks = Math.min(job.bad || 0, 36);
+    for (let i = 0; i < ticks; i++) {
+      const tick = document.createElement("div");
+      tick.className = "bad-tick";
+      tick.style.left = (2 + Math.random() * Math.max(pct, 2)) + "%";
+      strip.appendChild(tick);
+    }
+  }
+
+  const logEl = $("log");
+  if (logLines && logLines.length) {
+    logEl.innerHTML = logLines.map((line) => {
+      let cls = "";
+      if (/^\d{2}:\d{2}:\d{2}\s+bad/.test(line)) cls = "bad";
+      else if (/^\d{2}:\d{2}:\d{2}\s+ok\s/.test(line)) cls = "ok";
+      else if (/ERR|Error|Critical/.test(line)) cls = "err";
+      return `<div class="${cls}">${escapeHtml(line)}</div>`;
+    }).join("");
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+}
+
+async function poll() {
+  if (polling) return;
+  polling = true;
+  try {
+    const [prov, st, usage] = await Promise.all([
+      api.get("/api/provider").catch(() => ({ ok: false, detail: "вЂ”" })),
+      api.get("/api/status"),
+      api.get("/api/usage").catch(() => ({ usage: null })),
+    ]);
+    renderLm(prov);
+    if (usage && usage.usage) renderUsage(usage.usage);
+    renderJob(st.job || {}, st.log || []);
+    serverOffline(false);
+    api.get("/api/review").then((r) => setReviewCountBadge(r.count || 0)).catch(() => {});
+    refreshUndo();
+    if (st.review_pending && $("reviewModal").hidden && window.__openReviewPending) {
+      window.__openReviewPending(st.review_pending);
+    }
+  } catch (e) {
+    serverOffline(true);
+  } finally {
+    polling = false;
+  }
+}
+
+function renderUsage(u) {
+  const el = $("usageLine");
+  if (!el) return;
+  const req = u.requests ?? 0;
+  const tin = u.input_tokens ?? 0;
+  const tout = u.output_tokens ?? 0;
+  const cost = u.cost_usd ?? 0;
+  el.textContent = t("provider.usage", {
+    req: fmtNum(req),
+    tin: fmtNum(tin),
+    tout: fmtNum(tout),
+    cost: cost.toFixed(4),
+  });
 }
 
 init();

@@ -1806,6 +1806,68 @@ def api_journal() -> dict[str, Any]:
     return {"ok": True, "run": rid, "count": len(ops), "ops": ops}
 
 
+@app.get("/api/journal/image")
+def api_journal_image(path: str) -> FileResponse:
+    p = Path(path)
+    if not p.is_file():
+        raise HTTPException(404, "File not found")
+    return FileResponse(p)
+
+
+class UndoOne(BaseModel):
+    op: str
+    from_path: str
+    to_path: str
+
+
+def undo_single(op: str, from_path: str, to_path: str) -> dict[str, Any]:
+    src = Path(from_path)
+    dest = Path(to_path)
+    if op == "move":
+        if dest.is_file() and not src.exists():
+            src.parent.mkdir(parents=True, exist_ok=True)
+            if src.exists():
+                src = src.parent / f"{dest.stem}_undo_{int(time.time())}{dest.suffix}"
+            shutil.move(str(dest), str(src))
+            return {"ok": True, "action": f"restored->{src}"}
+        return {"ok": True, "action": "skip"}
+    if op == "copy":
+        if dest.is_file():
+            dest.unlink()
+            return {"ok": True, "action": "copy-deleted"}
+        return {"ok": True, "action": "skip"}
+    return {"ok": False, "action": "unknown-op"}
+
+
+def drop_journal_record(op: str, from_path: str, to_path: str) -> None:
+    rows = load_journal()
+    out: list[dict[str, Any]] = []
+    dropped = False
+    for r in rows:
+        if (
+            not dropped
+            and r.get("op") == op
+            and str(r.get("from")) == from_path
+            and str(r.get("to")) == to_path
+        ):
+            dropped = True
+            continue
+        out.append(r)
+    rewrite_journal(out)
+
+
+@app.post("/api/journal/undo-one")
+def api_journal_undo_one(body: UndoOne) -> dict[str, Any]:
+    with JOB_LOCK:
+        if JOB.running:
+            raise HTTPException(409, "Stop the run first")
+    result = undo_single(body.op, body.from_path, body.to_path)
+    if result.get("ok"):
+        drop_journal_record(body.op, body.from_path, body.to_path)
+        log(f"undo one: {body.from_path} ({result.get('action')})")
+    return result
+
+
 @app.post("/api/journal/undo")
 def api_journal_undo() -> dict[str, Any]:
     rid = last_run_id()
