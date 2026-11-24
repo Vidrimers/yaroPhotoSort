@@ -40,7 +40,7 @@ window.YARO_I18N = {
   "behavior.badTitle": "What to do with rejects",
   "behavior.onlyCsv": "CSV only, I’ll review",
   "behavior.onlyCsv.tip": "Files are not moved. results/analysis.csv gets a row per photo with verdict (ok/bad), reason and score. You review the table and delete by hand.",
-  "behavior.moveBad": "Move to _rejects",
+  "behavior.moveBad": "Move to deleted (_rejects)",
   "behavior.moveBad.tip": "Rejects go into a _rejects folder inside the photo folder. Good shots stay put. CSV is written either way.",
   "behavior.more": "More",
   "behavior.recursive": "Include subfolders",
@@ -262,5 +262,8 @@ window.YARO_I18N = {
   "tab.sorting": "Sorting",
   "tab.dupes": "Duplicates",
   "layout.title": "Sort mode",
-  "lm.gpu": "GPU"
+  "lm.gpu": "GPU",
+  "undo.run": "Run",
+  "undo.opsWord": "ops",
+  "undo.conflict": "Warning: {n} file(s) in this run were also touched by other runs. Undoing may conflict with later changes."
 };

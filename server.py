@@ -1850,10 +1850,56 @@ def api_dupes_resolve(body: DupeResolve) -> dict[str, Any]:
 
 
 @app.get("/api/journal")
-def api_journal() -> dict[str, Any]:
+def api_journal(run: str = "") -> dict[str, Any]:
+    if run:
+        ops = [r for r in load_journal() if r.get("run") == run]
+        return {"ok": True, "run": run, "count": len(ops), "ops": ops}
     rid = last_run_id()
     ops = last_run_ops()
     return {"ok": True, "run": rid, "count": len(ops), "ops": ops}
+
+
+@app.get("/api/journal/runs")
+def api_journal_runs() -> dict[str, Any]:
+    rows = load_journal()
+    groups: dict[str, dict[str, Any]] = {}
+    file_to_runs: dict[str, set[str]] = {}
+    for r in rows:
+        rid = str(r.get("run") or "")
+        g = groups.setdefault(
+            rid,
+            {"run": rid, "ts": r.get("ts"), "count": 0, "ops": 0, "files": set()},
+        )
+        g["ts"] = r.get("ts") or g["ts"]
+        g["ops"] += 1
+        for key in ("from", "to"):
+            p = str(r.get(key) or "")
+            if p:
+                g["files"].add(p)
+                file_to_runs.setdefault(p, set()).add(rid)
+
+    # конфликт: файл задет более чем одним прогоном
+    conflict_files = {p for p, runs in file_to_runs.items() if len(runs) > 1}
+
+    out = []
+    for rid, g in groups.items():
+        touched = len(g["files"] & conflict_files)
+        out.append(
+            {
+                "run": rid,
+                "ts": g["ts"],
+                "ops": g["ops"],
+                "conflict_files": touched,
+                "conflict": touched > 0,
+            }
+        )
+    out.sort(key=lambda x: str(x.get("ts") or ""), reverse=True)
+    return {
+        "ok": True,
+        "count": len(out),
+        "runs": out,
+        "conflict_total": len(conflict_files),
+    }
 
 
 @app.get("/api/journal/image")
@@ -1922,9 +1968,13 @@ def api_journal_undo_one(body: UndoOne) -> dict[str, Any]:
     return result
 
 
+class UndoRun(BaseModel):
+    run: str = ""
+
+
 @app.post("/api/journal/undo")
-def api_journal_undo() -> dict[str, Any]:
-    rid = last_run_id()
+def api_journal_undo(body: UndoRun | None = None) -> dict[str, Any]:
+    rid = body.run if body and body.run else last_run_id()
     if not rid:
         raise HTTPException(400, "Nothing to undo")
     with JOB_LOCK:

@@ -1104,6 +1104,11 @@ legend {
         <span class="review-count" id="undoCount"></span>
         <button class="btn" type="button" id="undoClose" data-i18n="modal.cancel"></button>
       </div>
+      <div class="num-row" style="margin: 12px 18px 4px;">
+        <label for="undoRun" data-i18n="undo.run"></label>
+        <select id="undoRun" class="folder-input" style="width:100%;max-width:420px;"></select>
+      </div>
+      <div class="hint" id="undoConflict" style="margin: 4px 18px 8px; display:none;"></div>
       <div class="review-body" id="undoBody">
         <div class="review-photo"><img id="undoImg" alt=""></div>
         <div class="review-meta">
@@ -2834,12 +2839,31 @@ function bindDupes() {
   setInterval(refreshDupesStatus, 2500);
 }
 
-/* РІ”Р‚РІ”Р‚ undo last run РІ”Р‚РІ”Р‚ */
+/* undo runs */
 let undoOps = [];
 let undoIdx = 0;
+let undoRuns = [];
+let undoRun = "";
 
 function undoItem() {
   return undoOps[undoIdx] || null;
+}
+
+function renderUndoRuns() {
+  const sel = $("undoRun");
+  sel.innerHTML = undoRuns.map((r) => {
+    const label = `${r.run} · ${r.ops} ${t("undo.opsWord")}${r.conflict ? " ⚠" : ""}`;
+    return `<option value="${escapeAttr(r.run)}" ${r.run === undoRun ? "selected" : ""}>${escapeHtml(label)}</option>`;
+  }).join("");
+  const cur = undoRuns.find((r) => r.run === undoRun);
+  const warn = $("undoConflict");
+  if (cur && cur.conflict) {
+    warn.style.display = "";
+    warn.textContent = t("undo.conflict", { n: cur.conflict_files });
+  } else {
+    warn.style.display = "none";
+    warn.textContent = "";
+  }
 }
 
 function renderUndoPage() {
@@ -2857,7 +2881,6 @@ function renderUndoPage() {
   }
   body.hidden = false;
   empty.hidden = true;
-  const srcExists = false;
   const imgPath = el.to || el.from;
   $("undoImg").src = `/api/journal/image?path=${encodeURIComponent(imgPath)}`;
   $("undoImg").onerror = () => {
@@ -2870,21 +2893,39 @@ function renderUndoPage() {
   $("undoOp").textContent = el.op === "copy" ? t("undo.opCopy") : t("undo.opMove");
 }
 
+async function loadUndoOps() {
+  try {
+    const res = await api.get("/api/journal" + (undoRun ? "?run=" + encodeURIComponent(undoRun) : ""));
+    undoOps = res.ops || [];
+    if (!undoRun) undoRun = res.run || "";
+    if (undoIdx >= undoOps.length) undoIdx = Math.max(0, undoOps.length - 1);
+  } catch (e) {
+    undoOps = [];
+  }
+}
+
 async function refreshUndo() {
   try {
-    const res = await api.get("/api/journal");
-    undoOps = res.ops || [];
-    if (undoIdx >= undoOps.length) undoIdx = Math.max(0, undoOps.length - 1);
+    const runsRes = await api.get("/api/journal/runs");
+    undoRuns = runsRes.runs || [];
+    if (!undoRun || !undoRuns.some((r) => r.run === undoRun)) {
+      undoRun = undoRuns[0] ? undoRuns[0].run : "";
+    }
+    await loadUndoOps();
     const btn = $("btnUndo");
-    btn.hidden = undoOps.length === 0;
-    btn.textContent = `${t("btn.undo")} (${undoOps.length})`;
-  } catch (e) { /* ignore */ }
+    const total = undoRuns.reduce((a, r) => a + (r.ops || 0), 0);
+    btn.hidden = total === 0;
+    btn.textContent = `${t("btn.undo")} (${total})`;
+    renderUndoRuns();
+  } catch (e) {
+    /* ignore */
+  }
 }
 
 function bindUndo() {
   const modal = $("undoModal");
-  $("btnUndo").addEventListener("click", () => {
-    refreshUndo();
+  $("btnUndo").addEventListener("click", async () => {
+    await refreshUndo();
     renderUndoPage();
     modal.hidden = false;
     document.body.style.overflow = "hidden";
@@ -2894,6 +2935,13 @@ function bindUndo() {
     document.body.style.overflow = "";
     refreshUndo();
     poll();
+  });
+  $("undoRun").addEventListener("change", async () => {
+    undoRun = $("undoRun").value;
+    undoIdx = 0;
+    await loadUndoOps();
+    renderUndoRuns();
+    renderUndoPage();
   });
   $("undoPrev").addEventListener("click", () => {
     if (undoIdx > 0) {
@@ -2926,7 +2974,7 @@ function bindUndo() {
     }
   });
   $("undoKeep").addEventListener("click", () => {
-    // Р С•РЎРѓРЎвЂљР В°Р Р†Р С‘РЎвЂљРЎРЉ Р С”Р В°Р С” Р ВµРЎРѓРЎвЂљРЎРЉ: Р С—РЎР‚Р С•РЎРѓРЎвЂљР С• Р С—РЎР‚Р С•Р С—РЎС“РЎРѓР С”Р В°Р ВµР С, Р В±Р ВµР · Р С•Р С—Р ВµРЎР‚Р В°РЎвЂ Р С‘Р С‘
+    // leave file as is: skip this op without touching anything
     undoOps.splice(undoIdx, 1);
     if (undoIdx >= undoOps.length) undoIdx = Math.max(0, undoOps.length - 1);
     renderUndoPage();
@@ -2936,7 +2984,7 @@ function bindUndo() {
     const ok = await uiConfirm(t("undo.title"), t("confirm.undo"), t("undo.apply"));
     if (!ok) return;
     try {
-      await api.post("/api/journal/undo");
+      await api.post("/api/journal/undo", { run: undoRun || "" });
       modal.hidden = true;
       document.body.style.overflow = "";
       showToast(t("toast.undoAll"));
