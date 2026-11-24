@@ -23,7 +23,7 @@ window.YARO_I18N = {
   "quality.title": "Что считаем браком",
   "quality.hint": "Включи критерии, по которым модель ставит quality=bad.",
   "quality.blur": "Размытие",
-  "quality.blur.sub": "смаз, не в фокусе, тряска",
+  "quality.blur.sub": "смаз, не в фокусе, тряска (причина?)",
   "quality.blur.tip": "Снимок не в фокусе, смазан рукой или тряской камеры.",
   "quality.exposure": "Пересвет или недосвет",
   "quality.exposure.sub": "выбитое небо, чёрная масса без деталей",
