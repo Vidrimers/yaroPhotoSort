@@ -144,7 +144,7 @@ window.YARO_I18N = {
   "review.reason": "Reason",
   "review.tags": "Tags",
   "review.keep": "Keep",
-  "review.reject": "To _rejects",
+  "review.reject": "To deleted",
   "review.skip": "Skip for now",
   "review.empty": "Queue is empty. Borderline and rejected shots will show up here in Ask mode.",
   "review.noPreview": "preview unavailable",
@@ -240,5 +240,12 @@ window.YARO_I18N = {
   "undo.next": "Next",
   "undo.apply": "Undo all",
   "confirm.undo": "Undo every file operation from the last run? Copies are deleted, moves return to their original names and folders.",
-  "err.offline": "No connection to the server. Start it with start.bat, then refresh the page."
+  "err.offline": "No connection to the server. Start it with start.bat, then refresh the page.",
+  "dupes.applyGroup": "Save this group",
+  "dupes.pickHint": "Click a photo to open it big. Star marks the AI pick — change it if you disagree.",
+  "dupes.aiBest": "AI pick",
+  "dupes.keepThis": "Keep this one",
+  "toast.dupeSaved": "Group saved: keeper stays, the rest are in _rejects",
+  "toast.dupeKeeper": "Keeper updated",
+  "toast.toDeleted": "Photo sent to _rejects"
 };

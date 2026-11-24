@@ -1586,6 +1586,107 @@ def api_dupes_list() -> dict[str, Any]:
     return {"ok": True, "count": len(groups), "groups": groups}
 
 
+@app.get("/api/dupes/image")
+def api_dupes_image(path: str) -> FileResponse:
+    p = Path(path)
+    if not p.is_file():
+        raise HTTPException(404, "File not found")
+    return FileResponse(p)
+
+
+class DupeResolve(BaseModel):
+    group_id: int
+    keep_path: str
+    others: str = "reject"  # reject | stay
+
+
+class DupeSingle(BaseModel):
+    path: str
+
+
+@app.post("/api/dupes/delete-single")
+def api_dupes_delete_single(body: DupeSingle) -> dict[str, Any]:
+    global CURRENT_RUN
+    CURRENT_RUN = f"dupes-{datetime.now().strftime('%Y-%m-%d_%H-%M')}"
+    p = Path(body.path)
+    if not p.is_file():
+        raise HTTPException(404, "File not found")
+    cfg = load_config()
+    input_folder = cfg.get("input_folder") or ""
+    rej = Path(input_folder) / (cfg.get("bad_folder_name") or "_rejects")
+    do_move(p, rej / p.name)
+    log(f"dupes single -> _rejects: {p.name}")
+    return {"ok": True, "to": str(rej / p.name)}
+
+
+def _find_original_for(moved_path: str) -> str | None:
+    """Ищет в журнале исходный путь для файла, лежащего в _dupes."""
+    for rec in reversed(load_journal()):
+        if str(rec.get("to")) == moved_path and rec.get("op") == "move":
+            return str(rec.get("from"))
+    return None
+
+
+@app.post("/api/dupes/resolve")
+def api_dupes_resolve(body: DupeResolve) -> dict[str, Any]:
+    global CURRENT_RUN
+    CURRENT_RUN = f"dupes-{datetime.now().strftime('%Y-%m-%d_%H-%M')}"
+    if not DUPES_PATH.exists():
+        raise HTTPException(404, "No duplicates found")
+    try:
+        groups = json.loads(DUPES_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        raise HTTPException(500, "dupes.json is broken")
+    group = next((g for g in groups if int(g.get("id") or 0) == body.group_id), None)
+    if group is None:
+        raise HTTPException(404, "Group not found")
+
+    cfg = load_config()
+    input_folder = cfg.get("input_folder") or ""
+    rej = Path(input_folder) / (cfg.get("bad_folder_name") or "_rejects")
+
+    keep = Path(body.keep_path)
+    if not keep.is_file():
+        raise HTTPException(404, "Keeper file not found")
+
+    # keeper: вернуть из _dupes к источнику, если можем
+    keeper_action = "keep"
+    if "_dupes" in str(keep):
+        original = _find_original_for(str(keep))
+        if original and not Path(original).exists():
+            do_move(keep, Path(original))
+            keeper_action = f"restore->{original}"
+        else:
+            dest = Path(input_folder) / keep.name
+            if not dest.exists():
+                do_move(keep, dest)
+                keeper_action = f"restore->{dest}"
+            else:
+                keeper_action = "keep"
+
+    others_action = "stay"
+    if body.others == "reject":
+        rej.mkdir(parents=True, exist_ok=True)
+        for raw in group.get("files") or []:
+            p = Path(str(raw))
+            if str(p) == str(keep) or not p.is_file():
+                continue
+            do_move(p, rej / p.name)
+        others_action = "reject"
+
+    group["resolved"] = {
+        "keep": str(keep),
+        "keeper_action": keeper_action,
+        "others": others_action,
+        "ts": datetime.now().isoformat(timespec="seconds"),
+    }
+    DUPES_PATH.write_text(
+        json.dumps(groups, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    log(f"dupes group {body.group_id} resolved: keep={keep.name} others={others_action}")
+    return {"ok": True, "keeper_action": keeper_action, "others": others_action}
+
+
 @app.get("/api/journal")
 def api_journal() -> dict[str, Any]:
     rid = last_run_id()

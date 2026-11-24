@@ -764,6 +764,146 @@ legend {
   text-align: center;
   color: var(--muted);
 }
+
+/* toast */
+#toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--text);
+  color: var(--bg);
+  padding: 12px 18px;
+  border-radius: 3px;
+  font: 600 13.5px/1.3 "Source Sans 3", sans-serif;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease, transform .2s ease;
+  z-index: 300;
+  max-width: min(520px, calc(100% - 32px));
+}
+#toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* просмотрщик дубликатов */
+.dupe-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+  padding: 4px 0 8px;
+}
+.dupe-thumb {
+  position: relative;
+  border: 2px solid var(--line);
+  background: var(--bg-3);
+  cursor: pointer;
+  aspect-ratio: 1;
+  overflow: hidden;
+}
+.dupe-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.dupe-thumb.keeper {
+  border-color: var(--accent-only-run);
+}
+.dupe-thumb.selected {
+  outline: 2px solid var(--accent-only-run);
+  outline-offset: 1px;
+}
+.dupe-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: var(--accent-only-run);
+  color: var(--amber-ink);
+  font: 700 11px/1 "Source Sans 3", sans-serif;
+  padding: 4px 6px;
+  border-radius: 2px;
+}
+.dupe-name {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  font: 500 10.5px/1.3 "JetBrains Mono", monospace;
+  padding: 4px 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* lightbox */
+#lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.88);
+  z-index: 250;
+  display: flex;
+  flex-direction: column;
+}
+#lightbox[hidden] { display: none !important; }
+.lb-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  color: #fff;
+}
+.lb-top h3 {
+  margin: 0;
+  flex: 1;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: "JetBrains Mono", monospace;
+  word-break: break-all;
+}
+.lb-stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: 0 18px;
+}
+.lb-stage img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.lb-side {
+  color: #cfc9bd;
+  font-size: 12.5px;
+  line-height: 1.5;
+  padding: 0 18px 10px;
+  font-family: "JetBrains Mono", monospace;
+}
+.lb-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 14px 18px 20px;
+}
+.lb-nav {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.lb-count {
+  color: #cfc9bd;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+  min-width: 64px;
+  text-align: center;
+}
 </style>
 </head>
 <body>
@@ -865,11 +1005,37 @@ legend {
     <div class="modal-help" role="dialog" aria-modal="true" aria-labelledby="dupesModalTitle">
       <div class="modal-help-head">
         <h2 id="dupesModalTitle" data-i18n="dupes.title"></h2>
+        <span class="review-count" id="dupeGroupCount"></span>
         <button class="btn" type="button" id="dupesClose" data-i18n="modal.confirm"></button>
       </div>
       <div class="modal-help-body" id="dupesBody"></div>
+      <div class="review-actions" id="dupeGroupActions">
+        <button class="btn btn-primary" type="button" id="dupeApplyGroup" data-i18n="dupes.applyGroup"></button>
+        <button class="btn" type="button" id="dupePrevGroup" data-i18n="undo.prev"></button>
+        <button class="btn" type="button" id="dupeNextGroup" data-i18n="undo.next"></button>
+      </div>
     </div>
   </div>
+
+  <div id="lightbox" hidden>
+    <div class="lb-top">
+      <h3 id="lbName">—</h3>
+      <div class="lb-nav">
+        <button class="btn" type="button" id="lbPrev" data-i18n="undo.prev"></button>
+        <span class="lb-count" id="lbCount"></span>
+        <button class="btn" type="button" id="lbNext" data-i18n="undo.next"></button>
+      </div>
+      <button class="btn" type="button" id="lbClose" data-i18n="modal.confirm"></button>
+    </div>
+    <div class="lb-stage"><img id="lbImg" alt=""></div>
+    <div class="lb-side" id="lbInfo">—</div>
+    <div class="lb-actions">
+      <button class="btn btn-primary" type="button" id="lbKeep" data-i18n="dupes.keepThis"></button>
+      <button class="btn btn-danger" type="button" id="lbDelete" data-i18n="review.reject"></button>
+    </div>
+  </div>
+
+  <div id="toast"></div>
 
   <div class="modal-overlay" id="undoModal" hidden>
     <div class="modal-review" role="dialog" aria-modal="true" aria-labelledby="undoTitle">
@@ -2269,6 +2435,100 @@ function bindReview() {
   window.__openReviewPending = openPending;
 }
 
+/* ── toast ── */
+let toastTimer = null;
+function showToast(msg) {
+  const el = $("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 2600);
+}
+
+/* ── duplicates viewer ── */
+let dupeGroups = [];
+let dupeIdx = 0;
+let dupeSelected = "";
+let lbIdx = 0;
+
+function dupeGroup() {
+  return dupeGroups[dupeIdx] || null;
+}
+
+function dupeFiles() {
+  const g = dupeGroup();
+  return (g && g.files) || [];
+}
+
+function renderDupeGroup() {
+  const g = dupeGroup();
+  $("dupeGroupCount").textContent = dupeGroups.length
+    ? `${dupeIdx + 1} / ${dupeGroups.length}`
+    : "0 / 0";
+  const body = $("dupesBody");
+  if (!g) {
+    body.innerHTML = `<div class="review-empty">${escapeHtml(t("dupes.empty"))}</div>`;
+    return;
+  }
+  if (!dupeSelected) dupeSelected = g.keeper || (g.files || [])[0] || "";
+  const files = g.files || [];
+  const names = g.names || files.map((f) => f.split(/[\\/]/).pop());
+  body.innerHTML = `
+    <p class="hint" style="margin: 0 0 10px;">${escapeHtml(t("dupes.pickHint"))}</p>
+    <div class="dupe-grid">
+      ${files.map((f, i) => `
+        <div class="dupe-thumb ${f === g.keeper ? "keeper" : ""} ${f === dupeSelected ? "selected" : ""}" data-path="${escapeAttr(f)}" data-idx="${i}">
+          <img src="/api/dupes/image?path=${encodeURIComponent(f)}" alt="" loading="lazy">
+          ${f === g.keeper ? `<span class="dupe-badge">★ ${escapeHtml(t("dupes.aiBest"))}</span>` : ""}
+          <div class="dupe-name">${escapeHtml(names[i] || "")}</div>
+        </div>`).join("")}
+    </div>`;
+  body.querySelectorAll(".dupe-thumb").forEach((el) => {
+    el.addEventListener("click", () => {
+      dupeSelected = el.dataset.path;
+      lbIdx = parseInt(el.dataset.idx || "0", 10);
+      renderDupeGroup();
+      openLightbox();
+    });
+  });
+}
+
+function openLightbox() {
+  const files = dupeFiles();
+  const g = dupeGroup();
+  if (!files.length) return;
+  lbIdx = Math.max(0, Math.min(lbIdx, files.length - 1));
+  const path = files[lbIdx];
+  const name = (g.names || [])[lbIdx] || path.split(/[\\/]/).pop();
+  $("lbImg").src = `/api/dupes/image?path=${encodeURIComponent(path)}`;
+  $("lbName").textContent = name;
+  $("lbCount").textContent = `${lbIdx + 1} / ${files.length}`;
+  $("lbInfo").textContent = [
+    `${t("undo.from")}: ${path}`,
+    `${t("dupes.aiBest")}: ${(g.keeper_name || "")}`,
+  ].join("\n");
+  $("lbKeep").style.display = path === dupeSelected ? "" : "";
+  $("lightbox").hidden = false;
+  document.body.style.overflow = "hidden";
+}
+
+function closeLightbox() {
+  $("lightbox").hidden = true;
+  if ($("dupesModal").hidden) document.body.style.overflow = "";
+}
+
+async function refreshDupesGroups() {
+  try {
+    const res = await api.get("/api/dupes");
+    dupeGroups = (res.groups || []).filter((g) => !g.resolved);
+    if (dupeIdx >= dupeGroups.length) dupeIdx = Math.max(0, dupeGroups.length - 1);
+    dupeSelected = "";
+    return dupeGroups;
+  } catch (e) {
+    return [];
+  }
+}
+
 /* ── duplicates ── */
 async function refreshDupesStatus() {
   try {
@@ -2299,38 +2559,98 @@ function bindDupes() {
 
   const modal = $("dupesModal");
   $("btnDupesView").addEventListener("click", async () => {
-    try {
-      const res = await api.get("/api/dupes");
-      const body = $("dupesBody");
-      const groups = res.groups || [];
-      if (!groups.length) {
-        body.innerHTML = `<div class="review-empty">${escapeHtml(t("dupes.empty"))}</div>`;
-      } else {
-        body.innerHTML = groups.map((g) => `
-          <div class="help-step">
-            <div class="help-num">${g.id}</div>
-            <div>
-              <h3>${escapeHtml(g.keeper_name || "")} · ${g.files.length} ${escapeHtml(t("dupes.filesWord"))}</h3>
-              <p>${escapeHtml((g.names || []).join(", "))}</p>
-            </div>
-          </div>`).join("");
-      }
-      modal.hidden = false;
-      document.body.style.overflow = "hidden";
-    } catch (e) {
-      uiAlert("Error", errText(e));
-    }
+    await refreshDupesGroups();
+    dupeSelected = "";
+    renderDupeGroup();
+    modal.hidden = false;
+    document.body.style.overflow = "hidden";
   });
   $("dupesClose").addEventListener("click", () => {
     modal.hidden = true;
     document.body.style.overflow = "";
+    closeLightbox();
+    refreshDupesStatus();
+    refreshUndo();
+    poll();
   });
   modal.addEventListener("click", (e) => {
     if (e.target === modal) {
       modal.hidden = true;
       document.body.style.overflow = "";
+      closeLightbox();
     }
   });
+  $("dupePrevGroup").addEventListener("click", () => {
+    if (dupeIdx > 0) {
+      dupeIdx -= 1;
+      dupeSelected = "";
+      renderDupeGroup();
+    }
+  });
+  $("dupeNextGroup").addEventListener("click", () => {
+    if (dupeIdx < dupeGroups.length - 1) {
+      dupeIdx += 1;
+      dupeSelected = "";
+      renderDupeGroup();
+    }
+  });
+  $("dupeApplyGroup").addEventListener("click", async () => {
+    const g = dupeGroup();
+    if (!g || !dupeSelected) return;
+    try {
+      await api.post("/api/dupes/resolve", {
+        group_id: g.id,
+        keep_path: dupeSelected,
+        others: "reject",
+      });
+      showToast(t("toast.dupeSaved"));
+      dupeGroups.splice(dupeIdx, 1);
+      if (dupeIdx >= dupeGroups.length) dupeIdx = Math.max(0, dupeGroups.length - 1);
+      dupeSelected = "";
+      renderDupeGroup();
+      refreshDupesStatus();
+    } catch (e) {
+      uiAlert("Error", errText(e));
+    }
+  });
+
+  $("lbClose").addEventListener("click", closeLightbox);
+  $("lbPrev").addEventListener("click", () => {
+    lbIdx -= 1;
+    openLightbox();
+  });
+  $("lbNext").addEventListener("click", () => {
+    lbIdx += 1;
+    openLightbox();
+  });
+  $("lbKeep").addEventListener("click", () => {
+    const files = dupeFiles();
+    if (!files[lbIdx]) return;
+    dupeSelected = files[lbIdx];
+    renderDupeGroup();
+    showToast(t("toast.dupeKeeper"));
+    closeLightbox();
+  });
+  $("lbDelete").addEventListener("click", async () => {
+    const files = dupeFiles();
+    const g = dupeGroup();
+    const path = files[lbIdx];
+    if (!path || !g) return;
+    try {
+      await api.post("/api/dupes/delete-single", { path });
+      showToast(t("toast.toDeleted"));
+      // файл убран из группы
+      if (g.files) g.files.splice(lbIdx, 1);
+      if (g.names) g.names.splice(lbIdx, 1);
+      if (g.keeper === path) g.keeper = (g.files || [])[0] || "";
+      closeLightbox();
+      if (lbIdx >= (g.files || []).length) lbIdx = Math.max(0, (g.files || []).length - 1);
+      renderDupeGroup();
+    } catch (e) {
+      uiAlert("Error", errText(e));
+    }
+  });
+
   refreshDupesStatus();
   setInterval(refreshDupesStatus, 2500);
 }
