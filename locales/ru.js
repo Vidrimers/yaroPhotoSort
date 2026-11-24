@@ -225,5 +225,19 @@ window.YARO_I18N = {
   "provider.baseUrlPh": "https://xxxx.ngrok-free.app/v1",
   "provider.colabGuideBtn": "Как подключить",
   "provider.colabGuideTitle": "Google Colab",
-  "provider.colabGuideText": "Colab — бесплатный Jupyter-ноутбук на GPU Google. Модель запускаешь сам, сюда вставляешь URL туннеля.\n\n1. Открой colab.research.google.com\n2. Новый ноутбук → Runtime → Change runtime type → GPU (T4 хватит)\n3. В ячейке поставь OpenAI-совместимый сервер, например:\n   !pip install llama-cpp-python[server]\n   !python -m llama_cpp.server --model /content/model.gguf --port 8000\n   (или ollama / vLLM — что умеет /v1/chat/completions)\n4. В другой ячейке подними туннель:\n   !pip install cloudflared\n   !cloudflared tunnel --url http://localhost:8000\n5. Скопируй https://....trycloudflare.com, добавь в конец /v1\n   и вставь в Base URL выше. Сохрани, потом «Проверить связь».\n\nСрок жизни: бесплатный Colab отваливается примерно через 12 часов или при простое. URL умирает вместе с сессией — перезапусти ноутбук и вставь новый. Для длинных автозапусков не подходит."
+  "provider.colabGuideText": "Colab — бесплатный Jupyter-ноутбук на GPU Google. Модель запускаешь сам, сюда вставляешь URL туннеля.\n\n1. Открой colab.research.google.com\n2. Новый ноутбук → Runtime → Change runtime type → GPU (T4 хватит)\n3. В ячейке поставь OpenAI-совместимый сервер, например:\n   !pip install llama-cpp-python[server]\n   !python -m llama_cpp.server --model /content/model.gguf --port 8000\n   (или ollama / vLLM — что умеет /v1/chat/completions)\n4. В другой ячейке подними туннель:\n   !pip install cloudflared\n   !cloudflared tunnel --url http://localhost:8000\n5. Скопируй https://....trycloudflare.com, добавь в конец /v1\n   и вставь в Base URL выше. Сохрани, потом «Проверить связь».\n\nСрок жизни: бесплатный Colab отваливается примерно через 12 часов или при простое. URL умирает вместе с сессией — перезапусти ноутбук и вставь новый. Для длинных автозапусков не подходит.",
+  "btn.undo": "Откатить",
+  "undo.title": "Откат последнего прогона",
+  "undo.empty": "Операций для отката нет.",
+  "undo.opMove": "Перенос",
+  "undo.opCopy": "Копия",
+  "undo.from": "Было",
+  "undo.to": "Стало",
+  "undo.result": "При откате",
+  "undo.backMove": "файл вернётся по исходному пути",
+  "undo.backCopy": "копия по назначению удалится",
+  "undo.prev": "Назад",
+  "undo.next": "Вперёд",
+  "undo.apply": "Откатить всё",
+  "confirm.undo": "Отменить все файловые операции последнего прогона? Копии удалятся, переносы вернутся с исходными именами и папками."
 };

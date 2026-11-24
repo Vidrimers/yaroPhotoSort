@@ -871,6 +871,22 @@ legend {
     </div>
   </div>
 
+  <div class="modal-overlay" id="undoModal" hidden>
+    <div class="modal-review" role="dialog" aria-modal="true" aria-labelledby="undoTitle">
+      <div class="review-head">
+        <h2 id="undoTitle" data-i18n="undo.title"></h2>
+        <span class="review-count" id="undoCount"></span>
+        <button class="btn" type="button" id="undoClose" data-i18n="modal.cancel"></button>
+      </div>
+      <div class="modal-help-body" id="undoBody" style="min-height: 220px;"></div>
+      <div class="review-actions">
+        <button class="btn btn-danger" type="button" id="undoApply" data-i18n="undo.apply"></button>
+        <button class="btn" type="button" id="undoPrev" data-i18n="undo.prev"></button>
+        <button class="btn" type="button" id="undoNext" data-i18n="undo.next"></button>
+      </div>
+    </div>
+  </div>
+
   <div class="grid">
     <div class="col">
 
@@ -1189,6 +1205,7 @@ legend {
           <button class="btn btn-danger" id="btnStop" type="button" data-i18n="btn.stop" disabled></button>
           <button class="btn btn-ghost" id="btnScan" type="button" data-i18n="btn.scan"></button>
           <button class="btn" id="btnReview" type="button" hidden></button>
+          <button class="btn" id="btnUndo" type="button" hidden></button>
         </div>
 
         <div class="stats">
@@ -1794,6 +1811,7 @@ function bindForm() {
   syncReviewTiming();
   syncEventsCategories();
   bindDupes();
+  bindUndo();
 }
 
 function fmtNum(n) {
@@ -1955,6 +1973,7 @@ async function poll() {
     renderJob(st.job || {}, st.log || []);
     serverOffline(false);
     api.get("/api/review").then((r) => setReviewCountBadge(r.count || 0)).catch(() => {});
+    refreshUndo();
     if (st.review_pending && $("reviewModal").hidden && window.__openReviewPending) {
       window.__openReviewPending(st.review_pending);
     }
@@ -2307,6 +2326,87 @@ function bindDupes() {
   });
   refreshDupesStatus();
   setInterval(refreshDupesStatus, 2500);
+}
+
+/* ── undo last run ── */
+let undoOps = [];
+let undoIdx = 0;
+
+function renderUndoPage() {
+  const body = $("undoBody");
+  const el = undoOps[undoIdx];
+  $("undoCount").textContent = undoOps.length
+    ? `${undoIdx + 1} / ${undoOps.length}`
+    : "0 / 0";
+  if (!el) {
+    body.innerHTML = `<div class="review-empty">${escapeHtml(t("undo.empty"))}</div>`;
+    return;
+  }
+  const op = el.op === "copy" ? t("undo.opCopy") : t("undo.opMove");
+  const back = el.op === "copy"
+    ? t("undo.backCopy")
+    : t("undo.backMove");
+  body.innerHTML = `
+    <div class="help-step">
+      <div class="help-num">${undoIdx + 1}</div>
+      <div>
+        <h3>${escapeHtml(op)}</h3>
+        <p><b>${escapeHtml(t("undo.from"))}:</b> ${escapeHtml(el.from)}</p>
+        <p><b>${escapeHtml(t("undo.to"))}:</b> ${escapeHtml(el.to)}</p>
+        <p><b>${escapeHtml(t("undo.result"))}:</b> ${escapeHtml(back)}</p>
+      </div>
+    </div>`;
+}
+
+async function refreshUndo() {
+  try {
+    const res = await api.get("/api/journal");
+    undoOps = res.ops || [];
+    undoIdx = 0;
+    const btn = $("btnUndo");
+    btn.hidden = undoOps.length === 0;
+    btn.textContent = `${t("btn.undo")} (${undoOps.length})`;
+  } catch (e) { /* ignore */ }
+}
+
+function bindUndo() {
+  const modal = $("undoModal");
+  $("btnUndo").addEventListener("click", () => {
+    refreshUndo();
+    renderUndoPage();
+    modal.hidden = false;
+    document.body.style.overflow = "hidden";
+  });
+  $("undoClose").addEventListener("click", () => {
+    modal.hidden = true;
+    document.body.style.overflow = "";
+  });
+  $("undoPrev").addEventListener("click", () => {
+    if (undoIdx > 0) {
+      undoIdx -= 1;
+      renderUndoPage();
+    }
+  });
+  $("undoNext").addEventListener("click", () => {
+    if (undoIdx < undoOps.length - 1) {
+      undoIdx += 1;
+      renderUndoPage();
+    }
+  });
+  $("undoApply").addEventListener("click", async () => {
+    const ok = await uiConfirm(t("undo.title"), t("confirm.undo"), t("undo.apply"));
+    if (!ok) return;
+    try {
+      await api.post("/api/journal/undo");
+      modal.hidden = true;
+      document.body.style.overflow = "";
+      refreshUndo();
+      poll();
+    } catch (e) {
+      uiAlert("Error", e.message);
+    }
+  });
+  refreshUndo();
 }
 
 init();

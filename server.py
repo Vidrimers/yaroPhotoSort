@@ -51,6 +51,104 @@ CSV_PATH = RESULTS_DIR / "analysis.csv"
 LOG_PATH = RESULTS_DIR / "run.log"
 REVIEW_PATH = RESULTS_DIR / "review_queue.jsonl"
 DUPES_PATH = RESULTS_DIR / "dupes.json"
+JOURNAL_PATH = RESULTS_DIR / "journal.jsonl"
+CURRENT_RUN = "manual"
+
+
+# ────────────────────────────── журнал операций ──────────────────────────────
+
+def journal_record(op: str, src: str, dest: str, run_id: str) -> None:
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    row = {
+        "op": op,
+        "from": src,
+        "to": dest,
+        "run": run_id,
+        "ts": datetime.now().isoformat(timespec="seconds"),
+    }
+    with JOURNAL_PATH.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+
+def load_journal() -> list[dict[str, Any]]:
+    if not JOURNAL_PATH.exists():
+        return []
+    rows: list[dict[str, Any]] = []
+    with JOURNAL_PATH.open("r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rows.append(json.loads(line))
+            except Exception:
+                continue
+    return rows
+
+
+def last_run_id() -> str:
+    rows = load_journal()
+    return rows[-1].get("run", "") if rows else ""
+
+
+def last_run_ops() -> list[dict[str, Any]]:
+    rid = last_run_id()
+    if not rid:
+        return []
+    return [r for r in load_journal() if r.get("run") == rid]
+
+
+def rewrite_journal(rows: list[dict[str, Any]]) -> None:
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    with JOURNAL_PATH.open("w", encoding="utf-8") as f:
+        for row in rows:
+            f.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+
+def do_move(src: Path, dest: Path, run_id: str | None = None) -> None:
+    run_id = run_id or CURRENT_RUN
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if dest.exists():
+        dest = dest.parent / f"{src.stem}_{int(time.time())}{src.suffix}"
+    shutil.move(str(src), str(dest))
+    journal_record("move", str(src), str(dest), run_id)
+
+
+def do_copy(src: Path, dest: Path, run_id: str | None = None) -> None:
+    run_id = run_id or CURRENT_RUN
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if dest.exists():
+        dest = dest.parent / f"{src.stem}_{int(time.time())}{src.suffix}"
+    shutil.copy2(str(src), str(dest))
+    journal_record("copy", str(src), str(dest), run_id)
+
+
+def undo_run(run_id: str) -> dict[str, Any]:
+    """Разворачивает операции прогона в обратном порядке."""
+    rows = load_journal()
+    ops = [r for r in rows if r.get("run") == run_id]
+    undone = 0
+    errors: list[str] = []
+    for rec in reversed(ops):
+        src = Path(str(rec.get("from") or ""))
+        dest = Path(str(rec.get("to") or ""))
+        op = rec.get("op")
+        try:
+            if op == "move":
+                if dest.is_file() and not src.exists():
+                    src.parent.mkdir(parents=True, exist_ok=True)
+                    if src.exists():
+                        src = src.parent / f"{dest.stem}_undo_{int(time.time())}{dest.suffix}"
+                    shutil.move(str(dest), str(src))
+                undone += 1
+            elif op == "copy":
+                if dest.is_file():
+                    dest.unlink()
+                undone += 1
+        except Exception as e:
+            errors.append(f"{rec.get('from')}: {e}")
+    rewrite_journal([r for r in rows if r.get("run") != run_id])
+    return {"ok": not errors, "run": run_id, "undone": undone, "errors": errors}
 
 LM_BASE = os.environ.get("LMSTUDIO_URL", "http://127.0.0.1:1234")
 
@@ -498,6 +596,8 @@ def pick_keeper(group: list[Path], mode: str) -> Path:
 
 
 def run_dupes_scan(cfg: dict[str, Any]) -> None:
+    global CURRENT_RUN
+    CURRENT_RUN = f"dupes-{datetime.now().strftime('%Y-%m-%d_%H-%M')}"
     try:
         files = iter_images(cfg)
         with DUPES_LOCK:
@@ -528,10 +628,7 @@ def run_dupes_scan(cfg: dict[str, Any]) -> None:
                     if not p.is_file():
                         continue
                     dest = dest_root / p.name
-                    dest_root.mkdir(parents=True, exist_ok=True)
-                    if dest.exists():
-                        dest = dest_root / f"{p.stem}_{int(time.time())}{p.suffix}"
-                    shutil.move(str(p), str(dest))
+                    do_move(p, dest)
                 entry["action"] = f"group->{dest_root.name}"
             elif action == "reject_extra":
                 rej = Path(input_folder) / (cfg.get("bad_folder_name") or "_rejects")
@@ -540,9 +637,7 @@ def run_dupes_scan(cfg: dict[str, Any]) -> None:
                     if p == keeper or not p.is_file():
                         continue
                     dest = rej / p.name
-                    if dest.exists():
-                        dest = rej / f"{p.stem}_{int(time.time())}{p.suffix}"
-                    shutil.move(str(p), str(dest))
+                    do_move(p, dest)
                 entry["action"] = "reject_extra"
             else:
                 entry["action"] = "mark"
@@ -989,10 +1084,7 @@ def apply_actions(
             dest = dest_root / path.name
             actions.append(f"special->{tag}")
             if not dry and path.exists():
-                dest_root.mkdir(parents=True, exist_ok=True)
-                if dest.exists():
-                    dest = dest_root / f"{path.stem}_{int(time.time())}{path.suffix}"
-                shutil.move(str(path), str(dest))
+                do_move(path, dest)
             return ", ".join(actions)
 
     if use_events:
@@ -1002,10 +1094,7 @@ def apply_actions(
             dest = dest_root / path.name
             actions.append(f"event->{ev}")
             if not dry and path.exists():
-                dest_root.mkdir(parents=True, exist_ok=True)
-                if dest.exists():
-                    dest = dest_root / f"{path.stem}_{int(time.time())}{path.suffix}"
-                shutil.move(str(path), str(dest))
+                do_move(path, dest)
             return ", ".join(actions)
 
     if cfg.get("output_mode") == "move_bad" and verdict["quality"] == "bad":
@@ -1016,10 +1105,7 @@ def apply_actions(
             dest = dest_root / f"{path.stem}_bad_{safe}{path.suffix}"
         actions.append(f"move_bad->{dest.name}")
         if not dry:
-            dest_root.mkdir(parents=True, exist_ok=True)
-            if dest.exists():
-                dest = dest_root / f"{path.stem}_{int(time.time())}{path.suffix}"
-            shutil.move(str(path), str(dest))
+            do_move(path, dest)
 
     if use_categories:
         tags = verdict.get("category_tags") or [verdict.get("category") or "other"]
@@ -1037,20 +1123,18 @@ def apply_actions(
                         pass
                 actions.append(f"{c.get('action')}->{key}")
                 if not dry and path.exists():
-                    dest.parent.mkdir(parents=True, exist_ok=True)
-                    if dest.exists():
-                        dest = dest.parent / f"{path.stem}_{int(time.time())}{path.suffix}"
                     if c.get("action") == "move":
-                        shutil.move(str(path), str(dest))
+                        do_move(path, dest)
                     else:
-                        shutil.copy2(str(path), str(dest))
+                        do_copy(path, dest)
                 break
 
     return ", ".join(actions) if actions else "csv_only"
 
 
 def job_worker(cfg: dict[str, Any]) -> None:
-    global JOB
+    global JOB, CURRENT_RUN
+    CURRENT_RUN = f"run-{datetime.now().strftime('%Y-%m-%d_%H-%M')}"
     try:
         provider = cfg.get("provider") or "lmstudio"
         model = cfg.get("model_name") or providers.DEFAULT_MODELS.get(provider, "")
@@ -1502,6 +1586,26 @@ def api_dupes_list() -> dict[str, Any]:
     return {"ok": True, "count": len(groups), "groups": groups}
 
 
+@app.get("/api/journal")
+def api_journal() -> dict[str, Any]:
+    rid = last_run_id()
+    ops = last_run_ops()
+    return {"ok": True, "run": rid, "count": len(ops), "ops": ops}
+
+
+@app.post("/api/journal/undo")
+def api_journal_undo() -> dict[str, Any]:
+    rid = last_run_id()
+    if not rid:
+        raise HTTPException(400, "Nothing to undo")
+    with JOB_LOCK:
+        if JOB.running:
+            raise HTTPException(409, "Stop the run first")
+    result = undo_run(rid)
+    log(f"Undo run {rid}: {result.get('undone')} ops, {len(result.get('errors') or [])} errors")
+    return result
+
+
 @app.get("/api/review/image")
 def api_review_image(path: str) -> FileResponse:
     rows = read_review_queue()
@@ -1524,10 +1628,7 @@ def apply_review_decision(path: Path, target: dict[str, Any], decision: str, cfg
             safe = re.sub(r"[^\w\-]+", "_", str(target["quality_reason"]))[:40]
             dest = dest_root / f"{path.stem}_bad_{safe}{path.suffix}"
         if path.is_file():
-            dest_root.mkdir(parents=True, exist_ok=True)
-            if dest.exists():
-                dest = dest_root / f"{path.stem}_{int(time.time())}{path.suffix}"
-            shutil.move(str(path), str(dest))
+            do_move(path, dest)
         return f"reject->{dest.name}"
 
     action = "keep"
@@ -1543,13 +1644,10 @@ def apply_review_decision(path: Path, target: dict[str, Any], decision: str, cfg
                         dest = dest_root / path.relative_to(input_folder)
                     except Exception:
                         pass
-                dest.parent.mkdir(parents=True, exist_ok=True)
-                if dest.exists():
-                    dest = dest.parent / f"{path.stem}_{int(time.time())}{path.suffix}"
                 if c.get("action") == "move":
-                    shutil.move(str(path), str(dest))
+                    do_move(path, dest)
                 else:
-                    shutil.copy2(str(path), str(dest))
+                    do_copy(path, dest)
                 action = f"keep->{key}"
                 break
     return action
@@ -1563,6 +1661,8 @@ def drop_from_review_queue(path: str) -> list[dict[str, Any]]:
 
 @app.post("/api/review/decide")
 def api_review_decide(body: ReviewDecision) -> dict[str, Any]:
+    global CURRENT_RUN
+    CURRENT_RUN = f"review-{datetime.now().strftime('%Y-%m-%d_%H-%M')}"
     if body.decision not in ("keep", "reject", "skip"):
         raise HTTPException(400, "decision must be keep, reject or skip")
     rows = read_review_queue()
