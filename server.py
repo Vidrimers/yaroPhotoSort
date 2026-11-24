@@ -173,6 +173,12 @@ def undo_run(run_id: str) -> dict[str, Any]:
     rewrite_journal([r for r in rows if r.get("run") != run_id])
     cfg = load_config()
     removed = cleanup_empty_dirs(cfg.get("input_folder") or "", touched)
+    # откат дубликатов: старые группы больше не отражают реальность
+    if str(run_id).startswith("dupes"):
+        try:
+            DUPES_PATH.write_text("[]", encoding="utf-8")
+        except Exception:
+            pass
     return {
         "ok": not errors,
         "run": run_id,
@@ -1745,7 +1751,15 @@ def api_dupes_list() -> dict[str, Any]:
         groups = json.loads(DUPES_PATH.read_text(encoding="utf-8"))
     except Exception:
         groups = []
-    return {"ok": True, "count": len(groups), "groups": groups}
+    # живые группы: есть хотя бы два существующих файла
+    live = []
+    for g in groups:
+        files = [f for f in (g.get("files") or []) if Path(str(f)).is_file()]
+        if len(files) >= 2:
+            g = dict(g)
+            g["files"] = files
+            live.append(g)
+    return {"ok": True, "count": len(live), "groups": live}
 
 
 @app.get("/api/dupes/image")

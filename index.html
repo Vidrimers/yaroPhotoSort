@@ -2725,8 +2725,10 @@ async function refreshDupesStatus() {
     } else {
       $("btnDupes").disabled = false;
       el.textContent = s.message || "";
-      if (s.groups > 0) $("btnDupesView").hidden = false;
     }
+    // кнопка просмотра — только по живым группам
+    const list = await api.get("/api/dupes");
+    $("btnDupesView").hidden = !(list.count > 0);
   } catch (e) { /* ignore */ }
 }
 
@@ -2930,10 +2932,11 @@ function bindUndo() {
     modal.hidden = false;
     document.body.style.overflow = "hidden";
   });
-  $("undoClose").addEventListener("click", () => {
+  $("undoClose").addEventListener("click", async () => {
     modal.hidden = true;
     document.body.style.overflow = "";
-    refreshUndo();
+    await refreshUndo();
+    await refreshDupesStatus();
     poll();
   });
   $("undoRun").addEventListener("change", async () => {
@@ -2968,7 +2971,8 @@ function bindUndo() {
       undoOps.splice(undoIdx, 1);
       if (undoIdx >= undoOps.length) undoIdx = Math.max(0, undoOps.length - 1);
       renderUndoPage();
-      refreshUndo();
+      await refreshUndo();
+      await refreshDupesStatus();
     } catch (e) {
       uiAlert("Error", errText(e));
     }
@@ -2989,6 +2993,10 @@ function bindUndo() {
       document.body.style.overflow = "";
       showToast(t("toast.undoAll"));
       await refreshUndo();
+      await refreshDupesStatus();
+      await refreshDupesGroups();
+      dupeSelected = "";
+      renderDupeGroup();
       poll();
     } catch (e) {
       uiAlert("Error", errText(e));
