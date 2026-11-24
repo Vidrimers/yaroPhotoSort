@@ -4,7 +4,7 @@
 
 A local panel for cleaning up a large photo archive: flags rejects and sorts shots into folders using a vision model — locally (LM Studio / Ollama) or in the cloud (ChatGPT, Claude, Gemini, Qwen, MiMo, NVIDIA, OpenRouter).
 
-Built for this job: ~15,000 personal photos, quickly separate blurred / blown-out / accidental frames and distribute the rest (people, documents, screenshots, etc.) into folders. Everything runs on your machine — no API, no tokens.
+Built for this job: ~15,000 personal photos, quickly separate blurred / blown-out / accidental frames and distribute the rest (people, documents, screenshots, etc.) into folders. Local models run on your own GPU with no tokens spent; cloud providers are optional when you want a bigger model.
 
 ---
 
