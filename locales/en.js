@@ -260,5 +260,8 @@ window.YARO_I18N = {
   "undo.op": "Operation",
   "toast.undoOne": "File restored",
   "toast.undoAll": "Last run undone",
-  "toast.undoSkipped": "Left as is"
+  "toast.undoSkipped": "Left as is",
+  "tab.sorting": "Sorting",
+  "tab.dupes": "Duplicates",
+  "layout.title": "Sort mode"
 };

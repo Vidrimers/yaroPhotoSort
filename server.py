@@ -295,6 +295,8 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "port": 8460,
     "ui_lang": "en",
     "ui_theme": "lab",
+    "ui_tab": "sorting",
+    "ui_accordion": {},
 }
 
 
@@ -1492,6 +1494,8 @@ class ConfigModel(BaseModel):
     port: int = 8460
     ui_lang: str = "en"
     ui_theme: str = "lab"
+    ui_tab: str = "sorting"
+    ui_accordion: dict[str, bool] = {}
 
 
 @app.get("/")

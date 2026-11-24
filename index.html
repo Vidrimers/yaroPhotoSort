@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-theme="lab">
 <head>
 <meta charset="utf-8">
@@ -205,6 +205,71 @@ body {
     z-index: 5;
   }
 }
+
+/* табы и аккордеон левой колонки */
+.tab-bar {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--line);
+  padding: 0 20px;
+}
+.tab-bar button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: 600 13.5px/1 "Source Sans 3", sans-serif;
+  padding: 14px 16px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+.tab-bar button[aria-selected="true"] {
+  color: var(--text);
+  border-bottom-color: var(--accent-only-run);
+}
+.tab-panel[hidden] { display: none !important; }
+
+.acc-item {
+  border-bottom: 1px solid var(--line);
+}
+.acc-item:last-child { border-bottom: 0; }
+.acc-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: 500 16px/1.2 "Bitter", Georgia, serif;
+  padding: 16px 20px;
+  cursor: pointer;
+  text-align: left;
+}
+.acc-head:hover { background: rgba(255,255,255,0.02); }
+.acc-head:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+.acc-head .acc-arrow {
+  margin-left: auto;
+  width: 8px;
+  height: 8px;
+  border-right: 1.5px solid var(--faint);
+  border-bottom: 1.5px solid var(--faint);
+  transform: rotate(-45deg);
+  transition: transform .15s ease;
+  flex: none;
+}
+.acc-item.open .acc-head .acc-arrow {
+  transform: rotate(45deg);
+}
+.acc-body {
+  display: none;
+  padding: 0 20px 18px;
+}
+.acc-item.open .acc-body { display: block; }
 
 @media (max-width: 940px) {
   .grid { grid-template-columns: 1fr; }
@@ -1080,8 +1145,19 @@ legend {
         <div class="dropzone" id="dropzone" data-i18n="dropzone.default"></div>
       </section>
 
-      <section>
-        <h2 data-i18n="quality.title"></h2>
+
+      <div class="tab-bar" role="tablist">
+        <button type="button" id="tabBtnSorting" role="tab" aria-selected="true" data-i18n="tab.sorting"></button>
+        <button type="button" id="tabBtnDupes" role="tab" aria-selected="false" data-i18n="tab.dupes"></button>
+      </div>
+
+      <div class="tab-panel" id="tabSorting" role="tabpanel">
+        <div class="acc-item" data-acc="quality">
+          <button class="acc-head" type="button">
+            <span data-i18n="quality.title"></span>
+            <span class="acc-arrow" aria-hidden="true"></span>
+          </button>
+          <div class="acc-body">
         <p class="hint" data-i18n="quality.hint"></p>
         <fieldset>
           <label class="check" data-i18n-title="quality.blur.tip">
@@ -1110,16 +1186,24 @@ legend {
           <label for="scoreThreshold" data-i18n="quality.scoreLabel" data-i18n-title="quality.scoreTip"></label>
           <input type="number" id="scoreThreshold" min="1" max="5" value="2">
         </div>
-      </section>
-
-      <section>
-        <h2 data-i18n="formats.title"></h2>
+          </div>
+        </div>
+        <div class="acc-item" data-acc="formats">
+          <button class="acc-head" type="button">
+            <span data-i18n="formats.title"></span>
+            <span class="acc-arrow" aria-hidden="true"></span>
+          </button>
+          <div class="acc-body">
         <p class="hint" data-i18n="formats.hint"></p>
         <div class="formats" id="formats"></div>
-      </section>
-
-      <section>
-        <h2 data-i18n="behavior.title"></h2>
+          </div>
+        </div>
+        <div class="acc-item" data-acc="behavior">
+          <button class="acc-head" type="button">
+            <span data-i18n="behavior.title"></span>
+            <span class="acc-arrow" aria-hidden="true"></span>
+          </button>
+          <div class="acc-body">
         <fieldset>
           <legend data-i18n="behavior.server"></legend>
           <div class="num-row">
@@ -1190,9 +1274,15 @@ legend {
             <span data-i18n="behavior.preserve"></span>
           </label>
         </fieldset>
-      </section>
-
-      <section>
+          </div>
+        </div>
+        <div class="acc-item" data-acc="layout">
+          <button class="acc-head" type="button">
+            <span data-i18n="layout.title"></span>
+            <span class="acc-arrow" aria-hidden="true"></span>
+          </button>
+          <div class="acc-body">
+            <div class="acc-sub">
         <h2 data-i18n="cats.title"></h2>
         <p class="hint" data-i18n="cats.hint"></p>
         <label class="cat-toggle" data-i18n-title="cats.enable.tip">
@@ -1212,9 +1302,8 @@ legend {
           <tbody id="cats"></tbody>
         </table>
         <p class="hint" id="destPreview" style="margin: 12px 0 0;"></p>
-      </section>
-
-      <section id="eventsSection">
+            </div>
+            <div class="acc-sub">
         <h2 data-i18n="events.title"></h2>
         <p class="hint" data-i18n="events.hint"></p>
         <label class="cat-toggle" data-i18n-title="events.enableTip">
@@ -1262,10 +1351,12 @@ legend {
           <input type="checkbox" id="optScreensDocs">
           <span data-i18n="events.screens"></span>
         </label>
-      </section>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      <section id="dupesSection">
-        <h2 data-i18n="dupes.title"></h2>
+      <div class="tab-panel" id="tabDupes" role="tabpanel" hidden>
         <p class="hint" data-i18n="dupes.hint"></p>
         <fieldset>
           <legend data-i18n="dupes.findTitle"></legend>
@@ -1317,7 +1408,7 @@ legend {
           <button class="btn btn-ghost" id="btnDupesView" type="button" data-i18n="dupes.view" hidden></button>
         </div>
         <p class="hint" id="dupesStatus" style="margin: 10px 0 0;"></p>
-      </section>
+      </div>
     </div>
 
     <div class="col">
@@ -1719,6 +1810,8 @@ function currentConfigPatch() {
     dupes_similar: $("dupesSimilar").checked,
     ui_lang: LANG,
     ui_theme: document.documentElement.dataset.theme || "lab",
+    ui_tab: window.__uiTab || "sorting",
+    ui_accordion: window.__uiAccordion || {},
     provider: window.__provider || "lmstudio",
     model_name: $("modelName").value.trim(),
     max_requests: Math.max(0, parseInt($("maxRequests").value || "0", 10)),
@@ -1785,18 +1878,68 @@ function syncEventsCategories() {
   const evOn = $("optEvents").checked;
   const catOn = $("optCategories").checked;
 
-  const catSection = $("optCategories").closest("section");
-  catSection.classList.toggle("cats-locked", evOn);
-  catSection.querySelectorAll("input, select").forEach((el) => {
-    el.disabled = evOn;
-  });
+  const catSection = $("optCategories").closest("section") || $("optCategories").closest(".acc-sub");
+  if (catSection) {
+    catSection.classList.toggle("cats-locked", evOn);
+    catSection.querySelectorAll("input, select").forEach((el) => {
+      el.disabled = evOn;
+    });
+  }
 
-  $("eventsSection").classList.toggle("cats-locked", catOn);
-  $("eventsSection").querySelectorAll("input").forEach((el) => {
-    el.disabled = catOn;
-  });
+  const evBlock = $("eventsSection") || $("optEvents").closest("section") || $("optEvents").closest(".acc-sub");
+  if (evBlock) {
+    evBlock.classList.toggle("cats-locked", catOn);
+    evBlock.querySelectorAll("input").forEach((el) => {
+      el.disabled = catOn;
+    });
+  }
 
   syncAllCatRows();
+}
+
+/* табы + аккордеон */
+function setUiTab(name) {
+  window.__uiTab = name;
+  $("tabBtnSorting").setAttribute("aria-selected", name === "sorting" ? "true" : "false");
+  $("tabBtnDupes").setAttribute("aria-selected", name === "dupes" ? "true" : "false");
+  $("tabSorting").hidden = name !== "sorting";
+  $("tabDupes").hidden = name !== "dupes";
+  // в табе дубликатов прогон сортировки не нужен
+  const sortingRun = name === "sorting";
+  ["btnStart", "btnStop", "btnScan"].forEach((id) => {
+    const el = $(id);
+    if (!el) return;
+    if (id === "btnStop") el.disabled = !sortingRun ? true : el.disabled;
+    else el.disabled = !sortingRun;
+  });
+  if (!sortingRun) {
+    $("btnStart").disabled = true;
+  }
+  scheduleSave();
+}
+
+function bindTabsAcc() {
+  $("tabBtnSorting").addEventListener("click", () => setUiTab("sorting"));
+  $("tabBtnDupes").addEventListener("click", () => setUiTab("dupes"));
+
+  document.querySelectorAll(".acc-item").forEach((item) => {
+    const head = item.querySelector(".acc-head");
+    head.addEventListener("click", () => {
+      item.classList.toggle("open");
+      window.__uiAccordion = window.__uiAccordion || {};
+      window.__uiAccordion[item.dataset.acc] = item.classList.contains("open");
+      scheduleSave();
+    });
+  });
+}
+
+function applyUiChrome(cfg) {
+  if (cfg.ui_tab) setUiTab(cfg.ui_tab);
+  const acc = cfg.ui_accordion || {};
+  window.__uiAccordion = { ...acc };
+  document.querySelectorAll(".acc-item").forEach((item) => {
+    item.classList.toggle("open", !!acc[item.dataset.acc]);
+  });
 }
 
 function renderCategories(cats) {
@@ -2224,11 +2367,13 @@ async function init() {
     config = data.config;
     applyConfigToForm(config);
     applyUiFromConfig(config);
+    applyUiChrome(config);
     serverOffline(false);
   } catch (e) {
     serverOffline(true);
   }
   bindForm();
+  bindTabsAcc();
   poll();
   setInterval(poll, 2500);
 
@@ -2347,6 +2492,8 @@ async function init() {
       await api.post("/api/config/reset");
       localStorage.removeItem("yarophoto-lang");
       localStorage.removeItem("yarophoto-theme");
+      window.__uiTab = "sorting";
+      window.__uiAccordion = {};
       location.reload();
     } catch (e) {
       uiAlert("Error", errText(e));

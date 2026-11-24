@@ -260,5 +260,8 @@ window.YARO_I18N = {
   "undo.op": "Операция",
   "toast.undoOne": "Файл возвращён",
   "toast.undoAll": "Прогон откачен",
-  "toast.undoSkipped": "Оставлено как есть"
+  "toast.undoSkipped": "Оставлено как есть",
+  "tab.sorting": "Сортировка",
+  "tab.dupes": "Дубликаты",
+  "layout.title": "Режим сортировки"
 };
