@@ -20,8 +20,6 @@ window.YARO_I18N = {
   "folder.title": "Photo folder",
   "folder.hint": "",
   "folder.placeholder": "D:\\Photos\\2024",
-  "dropzone.default": "Drop a folder here, or type the path above",
-  "dropzone.pathFail": "Dropped “{name}”, but the browser did not expose the full path. Use Browse… or type the path manually.",
   "quality.title": "What counts as a reject",
   "quality.hint": "Enable the rules that make the model return quality=bad.",
   "quality.blur": "Blur",
@@ -263,5 +261,6 @@ window.YARO_I18N = {
   "toast.undoSkipped": "Left as is",
   "tab.sorting": "Sorting",
   "tab.dupes": "Duplicates",
-  "layout.title": "Sort mode"
+  "layout.title": "Sort mode",
+  "lm.gpu": "GPU"
 };

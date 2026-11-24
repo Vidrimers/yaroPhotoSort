@@ -20,8 +20,6 @@ window.YARO_I18N = {
   "folder.title": "Папка с фото",
   "folder.hint": "",
   "folder.placeholder": "D:\\Photos\\2024",
-  "dropzone.default": "Перетащите папку в это поле, или впишите путь выше",
-  "dropzone.pathFail": "Принято «{name}», но браузер не отдал полный путь. Нажми «Обзор…» или впиши путь вручную.",
   "quality.title": "Что считаем браком",
   "quality.hint": "Включи критерии, по которым модель ставит quality=bad.",
   "quality.blur": "Размытие",
@@ -263,5 +261,6 @@ window.YARO_I18N = {
   "toast.undoSkipped": "Оставлено как есть",
   "tab.sorting": "Сортировка",
   "tab.dupes": "Дубликаты",
-  "layout.title": "Режим сортировки"
+  "layout.title": "Режим сортировки",
+  "lm.gpu": "Видеокарта"
 };

@@ -315,6 +315,9 @@ def load_config() -> dict[str, Any]:
                     cfg[k] = v
         except Exception as e:
             log(f"config.json is broken, using defaults: {e}")
+    # путь могли вставить в кавычках
+    if isinstance(cfg.get("input_folder"), str):
+        cfg["input_folder"] = cfg["input_folder"].strip().strip('"').strip("'").strip()
     return cfg
 
 
@@ -384,6 +387,7 @@ def lm_status() -> dict[str, Any]:
         "params_b": None,
         "vram_used_gb": None,
         "vram_total_gb": None,
+        "gpu_name": None,
         "ram_used_gb": None,
         "load_state": None,
         "raw": {},
@@ -462,7 +466,18 @@ def lm_status() -> dict[str, Any]:
     except Exception as e:
         info["error"] = str(e)
 
-    # VRAM: пробуем через nvidia-smi, если LM Studio не отдал
+    # VRAM + имя видеокарты: пробуем через nvidia-smi
+    try:
+        gname = subprocess.check_output(
+            ["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"],
+            timeout=3,
+            stderr=subprocess.DEVNULL,
+            encoding="utf-8",
+        ).strip().splitlines()
+        if gname:
+            info["gpu_name"] = gname[0].strip()
+    except Exception:
+        pass
     if info["vram_used_gb"] is None:
         try:
             out = subprocess.check_output(

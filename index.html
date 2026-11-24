@@ -117,7 +117,7 @@ body {
 .btn[disabled] { opacity: 0.42; cursor: not-allowed; transform: none; }
 .top-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 
-/* РєР°СЃС‚РѕРјРЅС‹Р№ СЃРµР»РµРєС‚ */
+/* Р С”Р В°РЎРѓРЎвЂљР С•Р СР Р…РЎвЂ№Р в„– РЎРѓР ВµР В»Р ВµР С”РЎвЂљ */
 .select { position: relative; }
 .select-btn {
   appearance: none;
@@ -194,7 +194,7 @@ body {
 .col > section:last-child { border-bottom: 0; }
 .col + .col { border-left: 1px solid var(--line); }
 
-/* РЅР° РґРµСЃРєС‚РѕРїРµ Р±Р»РѕРє В«РџСЂРѕРіРѕРЅВ» РґРµСЂР¶РёС‚СЃСЏ РІ РїРѕР»Рµ Р·СЂРµРЅРёСЏ */
+/* Р Р…Р В° Р Т‘Р ВµРЎРѓР С”РЎвЂљР С•Р С—Р Вµ Р В±Р В»Р С•Р С” Р’В«Р СџРЎР‚Р С•Р С–Р С•Р Р…Р’В» Р Т‘Р ВµРЎР‚Р В¶Р С‘РЎвЂљРЎРѓРЎРЏ Р Р† Р С—Р С•Р В»Р Вµ Р ·РЎР‚Р ВµР Р…Р С‘РЎРЏ */
 @media (min-width: 941px) {
   .col + .col > section:last-child {
     position: sticky;
@@ -206,7 +206,7 @@ body {
   }
 }
 
-/* табы и аккордеон левой колонки */
+/* С‚Р°Р±С‹ Рё Р°РєРєРѕСЂРґРµРѕРЅ Р»РµРІРѕР№ РєРѕР»РѕРЅРєРё */
 .tab-bar {
   display: flex;
   gap: 0;
@@ -229,7 +229,7 @@ body {
 }
 .tab-panel[hidden] { display: none !important; }
 .tab-panel > .acc-item:last-child { border-bottom: 0; }
-/* контент вне аккордеона (вкладка «Дубликаты») */
+/* РєРѕРЅС‚РµРЅС‚ РІРЅРµ Р°РєРєРѕСЂРґРµРѕРЅР° (РІРєР»Р°РґРєР° В«Р”СѓР±Р»РёРєР°С‚С‹В») */
 .tab-panel > *:not(.acc-item) {
   padding: 14px 20px;
 }
@@ -317,20 +317,7 @@ section h2 {
   border-radius: 3px;
 }
 .folder-input:focus { outline: none; border-color: var(--focus); }
-.dropzone {
-  margin-top: 10px;
-  border: 1px dashed var(--line-2);
-  padding: 12px;
-  text-align: center;
-  color: var(--faint);
-  font-size: 13px;
-  background: var(--bg-3);
-}
-.dropzone.drag {
-  border-color: var(--accent-only-run);
-  color: var(--accent-only-run);
-  background: var(--bg);
-}
+
 
 .lm-head {
   display: flex;
@@ -637,7 +624,7 @@ legend {
   font-size: 12px;
 }
 
-/* РјРѕРґР°Р»СЊРЅС‹Р№ confirm */
+/* Р СР С•Р Т‘Р В°Р В»РЎРЉР Р…РЎвЂ№Р в„– confirm */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -677,7 +664,7 @@ legend {
   justify-content: flex-end;
 }
 
-/* РјРѕРґР°Р»РєР° В«РљР°Рє РїРѕР»СЊР·РѕРІР°С‚СЊСЃСЏВ» */
+/* Р СР С•Р Т‘Р В°Р В»Р С”Р В° Р’В«Р С™Р В°Р С” Р С—Р С•Р В»РЎРЉР ·Р С•Р Р†Р В°РЎвЂљРЎРЉРЎРѓРЎРЏР’В» */
 .modal-help {
   width: min(640px, 100%);
   max-height: min(84vh, 860px);
@@ -752,7 +739,7 @@ legend {
   background: var(--bg-3);
 }
 
-/* СЌРєСЂР°РЅ РїСЂРѕРІРµСЂРєРё */
+/* РЎРЊР С”РЎР‚Р В°Р Р… Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р С‘ */
 .modal-review {
   width: min(760px, 100%);
   max-height: min(90vh, 920px);
@@ -861,7 +848,7 @@ legend {
   transform: translateX(-50%) translateY(0);
 }
 
-/* РїСЂРѕСЃРјРѕС‚СЂС‰РёРє РґСѓР±Р»РёРєР°С‚РѕРІ */
+/* Р С—РЎР‚Р С•РЎРѓР СР С•РЎвЂљРЎР‚РЎвЂ°Р С‘Р С” Р Т‘РЎС“Р В±Р В»Р С‘Р С”Р В°РЎвЂљР С•Р Р† */
 .dupe-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -1149,7 +1136,6 @@ legend {
                  data-i18n-placeholder="folder.placeholder" autocomplete="off">
           <button class="btn" id="btnBrowse" type="button" data-i18n="btn.browse"></button>
         </div>
-        <div class="dropzone" id="dropzone" data-i18n="dropzone.default"></div>
       </section>
 
 
@@ -1470,6 +1456,7 @@ legend {
         </div>
 
         <dl class="kv" id="lmKv">
+          <dt data-i18n="lm.gpu"></dt><dd id="lmGpu">—</dd>
           <dt data-i18n="lm.context"></dt><dd id="lmCtx">—</dd>
           <dt data-i18n="lm.quant"></dt><dd id="lmQuant">—</dd>
           <dt data-i18n="lm.memory"></dt><dd id="lmVram">—</dd>
@@ -1539,7 +1526,7 @@ const api = {
   },
 };
 
-/* в”Ђв”Ђ i18n в”Ђв”Ђ */
+/* РІ”Р‚РІ”Р‚ i18n РІ”Р‚РІ”Р‚ */
 let I18N = {};
 let LANG = localStorage.getItem("yarophoto-lang") || "en";
 
@@ -1564,7 +1551,7 @@ function applyI18n() {
   document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
     el.placeholder = t(el.dataset.i18nPlaceholder);
   });
-  // Р»РѕРєР°Р»РёР·СѓРµРј СЃРіРµРЅРµСЂРёСЂРѕРІР°РЅРЅС‹Р№ РєРѕРЅС‚РµРЅС‚
+  // Р В»Р С•Р С”Р В°Р В»Р С‘Р ·РЎС“Р ВµР С РЎРѓР С–Р ВµР Р…Р ВµРЎР‚Р С‘РЎР‚Р С•Р Р†Р В°Р Р…Р Р…РЎвЂ№Р в„– Р С”Р С•Р Р…РЎвЂљР ВµР Р…РЎвЂљ
   renderFormats(collectFormats());
   renderCategories(collectCategories().length ? collectCategories() : DEFAULT_CATEGORIES);
   updateDestPreview();
@@ -1617,7 +1604,7 @@ function loadLang(lang) {
       scheduleSave();
       resolve();
     };
-    // <script src> СЂР°Р±РѕС‚Р°РµС‚ Рё СЃ file://, Рё С‡РµСЂРµР· СЃРµСЂРІРµСЂ — РІ РѕС‚Р»РёС‡РёРµ РѕС‚ fetch
+    // <script src> РЎР‚Р В°Р В±Р С•РЎвЂљР В°Р ВµРЎвЂљ Р С‘ РЎРѓ file://, Р С‘ РЎвЂЎР ВµРЎР‚Р ВµР · РЎРѓР ВµРЎР‚Р Р†Р ВµРЎР‚ — Р Р† Р С•РЎвЂљР В»Р С‘РЎвЂЎР С‘Р Вµ Р С•РЎвЂљ fetch
     const prev = document.getElementById("i18n-script");
     if (prev) prev.remove();
     const s = document.createElement("script");
@@ -1633,7 +1620,7 @@ function loadLang(lang) {
   });
 }
 
-/* в”Ђв”Ђ theme + language selects в”Ђв”Ђ */
+/* РІ”Р‚РІ”Р‚ theme + language selects РІ”Р‚РІ”Р‚ */
 function setTheme(name) {
   document.documentElement.dataset.theme = name;
   localStorage.setItem("yarophoto-theme", name);
@@ -1787,7 +1774,7 @@ function collectCategories() {
 
 function currentConfigPatch() {
   return {
-    input_folder: $("inputFolder").value.trim(),
+    input_folder: $("inputFolder").value.trim().replace(/^["']|["']$/g, ""),
     output_mode: document.querySelector('input[name="outputMode"]:checked')?.value || "csv_only",
     review_mode: document.querySelector('input[name="reviewMode"]:checked')?.value || "auto",
     review_timing: document.querySelector('input[name="reviewTiming"]:checked')?.value || "batch",
@@ -1897,7 +1884,7 @@ function syncEventsCategories() {
   const evBlock = $("eventsSection") || $("optEvents").closest("section") || $("optEvents").closest(".acc-sub");
   if (evBlock) {
     evBlock.classList.toggle("cats-locked", catOn);
-    // пункты событий живут только при включённой галке и свободных категориях
+    // РїСѓРЅРєС‚С‹ СЃРѕР±С‹С‚РёР№ Р¶РёРІСѓС‚ С‚РѕР»СЊРєРѕ РїСЂРё РІРєР»СЋС‡С‘РЅРЅРѕР№ РіР°Р»РєРµ Рё СЃРІРѕР±РѕРґРЅС‹С… РєР°С‚РµРіРѕСЂРёСЏС…
     evBlock.querySelectorAll("input").forEach((el) => {
       if (el.id === "optEvents") {
         el.disabled = catOn;
@@ -1910,14 +1897,14 @@ function syncEventsCategories() {
   syncAllCatRows();
 }
 
-/* табы + аккордеон */
+/* С‚Р°Р±С‹ + Р°РєРєРѕСЂРґРµРѕРЅ */
 function setUiTab(name) {
   window.__uiTab = name;
   $("tabBtnSorting").setAttribute("aria-selected", name === "sorting" ? "true" : "false");
   $("tabBtnDupes").setAttribute("aria-selected", name === "dupes" ? "true" : "false");
   $("tabSorting").hidden = name !== "sorting";
   $("tabDupes").hidden = name !== "dupes";
-  // в табе дубликатов прогон сортировки не нужен
+  // РІ С‚Р°Р±Рµ РґСѓР±Р»РёРєР°С‚РѕРІ РїСЂРѕРіРѕРЅ СЃРѕСЂС‚РёСЂРѕРІРєРё РЅРµ РЅСѓР¶РµРЅ
   const sortingRun = name === "sorting";
   ["btnStart", "btnStop", "btnScan"].forEach((id) => {
     const el = $(id);
@@ -2188,7 +2175,7 @@ function errText(e) {
   return raw;
 }
 
-/* РєР°СЃС‚РѕРјРЅС‹Р№ confirm */
+/* Р С”Р В°РЎРѓРЎвЂљР С•Р СР Р…РЎвЂ№Р в„– confirm */
 function uiConfirm(title, message, okLabel) {
   return new Promise((resolve) => {
     const overlay = $("modal");
@@ -2264,6 +2251,15 @@ function renderLm(data) {
       $("lmTitle").textContent = t("lm.disconnected");
     }
     $("lmUrl").textContent = (data.url || "").replace(/^https?:\/\//, "");
+    const gpuRow = $("lmGpu") ? $("lmGpu").closest("dt") : null;
+    const gpuVal = $("lmGpu");
+    if (gpuVal) gpuVal.textContent = data.gpu_name || "—";
+    if (gpuRow && gpuVal) {
+      // GPU интересен только для локальных моделей
+      const showGpu = isLocal && !!data.gpu_name;
+      gpuRow.hidden = !showGpu;
+      gpuVal.hidden = !showGpu;
+    }
     $("lmCtx").textContent = data.context_length ? t("lm.tokens", { n: fmtNum(data.context_length) }) : "—";
     $("lmQuant").textContent = data.quant || "—";
     $("lmVram").textContent = data.vram_used_gb != null
@@ -2282,6 +2278,14 @@ function renderLm(data) {
     $("lmTitle").textContent = data.detail || t("provider.fail");
   }
   $("lmUrl").textContent = data.base || "";
+  const gpuRow2 = $("lmGpu") ? $("lmGpu").closest("dt") : null;
+  const gpuVal2 = $("lmGpu");
+  if (gpuVal2) gpuVal2.textContent = data.gpu_name || "—";
+  if (gpuRow2 && gpuVal2) {
+    const showGpu2 = isLocal && !!data.gpu_name;
+    gpuRow2.hidden = !showGpu2;
+    gpuVal2.hidden = !showGpu2;
+  }
   $("lmQuant").textContent = data.has_key ? t("provider.keyOk") : (isLocal ? "—" : t("provider.keyMissing"));
   $("lmVram").textContent = "—";
   $("lmCtx").textContent = "—";
@@ -2395,8 +2399,8 @@ async function init() {
 
   $("btnBrowse").addEventListener("click", async () => {
     if (location.protocol === "file:") {
-      dz.textContent = t("dropzone.needServer");
       serverOffline(true);
+      uiAlert(t("folder.title"), t("dropzone.needServer"));
       return;
     }
     try {
@@ -2418,32 +2422,6 @@ async function init() {
     }
   });
   $("inputFolder").addEventListener("input", updateDestPreview);
-
-  const dz = $("dropzone");
-  ["dragenter", "dragover"].forEach((ev) => {
-    dz.addEventListener(ev, (e) => {
-      e.preventDefault();
-      dz.classList.add("drag");
-    });
-  });
-  ["dragleave", "drop"].forEach((ev) => {
-    dz.addEventListener(ev, (e) => {
-      e.preventDefault();
-      dz.classList.remove("drag");
-    });
-  });
-  dz.addEventListener("drop", (e) => {
-    const file = e.dataTransfer.files && e.dataTransfer.files[0];
-    const path = file && (file.path || file.webkitFullPath);
-    if (path) {
-      $("inputFolder").value = path;
-      scheduleSave();
-      updateDestPreview();
-    } else if (file) {
-      $("inputFolder").value = file.name;
-      dz.textContent = t("dropzone.pathFail", { name: file.name });
-    }
-  });
 
   $("btnScan").addEventListener("click", async () => {
     await saveConfigNow();
@@ -2489,7 +2467,7 @@ async function init() {
     try {
       await api.post("/api/shutdown");
     } catch (e) {
-      /* СЃРµСЂРІРµСЂ РјРѕРі СѓСЃРїРµС‚СЊ Р·Р°РєСЂС‹С‚СЊ СЃРѕРµРґРёРЅРµРЅРёРµ — СЌС‚Рѕ РЅРѕСЂРјР° */
+      /* РЎРѓР ВµРЎР‚Р Р†Р ВµРЎР‚ Р СР С•Р С– РЎС“РЎРѓР С—Р ВµРЎвЂљРЎРЉ Р ·Р В°Р С”РЎР‚РЎвЂ№РЎвЂљРЎРЉ РЎРѓР С•Р ВµР Т‘Р С‘Р Р…Р ВµР Р…Р С‘Р Вµ — РЎРЊРЎвЂљР С• Р Р…Р С•РЎР‚Р СР В° */
     }
     setTimeout(() => { serverOffline(true); }, 600);
   });
@@ -2530,7 +2508,7 @@ async function init() {
   bindReview();
 }
 
-/* в”Ђв”Ђ review queue в”Ђв”Ђ */
+/* РІ”Р‚РІ”Р‚ review queue РІ”Р‚РІ”Р‚ */
 let reviewItems = [];
 let reviewIdx = 0;
 
@@ -2588,7 +2566,7 @@ async function decideReview(decision) {
     setReviewCountBadge(reviewItems.length);
     if (reviewIdx >= reviewItems.length) reviewIdx = Math.max(0, reviewItems.length - 1);
   } else if (reviewItems.length === 1) {
-    // live-СЂРµР¶РёРј: В«РїСЂРѕРїСѓСЃС‚РёС‚СЊВ» РѕС‚РїСѓСЃРєР°РµС‚ РѕС‡РµСЂРµРґСЊ, РјРѕРґР°Р»РєСѓ Р·Р°РєСЂС‹РІР°РµРј
+    // live-РЎР‚Р ВµР В¶Р С‘Р С: Р’В«Р С—РЎР‚Р С•Р С—РЎС“РЎРѓРЎвЂљР С‘РЎвЂљРЎРЉР’В» Р С•РЎвЂљР С—РЎС“РЎРѓР С”Р В°Р ВµРЎвЂљ Р С•РЎвЂЎР ВµРЎР‚Р ВµР Т‘РЎРЉ, Р СР С•Р Т‘Р В°Р В»Р С”РЎС“ Р ·Р В°Р С”РЎР‚РЎвЂ№Р Р†Р В°Р ВµР С
     $("reviewModal").hidden = true;
     document.body.style.overflow = "";
     return;
@@ -2636,7 +2614,7 @@ function bindReview() {
   window.__openReviewPending = openPending;
 }
 
-/* в”Ђв”Ђ toast в”Ђв”Ђ */
+/* РІ”Р‚РІ”Р‚ toast РІ”Р‚РІ”Р‚ */
 let toastTimer = null;
 function showToast(msg) {
   const el = $("toast");
@@ -2646,7 +2624,7 @@ function showToast(msg) {
   toastTimer = setTimeout(() => el.classList.remove("show"), 2600);
 }
 
-/* в”Ђв”Ђ duplicates viewer в”Ђв”Ђ */
+/* РІ”Р‚РІ”Р‚ duplicates viewer РІ”Р‚РІ”Р‚ */
 let dupeGroups = [];
 let dupeIdx = 0;
 let dupeSelected = "";
@@ -2680,7 +2658,7 @@ function renderDupeGroup() {
       ${files.map((f, i) => `
         <div class="dupe-thumb ${f === g.keeper ? "keeper" : ""} ${f === dupeSelected ? "selected" : ""}" data-path="${escapeAttr(f)}" data-idx="${i}">
           <img src="/api/dupes/image?path=${encodeURIComponent(f)}" alt="" loading="lazy">
-          ${f === g.keeper ? `<span class="dupe-badge">в… ${escapeHtml(t("dupes.aiBest"))}</span>` : ""}
+          ${f === g.keeper ? `<span class="dupe-badge">РІВ… ${escapeHtml(t("dupes.aiBest"))}</span>` : ""}
           <div class="dupe-name">${escapeHtml(names[i] || "")}</div>
         </div>`).join("")}
     </div>`;
@@ -2730,7 +2708,7 @@ async function refreshDupesGroups() {
   }
 }
 
-/* в”Ђв”Ђ duplicates в”Ђв”Ђ */
+/* РІ”Р‚РІ”Р‚ duplicates РІ”Р‚РІ”Р‚ */
 async function refreshDupesStatus() {
   try {
     const st = await api.get("/api/dupes/status");
@@ -2840,7 +2818,7 @@ function bindDupes() {
     try {
       await api.post("/api/dupes/delete-single", { path });
       showToast(t("toast.toDeleted"));
-      // С„Р°Р№Р» СѓР±СЂР°РЅ РёР· РіСЂСѓРїРїС‹
+      // РЎвЂћР В°Р в„–Р В» РЎС“Р В±РЎР‚Р В°Р Р… Р С‘Р · Р С–РЎР‚РЎС“Р С—Р С—РЎвЂ№
       if (g.files) g.files.splice(lbIdx, 1);
       if (g.names) g.names.splice(lbIdx, 1);
       if (g.keeper === path) g.keeper = (g.files || [])[0] || "";
@@ -2856,7 +2834,7 @@ function bindDupes() {
   setInterval(refreshDupesStatus, 2500);
 }
 
-/* в”Ђв”Ђ undo last run в”Ђв”Ђ */
+/* РІ”Р‚РІ”Р‚ undo last run РІ”Р‚РІ”Р‚ */
 let undoOps = [];
 let undoIdx = 0;
 
@@ -2948,7 +2926,7 @@ function bindUndo() {
     }
   });
   $("undoKeep").addEventListener("click", () => {
-    // РѕСЃС‚Р°РІРёС‚СЊ РєР°Рє РµСЃС‚СЊ: РїСЂРѕСЃС‚Рѕ РїСЂРѕРїСѓСЃРєР°РµРј, Р±РµР· РѕРїРµСЂР°С†РёРё
+    // Р С•РЎРѓРЎвЂљР В°Р Р†Р С‘РЎвЂљРЎРЉ Р С”Р В°Р С” Р ВµРЎРѓРЎвЂљРЎРЉ: Р С—РЎР‚Р С•РЎРѓРЎвЂљР С• Р С—РЎР‚Р С•Р С—РЎС“РЎРѓР С”Р В°Р ВµР С, Р В±Р ВµР · Р С•Р С—Р ВµРЎР‚Р В°РЎвЂ Р С‘Р С‘
     undoOps.splice(undoIdx, 1);
     if (undoIdx >= undoOps.length) undoIdx = Math.max(0, undoOps.length - 1);
     renderUndoPage();
@@ -2969,186 +2947,6 @@ function bindUndo() {
     }
   });
   refreshUndo();
-}
-
-function uiConfirm(title, message, okLabel) {
-  return new Promise((resolve) => {
-    const overlay = $("modal");
-    $("modalTitle").textContent = title;
-    $("modalText").textContent = message;
-    $("modalCancel").hidden = false;
-    $("modalCancel").textContent = t("modal.cancel");
-    $("modalOk").textContent = okLabel || t("modal.confirm");
-    overlay.hidden = false;
-    document.body.style.overflow = "hidden";
-
-    const done = (val) => {
-      overlay.hidden = true;
-      document.body.style.overflow = "";
-      $("modalOk").onclick = null;
-      $("modalCancel").onclick = null;
-      overlay.onclick = null;
-      document.removeEventListener("keydown", onKey);
-      resolve(val);
-    };
-    const onKey = (e) => {
-      if (e.key === "Escape") done(false);
-      if (e.key === "Enter") done(true);
-    };
-    $("modalOk").onclick = () => done(true);
-    $("modalCancel").onclick = () => done(false);
-    overlay.onclick = (e) => { if (e.target === overlay) done(false); };
-    document.addEventListener("keydown", onKey);
-    $("modalOk").focus();
-  });
-}
-
-function uiAlert(title, message) {
-  return new Promise((resolve) => {
-    const overlay = $("modal");
-    $("modalTitle").textContent = title;
-    $("modalText").textContent = message;
-    $("modalCancel").hidden = true;
-    $("modalOk").textContent = t("modal.confirm");
-    overlay.hidden = false;
-    document.body.style.overflow = "hidden";
-
-    const done = () => {
-      overlay.hidden = true;
-      document.body.style.overflow = "";
-      $("modalOk").onclick = null;
-      overlay.onclick = null;
-      document.removeEventListener("keydown", onKey);
-      resolve();
-    };
-    const onKey = (e) => { if (e.key === "Escape" || e.key === "Enter") done(); };
-    $("modalOk").onclick = done;
-    overlay.onclick = (e) => { if (e.target === overlay) done(); };
-    document.addEventListener("keydown", onKey);
-    $("modalOk").focus();
-  });
-}
-
-function renderLm(data) {
-  lastLm = data;
-  const dot = $("lmDot");
-  const provider = document.querySelector("#providerSelect .select-value")
-    ? (window.__provider || "lmstudio") : "lmstudio";
-  const isLocal = provider === "lmstudio";
-
-  if (data.connected != null) {
-    // legacy lmstudio payload
-    if (data.connected) {
-      dot.className = "dot on";
-      $("lmTitle").textContent = t("lm.connected");
-    } else {
-      dot.className = "dot off";
-      $("lmTitle").textContent = t("lm.disconnected");
-    }
-    $("lmUrl").textContent = (data.url || "").replace(/^https?:\/\//, "");
-    $("lmCtx").textContent = data.context_length ? t("lm.tokens", { n: fmtNum(data.context_length) }) : "—";
-    $("lmQuant").textContent = data.quant || "—";
-    $("lmVram").textContent = data.vram_used_gb != null
-      ? `${data.vram_used_gb} / ${data.vram_total_gb ?? "?"} GB`
-      : "—";
-    $("lmState").textContent = data.load_state || (data.connected ? t("lm.ready") : t("lm.noLink"));
-    return;
-  }
-
-  // provider payload
-  if (data.ok) {
-    dot.className = "dot on";
-    $("lmTitle").textContent = t("provider.ok");
-  } else {
-    dot.className = "dot off";
-    $("lmTitle").textContent = data.detail || t("provider.fail");
-  }
-  $("lmUrl").textContent = data.base || "";
-  $("lmQuant").textContent = data.has_key ? t("provider.keyOk") : (isLocal ? "—" : t("provider.keyMissing"));
-  $("lmVram").textContent = "—";
-  $("lmCtx").textContent = "—";
-  $("lmState").textContent = data.detail || "—";
-}
-
-function renderJob(job, logLines) {
-  lastJob = job;
-  lastLog = logLines;
-  $("stDone").textContent = fmtNum(job.done || 0);
-  $("stOk").textContent = fmtNum(job.ok || 0);
-  $("stBad").textContent = fmtNum(job.bad || 0);
-  $("stEta").textContent = job.eta || "—";
-  const pct = job.percent || 0;
-  $("stripFill").style.width = pct + "%";
-  $("stripPct").textContent = pct.toFixed(1) + "%";
-  $("stripCaption").textContent = job.running
-    ? (job.current_file || t("strip.working"))
-    : (job.message || t("strip.ready"));
-  $("btnStart").disabled = !!job.running;
-  $("btnStop").disabled = !job.running;
-
-  const strip = $("strip");
-  strip.querySelectorAll(".bad-tick").forEach((n) => n.remove());
-  if (job.total > 0) {
-    const ticks = Math.min(job.bad || 0, 36);
-    for (let i = 0; i < ticks; i++) {
-      const tick = document.createElement("div");
-      tick.className = "bad-tick";
-      tick.style.left = (2 + Math.random() * Math.max(pct, 2)) + "%";
-      strip.appendChild(tick);
-    }
-  }
-
-  const logEl = $("log");
-  if (logLines && logLines.length) {
-    logEl.innerHTML = logLines.map((line) => {
-      let cls = "";
-      if (/^\d{2}:\d{2}:\d{2}\s+bad/.test(line)) cls = "bad";
-      else if (/^\d{2}:\d{2}:\d{2}\s+ok\s/.test(line)) cls = "ok";
-      else if (/ERR|Error|Critical/.test(line)) cls = "err";
-      return `<div class="${cls}">${escapeHtml(line)}</div>`;
-    }).join("");
-    logEl.scrollTop = logEl.scrollHeight;
-  }
-}
-
-async function poll() {
-  if (polling) return;
-  polling = true;
-  try {
-    const [prov, st, usage] = await Promise.all([
-      api.get("/api/provider").catch(() => ({ ok: false, detail: "—" })),
-      api.get("/api/status"),
-      api.get("/api/usage").catch(() => ({ usage: null })),
-    ]);
-    renderLm(prov);
-    if (usage && usage.usage) renderUsage(usage.usage);
-    renderJob(st.job || {}, st.log || []);
-    serverOffline(false);
-    api.get("/api/review").then((r) => setReviewCountBadge(r.count || 0)).catch(() => {});
-    refreshUndo();
-    if (st.review_pending && $("reviewModal").hidden && window.__openReviewPending) {
-      window.__openReviewPending(st.review_pending);
-    }
-  } catch (e) {
-    serverOffline(true);
-  } finally {
-    polling = false;
-  }
-}
-
-function renderUsage(u) {
-  const el = $("usageLine");
-  if (!el) return;
-  const req = u.requests ?? 0;
-  const tin = u.input_tokens ?? 0;
-  const tout = u.output_tokens ?? 0;
-  const cost = u.cost_usd ?? 0;
-  el.textContent = t("provider.usage", {
-    req: fmtNum(req),
-    tin: fmtNum(tin),
-    tout: fmtNum(tout),
-    cost: cost.toFixed(4),
-  });
 }
 
 init();
