@@ -1132,6 +1132,7 @@ legend {
               <li role="option" data-value="gemini">Gemini</li>
               <li role="option" data-value="qwen">Qwen</li>
               <li role="option" data-value="mimo">MiMo</li>
+              <li role="option" data-value="nvidia">NVIDIA</li>
               <li role="option" data-value="openrouter">OpenRouter</li>
             </ul>
           </div>
@@ -1386,6 +1387,7 @@ function setProvider(value) {
     : value === "gemini" ? "Gemini"
     : value === "qwen" ? "Qwen"
     : value === "mimo" ? "MiMo"
+    : value === "nvidia" ? "NVIDIA"
     : value === "openrouter" ? "OpenRouter"
     : value;
   $("providerSelect").querySelectorAll("[role=option]").forEach((li) => {
@@ -1414,6 +1416,7 @@ function defaultModelFor(p) {
     gemini: "gemini-2.0-flash",
     qwen: "qwen-vl-plus",
     mimo: "mimo-v2.6-pro",
+    nvidia: "meta/llama-3.2-11b-vision-instruct",
     openrouter: "google/gemma-3-12b",
   })[p] || "";
 }

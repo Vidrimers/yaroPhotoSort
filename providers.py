@@ -64,6 +64,11 @@ PRICING: dict[str, dict[str, float]] = {
         "mimo-v2.6-pro-ultraspeed": {"in": 0.0, "out": 0.0},
     },
     "colab": {},
+    "nvidia": {
+        "meta/llama-3.2-11b-vision-instruct": {"in": 0.0, "out": 0.0},
+        "meta/llama-3.2-90b-vision-instruct": {"in": 0.0, "out": 0.0},
+        "google/gemma-3-27b-it": {"in": 0.0, "out": 0.0},
+    },
     "openrouter": {},
 }
 
@@ -76,6 +81,7 @@ DEFAULT_MODELS: dict[str, str] = {
     "gemini": "gemini-2.0-flash",
     "qwen": "qwen-vl-plus",
     "mimo": "mimo-v2.6-pro",
+    "nvidia": "meta/llama-3.2-11b-vision-instruct",
     "openrouter": "google/gemma-3-12b",
 }
 
@@ -89,6 +95,7 @@ DEFAULT_BASES: dict[str, str] = {
     "qwen": "https://dashscope.aliyuncs.com/compatible-mode",
     # token-plan key works here; api.xiaomimimo.com/v1 401s for tp- keys
     "mimo": "https://token-plan-sgp.xiaomimimo.com",
+    "nvidia": "https://integrate.api.nvidia.com",
     "openrouter": "https://openrouter.ai/api",
 }
 
@@ -101,6 +108,7 @@ ENV_KEYS: dict[str, str] = {
     "gemini": "GEMINI_API_KEY",
     "qwen": "QWEN_API_KEY",
     "mimo": "MIMO_API_KEY",
+    "nvidia": "NVIDIA_API_KEY",
     "openrouter": "OPENROUTER_API_KEY",
 }
 
@@ -113,6 +121,7 @@ PROVIDER_LABELS: dict[str, str] = {
     "gemini": "Gemini",
     "qwen": "Qwen",
     "mimo": "MiMo",
+    "nvidia": "NVIDIA",
     "openrouter": "OpenRouter",
 }
 
