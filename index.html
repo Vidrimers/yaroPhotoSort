@@ -2239,7 +2239,7 @@ function renderLm(data) {
   const dot = $("lmDot");
   const provider = document.querySelector("#providerSelect .select-value")
     ? (window.__provider || "lmstudio") : "lmstudio";
-  const isLocal = provider === "lmstudio";
+  const isLocal = provider === "lmstudio" || provider === "ollama";
 
   if (data.connected != null) {
     // legacy lmstudio payload
