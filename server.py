@@ -241,6 +241,9 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "always_sort_screens_docs": False,
     "dupes_action": "mark",              # mark | group | reject_extra
     "dupes_keeper": "resolution",        # resolution | time
+    "dupes_exact": True,
+    "dupes_burst": True,
+    "dupes_similar": False,
     "provider": "lmstudio",
     "model_name": "google/gemma-3-12b",
     "max_requests": 0,                   # 0 = без лимита
@@ -559,8 +562,37 @@ def image_megapixels(path: Path) -> float:
         return 0.0
 
 
+def file_md5(path: Path, chunk: int = 1024 * 1024) -> str:
+    import hashlib
+
+    h = hashlib.md5()
+    with path.open("rb") as f:
+        while True:
+            block = f.read(chunk)
+            if not block:
+                break
+            h.update(block)
+    return h.hexdigest()
+
+
+def find_exact_copies(files: list[Path]) -> list[list[Path]]:
+    """Группы байт-в-байт одинаковых файлов (md5)."""
+    by_hash: dict[str, list[Path]] = {}
+    for p in files:
+        try:
+            key = file_md5(p)
+        except Exception:
+            continue
+        by_hash.setdefault(key, []).append(p)
+        with DUPES_LOCK:
+            DUPES_STATE["done"] += 1
+    return [g for g in by_hash.values() if len(g) > 1]
+
+
 def find_duplicate_groups(files: list[Path], max_dist: int = 6) -> list[list[Path]]:
     """Группы почти одинаковых кадров по dHash + проверка размера кадра."""
+    if max_dist <= 0:
+        return []
     scored: list[tuple[Path, int]] = []
     for p in files:
         try:
@@ -589,6 +621,59 @@ def find_duplicate_groups(files: list[Path], max_dist: int = 6) -> list[list[Pat
     return groups
 
 
+def confirm_same_scene(group: list[Path], cfg: dict[str, Any]) -> bool:
+    """Две картинки → вопрос модели: одна сцена/объект (кот повернул голову)?"""
+    if len(group) < 2:
+        return False
+    provider = cfg.get("provider") or "lmstudio"
+    model = cfg.get("model_name") or providers.DEFAULT_MODELS.get(provider, "")
+    try:
+        data_a = prepare_image(group[0], 384)
+        data_b = prepare_image(group[1], 384)
+        prompt = (
+            "Here are two photos. Answer ONLY yes or no. "
+            "Do they show the same subject or scene (same cat, same place, same object), "
+            "even if the pose or angle is slightly different?"
+        )
+        reply = providers.ask_model_multi(
+            provider, model, prompt, [data_a, data_b], max_tokens=5
+        )
+        if reply.error:
+            return True
+        text = (reply.text or "").strip().lower()
+        return text.startswith("y") or "да" in text[:5]
+    except Exception:
+        return True
+
+
+def merge_groups(*lists: list[list[Path]]) -> list[list[Path]]:
+    """Склейка групп с общими файлами."""
+    parent: dict[str, str] = {}
+
+    def find(x: str) -> str:
+        parent.setdefault(x, x)
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    def union(a: str, b: str) -> None:
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            parent[rb] = ra
+
+    for groups in lists:
+        for g in groups:
+            keys = [str(p) for p in g]
+            for k in keys[1:]:
+                union(keys[0], k)
+
+    clusters: dict[str, list[Path]] = {}
+    for k, p in parent.items():
+        clusters.setdefault(find(k), []).append(Path(k))
+    return [g for g in clusters.values() if len(g) > 1]
+
+
 def pick_keeper(group: list[Path], mode: str) -> Path:
     if mode == "time":
         return max(group, key=lambda p: p.stat().st_mtime)
@@ -605,7 +690,31 @@ def run_dupes_scan(cfg: dict[str, Any]) -> None:
                 running=True, done=0, total=len(files), groups=0,
                 message="hashing",
             )
-        groups = find_duplicate_groups(files)
+        groups: list[list[Path]] = []
+        if cfg.get("dupes_exact"):
+            exact = find_exact_copies(files)
+            groups = merge_groups(groups, exact)
+            with DUPES_LOCK:
+                DUPES_STATE["message"] = f"exact copies: {len(exact)}"
+            log(f"Duplicates exact: {len(exact)} groups")
+
+        if cfg.get("dupes_burst"):
+            burst = find_duplicate_groups(files, max_dist=2)
+            groups = merge_groups(groups, burst)
+            with DUPES_LOCK:
+                DUPES_STATE["message"] = f"burst frames: {len(burst)}"
+            log(f"Duplicates burst: {len(burst)} groups")
+
+        if cfg.get("dupes_similar"):
+            similar = find_duplicate_groups(files, max_dist=8)
+            confirmed = []
+            for g in similar:
+                with DUPES_LOCK:
+                    DUPES_STATE["message"] = "checking scene"
+                if confirm_same_scene(g, cfg):
+                    confirmed.append(g)
+            groups = merge_groups(groups, confirmed)
+            log(f"Duplicates similar: {len(confirmed)}/{len(similar)} groups after model check")
         action = cfg.get("dupes_action") or "mark"
         keeper_mode = cfg.get("dupes_keeper") or "resolution"
         input_folder = cfg.get("input_folder") or ""
@@ -1338,6 +1447,9 @@ class ConfigModel(BaseModel):
     always_sort_screens_docs: bool = False
     dupes_action: str = "mark"
     dupes_keeper: str = "resolution"
+    dupes_exact: bool = True
+    dupes_burst: bool = True
+    dupes_similar: bool = False
     provider: str = "lmstudio"
     model_name: str = "google/gemma-3-12b"
     max_requests: int = 0

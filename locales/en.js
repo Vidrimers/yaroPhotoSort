@@ -247,5 +247,12 @@ window.YARO_I18N = {
   "dupes.keepThis": "Keep this one",
   "toast.dupeSaved": "Group saved: keeper stays, the rest are in _rejects",
   "toast.dupeKeeper": "Keeper updated",
-  "toast.toDeleted": "Photo sent to _rejects"
+  "toast.toDeleted": "Photo sent to _rejects",
+  "dupes.findTitle": "What to look for",
+  "dupes.exact": "Exact copies",
+  "dupes.exactTip": "Byte-identical file in any folder: a copy, a re-save with the same content. Found by checksum, fast and reliable.",
+  "dupes.similar": "Similar subject or scene",
+  "dupes.similarTip": "Same cat / place / thing but pose or angle changed. Candidates are filtered by hash, then the model compares two photos and answers yes/no. Slower and spends tokens.",
+  "dupes.burst": "Near-identical frames",
+  "dupes.burstTip": "Same shot taken one after another: burst, seconds apart. Small hash distance (<=2)."
 };

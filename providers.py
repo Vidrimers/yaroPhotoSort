@@ -268,7 +268,7 @@ def _openai_like(
     api_key: str,
     model: str,
     prompt: str,
-    data_url: str,
+    data_urls: list[str],
     max_tokens: int,
     extra_headers: dict[str, str] | None = None,
 ) -> ModelReply:
@@ -277,17 +277,13 @@ def _openai_like(
         headers["Authorization"] = f"Bearer {api_key}"
     if extra_headers:
         headers.update(extra_headers)
+    content: list[dict[str, Any]] = []
+    for url in data_urls:
+        content.append({"type": "image_url", "image_url": {"url": url}})
+    content.append({"type": "text", "text": prompt})
     payload = {
         "model": model,
-        "messages": [
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": prompt},
-                    {"type": "image_url", "image_url": {"url": data_url}},
-                ],
-            }
-        ],
+        "messages": [{"role": "user", "content": content}],
         "temperature": 0.1,
         "max_tokens": max_tokens,
     }
@@ -312,7 +308,7 @@ def _anthropic(
     api_key: str,
     model: str,
     prompt: str,
-    data_url: str,
+    data_urls: list[str],
     max_tokens: int,
 ) -> ModelReply:
     headers = {
@@ -320,25 +316,22 @@ def _anthropic(
         "x-api-key": api_key,
         "anthropic-version": "2023-06-01",
     }
-    # data:image/jpeg;base64,XXX
-    m = re.match(r"data:([^;]+);base64,(.*)", data_url, re.S)
-    media = m.group(1) if m else "image/jpeg"
-    b64 = m.group(2) if m else data_url
+    content: list[dict[str, Any]] = []
+    for data_url in data_urls:
+        m = re.match(r"data:([^;]+);base64,(.*)", data_url, re.S)
+        media = m.group(1) if m else "image/jpeg"
+        b64 = m.group(2) if m else data_url
+        content.append(
+            {
+                "type": "image",
+                "source": {"type": "base64", "media_type": media, "data": b64},
+            }
+        )
+    content.append({"type": "text", "text": prompt})
     payload = {
         "model": model,
         "max_tokens": max_tokens,
-        "messages": [
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "image",
-                        "source": {"type": "base64", "media_type": media, "data": b64},
-                    },
-                    {"type": "text", "text": prompt},
-                ],
-            }
-        ],
+        "messages": [{"role": "user", "content": content}],
     }
     t0 = time.time()
     r = requests.post(f"{base}/v1/messages", json=payload, headers=headers, timeout=120)
@@ -364,21 +357,18 @@ def _gemini(
     api_key: str,
     model: str,
     prompt: str,
-    data_url: str,
+    data_urls: list[str],
     max_tokens: int,
 ) -> ModelReply:
-    m = re.match(r"data:([^;]+);base64,(.*)", data_url, re.S)
-    b64 = m.group(2) if m else data_url
-    mime = m.group(1) if m else "image/jpeg"
+    parts: list[dict[str, Any]] = []
+    for data_url in data_urls:
+        m = re.match(r"data:([^;]+);base64,(.*)", data_url, re.S)
+        b64 = m.group(2) if m else data_url
+        mime = m.group(1) if m else "image/jpeg"
+        parts.append({"inline_data": {"mime_type": mime, "data": b64}})
+    parts.append({"text": prompt})
     payload = {
-        "contents": [
-            {
-                "parts": [
-                    {"text": prompt},
-                    {"inline_data": {"mime_type": mime, "data": b64}},
-                ]
-            }
-        ],
+        "contents": [{"parts": parts}],
         "generationConfig": {"maxOutputTokens": max_tokens, "temperature": 0.1},
     }
     t0 = time.time()
@@ -415,28 +405,39 @@ def ask_model(
     max_tokens: int = 220,
     base_override: str | None = None,
 ) -> ModelReply:
+    return ask_model_multi(provider, model, prompt, [data_url], max_tokens, base_override)
+
+
+def ask_model_multi(
+    provider: str,
+    model: str,
+    prompt: str,
+    data_urls: list[str],
+    max_tokens: int = 220,
+    base_override: str | None = None,
+) -> ModelReply:
     base = base_for(provider, base_override)
     key = api_key_for(provider)
     if provider == "lmstudio":
-        reply = _openai_like(base, key, model, prompt, data_url, max_tokens)
+        reply = _openai_like(base, key, model, prompt, data_urls, max_tokens)
     elif provider == "anthropic":
         if not key:
             return ModelReply(error="ANTHROPIC_API_KEY is empty")
-        reply = _anthropic(base, key, model, prompt, data_url, max_tokens)
+        reply = _anthropic(base, key, model, prompt, data_urls, max_tokens)
     elif provider == "gemini":
         if not key:
             return ModelReply(error="GEMINI_API_KEY is empty")
-        reply = _gemini(base, key, model, prompt, data_url, max_tokens)
+        reply = _gemini(base, key, model, prompt, data_urls, max_tokens)
     else:
-        # openai / qwen / mimo / openrouter
-        if not key:
+        # openai / qwen / mimo / openrouter / colab
+        if not key and provider not in ("colab",):
             env_name = ENV_KEYS.get(provider, "API_KEY")
             return ModelReply(error=f"{env_name} is empty")
         extra = {}
         if provider == "openrouter":
             extra["HTTP-Referer"] = "https://localhost"
             extra["X-Title"] = "yaroPhotoSort"
-        reply = _openai_like(base, key, model, prompt, data_url, max_tokens, extra)
+        reply = _openai_like(base, key, model, prompt, data_urls, max_tokens, extra)
 
     if not reply.error and (reply.input_tokens or reply.output_tokens):
         record_usage(provider, model, reply.input_tokens, reply.output_tokens)

@@ -1254,6 +1254,21 @@ legend {
         <h2 data-i18n="dupes.title"></h2>
         <p class="hint" data-i18n="dupes.hint"></p>
         <fieldset>
+          <legend data-i18n="dupes.findTitle"></legend>
+          <label class="check" data-i18n-title="dupes.exactTip">
+            <input type="checkbox" id="dupesExact" checked>
+            <span data-i18n="dupes.exact"></span>
+          </label>
+          <label class="check" data-i18n-title="dupes.burstTip">
+            <input type="checkbox" id="dupesBurst" checked>
+            <span data-i18n="dupes.burst"></span>
+          </label>
+          <label class="check" data-i18n-title="dupes.similarTip">
+            <input type="checkbox" id="dupesSimilar">
+            <span data-i18n="dupes.similar"></span>
+          </label>
+        </fieldset>
+        <fieldset>
           <legend data-i18n="dupes.actionTitle"></legend>
           <div class="radio-row" id="dupesAction">
             <label data-i18n-title="dupes.markTip">
@@ -1685,6 +1700,9 @@ function currentConfigPatch() {
     always_sort_screens_docs: $("optScreensDocs").checked,
     dupes_action: document.querySelector('input[name="dupesAction"]:checked')?.value || "mark",
     dupes_keeper: document.querySelector('input[name="dupesKeeper"]:checked')?.value || "resolution",
+    dupes_exact: $("dupesExact").checked,
+    dupes_burst: $("dupesBurst").checked,
+    dupes_similar: $("dupesSimilar").checked,
     ui_lang: LANG,
     ui_theme: document.documentElement.dataset.theme || "lab",
     provider: window.__provider || "lmstudio",
@@ -1873,6 +1891,9 @@ function applyConfigToForm(cfg) {
   if (dupesAction) dupesAction.checked = true;
   const dupesKeeper = document.querySelector(`input[name="dupesKeeper"][value="${cfg.dupes_keeper || "resolution"}"]`);
   if (dupesKeeper) dupesKeeper.checked = true;
+  $("dupesExact").checked = cfg.dupes_exact !== false;
+  $("dupesBurst").checked = cfg.dupes_burst !== false;
+  $("dupesSimilar").checked = !!cfg.dupes_similar;
   syncEventsCategories();
   $("optReasonName").checked = !!cfg.add_reason_to_name;
   $("optPreserve").checked = !!cfg.preserve_structure;
@@ -1973,6 +1994,9 @@ function bindForm() {
   document.querySelectorAll('input[name="eventName"]').forEach((el) => el.addEventListener("change", scheduleSave));
   document.querySelectorAll('input[name="dupesAction"]').forEach((el) => el.addEventListener("change", scheduleSave));
   document.querySelectorAll('input[name="dupesKeeper"]').forEach((el) => el.addEventListener("change", scheduleSave));
+  $("dupesExact").addEventListener("change", scheduleSave);
+  $("dupesBurst").addEventListener("change", scheduleSave);
+  $("dupesSimilar").addEventListener("change", scheduleSave);
   syncReviewTiming();
   syncEventsCategories();
   bindDupes();
