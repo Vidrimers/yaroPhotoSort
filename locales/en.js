@@ -94,7 +94,7 @@ window.YARO_I18N = {
   "lm.tps": "{n} tok/s",
   "run.title": "Run",
   "stat.processed": "processed",
-  "stat.ok": "ok",
+  "stat.ok": "good",
   "stat.bad": "bad",
   "stat.left": "left",
   "strip.ready": "ready to start",

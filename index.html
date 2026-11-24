@@ -228,6 +228,13 @@ body {
   border-bottom-color: var(--accent-only-run);
 }
 .tab-panel[hidden] { display: none !important; }
+.tab-panel > .acc-item:last-child { border-bottom: 0; }
+/* контент вне аккордеона (вкладка «Дубликаты») */
+.tab-panel > *:not(.acc-item) {
+  padding: 14px 20px;
+}
+.tab-panel > *:not(.acc-item):first-child { padding-top: 18px; }
+.tab-panel > *:not(.acc-item):last-child { padding-bottom: 18px; }
 
 .acc-item {
   border-bottom: 1px solid var(--line);
@@ -1050,11 +1057,11 @@ legend {
         <div class="review-photo"><img id="reviewImg" alt=""></div>
         <div class="review-meta">
           <dl>
-            <dt data-i18n="review.file"></dt><dd id="reviewFile">вЂ”</dd>
-            <dt data-i18n="review.score"></dt><dd id="reviewScore">вЂ”</dd>
-            <dt data-i18n="review.quality"></dt><dd id="reviewQuality">вЂ”</dd>
-            <dt data-i18n="review.reason"></dt><dd id="reviewReason">вЂ”</dd>
-            <dt data-i18n="review.tags"></dt><dd id="reviewTags">вЂ”</dd>
+            <dt data-i18n="review.file"></dt><dd id="reviewFile">—</dd>
+            <dt data-i18n="review.score"></dt><dd id="reviewScore">—</dd>
+            <dt data-i18n="review.quality"></dt><dd id="reviewQuality">—</dd>
+            <dt data-i18n="review.reason"></dt><dd id="reviewReason">—</dd>
+            <dt data-i18n="review.tags"></dt><dd id="reviewTags">—</dd>
           </dl>
         </div>
       </div>
@@ -1085,7 +1092,7 @@ legend {
 
   <div id="lightbox" hidden>
     <div class="lb-top">
-      <h3 id="lbName">вЂ”</h3>
+      <h3 id="lbName">—</h3>
       <div class="lb-nav">
         <button class="btn" type="button" id="lbPrev" data-i18n="undo.prev"></button>
         <span class="lb-count" id="lbCount"></span>
@@ -1094,7 +1101,7 @@ legend {
       <button class="btn" type="button" id="lbClose" data-i18n="modal.confirm"></button>
     </div>
     <div class="lb-stage"><img id="lbImg" alt=""></div>
-    <div class="lb-side" id="lbInfo">вЂ”</div>
+    <div class="lb-side" id="lbInfo">—</div>
     <div class="lb-actions">
       <button class="btn btn-primary" type="button" id="lbKeep" data-i18n="dupes.keepThis"></button>
       <button class="btn btn-danger" type="button" id="lbDelete" data-i18n="review.reject"></button>
@@ -1114,10 +1121,10 @@ legend {
         <div class="review-photo"><img id="undoImg" alt=""></div>
         <div class="review-meta">
           <dl>
-            <dt data-i18n="undo.from"></dt><dd id="undoFrom">вЂ”</dd>
-            <dt data-i18n="undo.to"></dt><dd id="undoTo">вЂ”</dd>
-            <dt data-i18n="undo.result"></dt><dd id="undoResult">вЂ”</dd>
-            <dt data-i18n="undo.op"></dt><dd id="undoOp">вЂ”</dd>
+            <dt data-i18n="undo.from"></dt><dd id="undoFrom">—</dd>
+            <dt data-i18n="undo.to"></dt><dd id="undoTo">—</dd>
+            <dt data-i18n="undo.result"></dt><dd id="undoResult">—</dd>
+            <dt data-i18n="undo.op"></dt><dd id="undoOp">—</dd>
           </dl>
         </div>
       </div>
@@ -1301,7 +1308,7 @@ legend {
           </thead>
           <tbody id="cats"></tbody>
         </table>
-        <p class="hint" id="destPreview" style="margin: 12px 0 0;"></p>
+        <p class="hint" id="destPreview" style="margin: 12px 0 0; max-width: none;"></p>
             </div>
             <div class="acc-sub">
         <h2 data-i18n="events.title"></h2>
@@ -1463,10 +1470,10 @@ legend {
         </div>
 
         <dl class="kv" id="lmKv">
-          <dt data-i18n="lm.context"></dt><dd id="lmCtx">вЂ”</dd>
-          <dt data-i18n="lm.quant"></dt><dd id="lmQuant">вЂ”</dd>
-          <dt data-i18n="lm.memory"></dt><dd id="lmVram">вЂ”</dd>
-          <dt data-i18n="lm.state"></dt><dd id="lmState">вЂ”</dd>
+          <dt data-i18n="lm.context"></dt><dd id="lmCtx">—</dd>
+          <dt data-i18n="lm.quant"></dt><dd id="lmQuant">—</dd>
+          <dt data-i18n="lm.memory"></dt><dd id="lmVram">—</dd>
+          <dt data-i18n="lm.state"></dt><dd id="lmState">—</dd>
         </dl>
 
         <div class="hint" id="usageLine" style="margin: 12px 0 0;" hidden></div>
@@ -1497,7 +1504,7 @@ legend {
           <div class="stat"><b id="stDone">0</b><span data-i18n="stat.processed"></span></div>
           <div class="stat ok"><b id="stOk">0</b><span data-i18n="stat.ok"></span></div>
           <div class="stat bad"><b id="stBad">0</b><span data-i18n="stat.bad"></span></div>
-          <div class="stat run"><b id="stEta">вЂ”</b><span data-i18n="stat.left"></span></div>
+          <div class="stat run"><b id="stEta">—</b><span data-i18n="stat.left"></span></div>
         </div>
 
         <div class="strip" id="strip" aria-hidden="true"><div class="fill" id="stripFill"></div></div>
@@ -1506,7 +1513,7 @@ legend {
           <span id="stripPct">0%</span>
         </div>
 
-        <div class="log" id="log">вЂ”</div>
+        <div class="log" id="log">—</div>
         <div class="footer-note" data-i18n="footer.note"></div>
       </section>
     </div>
@@ -1610,7 +1617,7 @@ function loadLang(lang) {
       scheduleSave();
       resolve();
     };
-    // <script src> СЂР°Р±РѕС‚Р°РµС‚ Рё СЃ file://, Рё С‡РµСЂРµР· СЃРµСЂРІРµСЂ вЂ” РІ РѕС‚Р»РёС‡РёРµ РѕС‚ fetch
+    // <script src> СЂР°Р±РѕС‚Р°РµС‚ Рё СЃ file://, Рё С‡РµСЂРµР· СЃРµСЂРІРµСЂ — РІ РѕС‚Р»РёС‡РёРµ РѕС‚ fetch
     const prev = document.getElementById("i18n-script");
     if (prev) prev.remove();
     const s = document.createElement("script");
@@ -1884,13 +1891,19 @@ function syncEventsCategories() {
     catSection.querySelectorAll("input, select").forEach((el) => {
       el.disabled = evOn;
     });
+    $("optCategories").disabled = evOn;
   }
 
   const evBlock = $("eventsSection") || $("optEvents").closest("section") || $("optEvents").closest(".acc-sub");
   if (evBlock) {
     evBlock.classList.toggle("cats-locked", catOn);
+    // пункты событий живут только при включённой галке и свободных категориях
     evBlock.querySelectorAll("input").forEach((el) => {
-      el.disabled = catOn;
+      if (el.id === "optEvents") {
+        el.disabled = catOn;
+      } else {
+        el.disabled = catOn || !evOn;
+      }
     });
   }
 
@@ -1983,7 +1996,7 @@ function escapeHtml(s) {
 
 function resolveDest(dest, inputFolder, key) {
   const raw = (dest || "").trim();
-  const base = (inputFolder || "").trim() || "вЂ¦";
+  const base = (inputFolder || "").trim() || "…";
   if (!raw) return joinPath(base, "_sorted", key);
   if (/^([a-zA-Z]:[\\/]|\\\\)/.test(raw)) return raw;
   return joinPath(base, raw);
@@ -2008,9 +2021,12 @@ function updateDestPreview() {
   const lines = rows.map((row) => {
     const key = row.dataset.key;
     const dest = row.querySelector(".cat-dest").value;
-    return `${key} в†’ ${resolveDest(dest, folder, key)}`;
+    return `${key} → ${resolveDest(dest, folder, key)}`;
   });
-  el.textContent = t("cats.preview") + lines.join("  В·  ");
+  el.innerHTML =
+    escapeHtml(t("cats.preview")) +
+    "<br>" +
+    lines.map((l) => `<code>${escapeHtml(l)}</code>`).join("<br>");
 }
 
 function applyConfigToForm(cfg) {
@@ -2248,11 +2264,11 @@ function renderLm(data) {
       $("lmTitle").textContent = t("lm.disconnected");
     }
     $("lmUrl").textContent = (data.url || "").replace(/^https?:\/\//, "");
-    $("lmCtx").textContent = data.context_length ? t("lm.tokens", { n: fmtNum(data.context_length) }) : "вЂ”";
-    $("lmQuant").textContent = data.quant || "вЂ”";
+    $("lmCtx").textContent = data.context_length ? t("lm.tokens", { n: fmtNum(data.context_length) }) : "—";
+    $("lmQuant").textContent = data.quant || "—";
     $("lmVram").textContent = data.vram_used_gb != null
       ? `${data.vram_used_gb} / ${data.vram_total_gb ?? "?"} GB`
-      : "вЂ”";
+      : "—";
     $("lmState").textContent = data.load_state || (data.connected ? t("lm.ready") : t("lm.noLink"));
     return;
   }
@@ -2266,10 +2282,10 @@ function renderLm(data) {
     $("lmTitle").textContent = data.detail || t("provider.fail");
   }
   $("lmUrl").textContent = data.base || "";
-  $("lmQuant").textContent = data.has_key ? t("provider.keyOk") : (isLocal ? "вЂ”" : t("provider.keyMissing"));
-  $("lmVram").textContent = "вЂ”";
-  $("lmCtx").textContent = "вЂ”";
-  $("lmState").textContent = data.detail || "вЂ”";
+  $("lmQuant").textContent = data.has_key ? t("provider.keyOk") : (isLocal ? "—" : t("provider.keyMissing"));
+  $("lmVram").textContent = "—";
+  $("lmCtx").textContent = "—";
+  $("lmState").textContent = data.detail || "—";
 }
 
 function renderJob(job, logLines) {
@@ -2278,7 +2294,7 @@ function renderJob(job, logLines) {
   $("stDone").textContent = fmtNum(job.done || 0);
   $("stOk").textContent = fmtNum(job.ok || 0);
   $("stBad").textContent = fmtNum(job.bad || 0);
-  $("stEta").textContent = job.eta || "вЂ”";
+  $("stEta").textContent = job.eta || "—";
   const pct = job.percent || 0;
   $("stripFill").style.width = pct + "%";
   $("stripPct").textContent = pct.toFixed(1) + "%";
@@ -2318,7 +2334,7 @@ async function poll() {
   polling = true;
   try {
     const [prov, st, usage] = await Promise.all([
-      api.get("/api/provider").catch(() => ({ ok: false, detail: "вЂ”" })),
+      api.get("/api/provider").catch(() => ({ ok: false, detail: "—" })),
       api.get("/api/status"),
       api.get("/api/usage").catch(() => ({ usage: null })),
     ]);
@@ -2435,7 +2451,7 @@ async function init() {
       const res = await api.get("/api/scan");
       $("stripCaption").textContent = res.ok
         ? t("strip.countPrefix") + fmtNum(res.count)
-        : (res.error || "вЂ”");
+        : (res.error || "—");
     } catch (e) {
       uiAlert("Error", errText(e));
     }
@@ -2473,7 +2489,7 @@ async function init() {
     try {
       await api.post("/api/shutdown");
     } catch (e) {
-      /* СЃРµСЂРІРµСЂ РјРѕРі СѓСЃРїРµС‚СЊ Р·Р°РєСЂС‹С‚СЊ СЃРѕРµРґРёРЅРµРЅРёРµ вЂ” СЌС‚Рѕ РЅРѕСЂРјР° */
+      /* СЃРµСЂРІРµСЂ РјРѕРі СѓСЃРїРµС‚СЊ Р·Р°РєСЂС‹С‚СЊ СЃРѕРµРґРёРЅРµРЅРёРµ — СЌС‚Рѕ РЅРѕСЂРјР° */
     }
     setTimeout(() => { serverOffline(true); }, 600);
   });
@@ -2546,15 +2562,15 @@ function showReviewItem() {
   actions.hidden = false;
   const item = reviewItems[reviewIdx] || reviewItems[0];
   $("reviewCount").textContent = `${reviewIdx + 1} / ${reviewItems.length}`;
-  $("reviewFile").textContent = item.filename || item.path || "вЂ”";
-  $("reviewScore").textContent = item.score != null ? String(item.score) : "вЂ”";
-  $("reviewQuality").textContent = item.quality || "вЂ”";
-  $("reviewReason").textContent = item.quality_reason || "вЂ”";
-  $("reviewTags").textContent = (item.category_tags || []).join(", ") || "вЂ”";
+  $("reviewFile").textContent = item.filename || item.path || "—";
+  $("reviewScore").textContent = item.score != null ? String(item.score) : "—";
+  $("reviewQuality").textContent = item.quality || "—";
+  $("reviewReason").textContent = item.quality_reason || "—";
+  $("reviewTags").textContent = (item.category_tags || []).join(", ") || "—";
   $("reviewImg").src = `/api/review/image?path=${encodeURIComponent(item.path)}`;
   $("reviewImg").onerror = () => {
     $("reviewImg").removeAttribute("src");
-    $("reviewFile").textContent = (item.filename || "") + " В· " + t("review.noPreview");
+    $("reviewFile").textContent = (item.filename || "") + " · " + t("review.noPreview");
   };
 }
 
@@ -2868,10 +2884,10 @@ function renderUndoPage() {
   $("undoImg").src = `/api/journal/image?path=${encodeURIComponent(imgPath)}`;
   $("undoImg").onerror = () => {
     $("undoImg").removeAttribute("src");
-    $("undoFrom").textContent = (el.from || "") + " В· " + t("review.noPreview");
+    $("undoFrom").textContent = (el.from || "") + " · " + t("review.noPreview");
   };
-  $("undoFrom").textContent = el.from || "вЂ”";
-  $("undoTo").textContent = el.to || "вЂ”";
+  $("undoFrom").textContent = el.from || "—";
+  $("undoTo").textContent = el.to || "—";
   $("undoResult").textContent = el.op === "copy" ? t("undo.backCopy") : t("undo.backMove");
   $("undoOp").textContent = el.op === "copy" ? t("undo.opCopy") : t("undo.opMove");
 }
@@ -3030,11 +3046,11 @@ function renderLm(data) {
       $("lmTitle").textContent = t("lm.disconnected");
     }
     $("lmUrl").textContent = (data.url || "").replace(/^https?:\/\//, "");
-    $("lmCtx").textContent = data.context_length ? t("lm.tokens", { n: fmtNum(data.context_length) }) : "вЂ”";
-    $("lmQuant").textContent = data.quant || "вЂ”";
+    $("lmCtx").textContent = data.context_length ? t("lm.tokens", { n: fmtNum(data.context_length) }) : "—";
+    $("lmQuant").textContent = data.quant || "—";
     $("lmVram").textContent = data.vram_used_gb != null
       ? `${data.vram_used_gb} / ${data.vram_total_gb ?? "?"} GB`
-      : "вЂ”";
+      : "—";
     $("lmState").textContent = data.load_state || (data.connected ? t("lm.ready") : t("lm.noLink"));
     return;
   }
@@ -3048,10 +3064,10 @@ function renderLm(data) {
     $("lmTitle").textContent = data.detail || t("provider.fail");
   }
   $("lmUrl").textContent = data.base || "";
-  $("lmQuant").textContent = data.has_key ? t("provider.keyOk") : (isLocal ? "вЂ”" : t("provider.keyMissing"));
-  $("lmVram").textContent = "вЂ”";
-  $("lmCtx").textContent = "вЂ”";
-  $("lmState").textContent = data.detail || "вЂ”";
+  $("lmQuant").textContent = data.has_key ? t("provider.keyOk") : (isLocal ? "—" : t("provider.keyMissing"));
+  $("lmVram").textContent = "—";
+  $("lmCtx").textContent = "—";
+  $("lmState").textContent = data.detail || "—";
 }
 
 function renderJob(job, logLines) {
@@ -3060,7 +3076,7 @@ function renderJob(job, logLines) {
   $("stDone").textContent = fmtNum(job.done || 0);
   $("stOk").textContent = fmtNum(job.ok || 0);
   $("stBad").textContent = fmtNum(job.bad || 0);
-  $("stEta").textContent = job.eta || "вЂ”";
+  $("stEta").textContent = job.eta || "—";
   const pct = job.percent || 0;
   $("stripFill").style.width = pct + "%";
   $("stripPct").textContent = pct.toFixed(1) + "%";
@@ -3100,7 +3116,7 @@ async function poll() {
   polling = true;
   try {
     const [prov, st, usage] = await Promise.all([
-      api.get("/api/provider").catch(() => ({ ok: false, detail: "вЂ”" })),
+      api.get("/api/provider").catch(() => ({ ok: false, detail: "—" })),
       api.get("/api/status"),
       api.get("/api/usage").catch(() => ({ usage: null })),
     ]);
