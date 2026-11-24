@@ -389,6 +389,17 @@ legend {
   font-size: 12.5px;
   margin-top: 1px;
 }
+.check .sub.hot {
+  color: var(--accent-only-run);
+  background: var(--amber-soft);
+  border-left: 2px solid var(--accent-only-run);
+  padding: 6px 8px;
+  margin-top: 6px;
+  border-radius: 2px;
+}
+[data-theme="paper"] .check .sub.hot {
+  background: rgba(176, 58, 46, 0.12);
+}
 
 .radio-row { display: flex; flex-direction: column; gap: 2px; }
 .radio-row label {
@@ -1432,6 +1443,13 @@ legend {
           <input type="checkbox" id="optCategories">
           <span data-i18n="cats.enable"></span>
         </label>
+        <label class="check" data-i18n-title="cats.onlyTip" style="margin: -4px 0 12px 0;">
+          <input type="checkbox" id="optCategoryOnly">
+          <span>
+            <span data-i18n="cats.only"></span>
+            <span class="sub" id="catsOnlySub" data-i18n="cats.onlySub"></span>
+          </span>
+        </label>
 
         <table class="cat-table">
           <thead>
@@ -1946,6 +1964,7 @@ function currentConfigPatch() {
     resume: $("optResume").checked,
     dry_run: $("optDry").checked,
     categorization: $("optCategories").checked,
+    category_only: $("optCategoryOnly").checked,
     events_enabled: $("optEvents").checked,
     event_method: document.querySelector('input[name="eventMethod"]:checked')?.value || "time",
     event_name: document.querySelector('input[name="eventName"]:checked')?.value || "date",
@@ -2023,6 +2042,35 @@ function syncReviewTiming() {
   box.querySelectorAll("input").forEach((el) => { el.disabled = !ask; });
 }
 
+function syncCategoryOnly() {
+  const on = $("optCategoryOnly").checked;
+  const sub = $("catsOnlySub");
+  if (sub) sub.classList.toggle("hot", on);
+  // всё, что про качество, в этом режиме не работает
+  ["ruleBlur", "ruleExposure", "ruleJunk", "scoreThreshold"].forEach((id) => {
+    const el = $(id);
+    if (el) el.disabled = on;
+  });
+  const qualitySec = $("ruleBlur") ? $("ruleBlur").closest("section") || $("ruleBlur").closest(".acc-item") : null;
+  if (qualitySec) qualitySec.classList.toggle("cats-locked", on);
+
+  document.querySelectorAll('input[name="outputMode"], input[name="reviewMode"], input[name="reviewTiming"]').forEach((el) => {
+    el.disabled = on;
+  });
+  const beh = $("optRecursive") ? $("optRecursive").closest("section") || $("optRecursive").closest(".acc-item") : null;
+  if (beh) {
+    // гасим только блок "что делать с плохими", остальное в поведении живо
+    const legend = beh.querySelector("legend");
+    void legend;
+  }
+  // подсветка самих групп поведения
+  document.querySelectorAll('input[name="outputMode"], input[name="reviewMode"], input[name="reviewTiming"]').forEach((el) => {
+    const row = el.closest("label");
+    if (row) row.style.opacity = on ? "0.5" : "";
+    if (row) row.style.cursor = on ? "not-allowed" : "";
+  });
+}
+
 function syncEventsCategories() {
   const evOn = $("optEvents").checked;
   const catOn = $("optCategories").checked;
@@ -2035,6 +2083,9 @@ function syncEventsCategories() {
     });
     $("optCategories").disabled = evOn;
   }
+  $("optCategoryOnly").disabled = evOn || !catOn;
+  if (!catOn) $("optCategoryOnly").checked = false;
+  syncCategoryOnly();
 
   const evBlock = $("eventsSection") || $("optEvents").closest("section") || $("optEvents").closest(".acc-sub");
   if (evBlock) {
@@ -2191,6 +2242,7 @@ function applyConfigToForm(cfg) {
   $("optResume").checked = !!cfg.resume;
   $("optDry").checked = !!cfg.dry_run;
   $("optCategories").checked = !!cfg.categorization;
+  $("optCategoryOnly").checked = !!cfg.category_only;
   $("optEvents").checked = !!cfg.events_enabled;
   if (cfg.provider) setProvider(cfg.provider);
   if (cfg.model_name) $("modelName").value = cfg.model_name;
@@ -2219,7 +2271,7 @@ function bindForm() {
   [
     "inputFolder", "scoreThreshold", "serverPort", "ruleBlur", "ruleExposure", "ruleJunk",
     "optRecursive", "optResume", "optDry", "optCategories", "optReasonName", "optPreserve",
-    "optEvents", "optScreensDocs", "eventGap", "modelName", "maxRequests", "maxCost",
+    "optEvents", "optScreensDocs", "eventGap", "modelName", "maxRequests", "maxCost", "optCategoryOnly",
   ].forEach((id) => $(id).addEventListener("change", scheduleSave));
   $("modelName").addEventListener("input", () => {
     $("modelName").dataset.manual = "1";
@@ -2296,6 +2348,10 @@ function bindForm() {
   $("optCategories").addEventListener("change", () => {
     if ($("optCategories").checked) $("optEvents").checked = false;
     syncEventsCategories();
+    scheduleSave();
+  });
+  $("optCategoryOnly").addEventListener("change", () => {
+    syncCategoryOnly();
     scheduleSave();
   });
   $("optEvents").addEventListener("change", () => {

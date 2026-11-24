@@ -282,5 +282,8 @@ window.YARO_I18N = {
   "dupes.applyGroupTip": "Keep the selected photo in place, move the rest of the group to deleted (_rejects).",
   "dupes.keepThisTip": "Mark this photo as the one to keep (star). Nothing is moved yet.",
   "dupes.deleteThisTip": "Move only this photo to deleted (_rejects). The rest of the group stays.",
-  "dupes.viewTip": "Open groups of near-identical frames and pick which one to keep."
+  "dupes.viewTip": "Open groups of near-identical frames and pick which one to keep.",
+  "cats.only": "Categories only, no quality scoring",
+  "cats.onlyTip": "Model only says what is in the photo and nothing about blur or exposure. It still looks at the image to pick a category — that is the point — but skips quality verdicts.\n\nWhat changes:\n• CSV has category and tags, quality and score stay empty\n• rejects and review queue never trigger\n• Move to deleted (_rejects) is ignored\n• shorter request, slightly faster per photo\n\nUse it to pull out one kind of content (docs, screenshots) without judging the rest.\nDisabled until «Enable categorization» is on.",
+  "cats.onlySub": "When on, these are disabled: what counts as a reject, score threshold, what to do with rejects, auto/manual review and when to ask."
 };

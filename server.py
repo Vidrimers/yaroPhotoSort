@@ -296,6 +296,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "resume": True,
     "dry_run": False,
     "categorization": False,
+    "category_only": False,
     "events_enabled": False,
     "event_method": "time",             # time | similar | time_ai (mutually exclusive)
     "event_name": "date",               # date | ai (mutually exclusive)
@@ -1008,13 +1009,22 @@ def build_prompt(cfg: dict[str, Any]) -> str:
     else:
         keys = "people, docs, screenshot, food, nature, animals, transport, interior, other"
 
-    parts.append(
-        "Ответь СТРОГО одним JSON-объектом без markdown, без пояснений:\n"
-        '{"quality":"ok|bad","quality_reason":"причина если bad иначе пусто",'
-        '"score":1-5,'
-        f'"category_tags":["{keys.split(", ")[0]}"],'
-        '"category_confidence":0.0-1.0}'
-    )
+    if cfg.get("category_only") and cfg.get("categorization"):
+        parts.append(
+            "Оценивать качество НЕ нужно. Только определи содержимое снимка.\n"
+            "Ответь СТРОГО одним JSON-объектом без markdown:\n"
+            '{"category_tags":["'
+            + (keys.split(", ")[0] if keys else "other")
+            + '"],"category_confidence":0.0-1.0}'
+        )
+    else:
+        parts.append(
+            "Ответь СТРОГО одним JSON-объектом без markdown, без пояснений:\n"
+            '{"quality":"ok|bad","quality_reason":"причина если bad иначе пусто",'
+            '"score":1-5,'
+            f'"category_tags":["{keys.split(", ")[0]}"],'
+            '"category_confidence":0.0-1.0}'
+        )
     return "\n".join(parts)
 
 
@@ -1043,6 +1053,32 @@ def parse_verdict(text: str, score_threshold: int) -> dict[str, Any]:
         obj = json.loads(m.group(0))
     except Exception:
         return fail("JSON parse error")
+    # режим "только категории" — в ответе нет quality/score
+    if "score" not in obj and "quality" not in obj:
+        tags_raw = obj.get("category_tags")
+        if not isinstance(tags_raw, list):
+            tags_raw = [obj.get("category")] if obj.get("category") else []
+        tags = []
+        for tag in tags_raw:
+            key = str(tag).lower().strip()
+            if key in valid and key not in tags:
+                tags.append(key)
+        if not tags:
+            tags = ["other"]
+        try:
+            conf = float(obj.get("category_confidence", 0.0))
+        except Exception:
+            conf = 0.0
+        return {
+            "quality": "ok",
+            "quality_reason": "",
+            "score": "",
+            "category": tags[0],
+            "category_tags": tags,
+            "category_confidence": round(max(0.0, min(1.0, conf)), 3),
+            "raw": raw[:300],
+        }
+
     try:
         score = int(obj.get("score", 3))
     except Exception:
@@ -1555,6 +1591,7 @@ class ConfigModel(BaseModel):
     resume: bool = True
     dry_run: bool = False
     categorization: bool = False
+    category_only: bool = False
     events_enabled: bool = False
     event_method: str = "time"
     event_name: str = "date"
