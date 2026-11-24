@@ -2839,6 +2839,12 @@ function showReviewItem() {
     $("reviewImg").removeAttribute("src");
     $("reviewFile").textContent = (item.filename || "") + " · " + t("review.noPreview");
   };
+  $("reviewImg").style.cursor = "zoom-in";
+  $("reviewImg").onclick = () => {
+    window.__lbSource = "review";
+    lbIdx = reviewIdx;
+    openLightbox();
+  };
 }
 
 async function decideReview(decision) {
@@ -2955,40 +2961,79 @@ function renderDupeGroup() {
     el.addEventListener("click", () => {
       dupeSelected = el.dataset.path;
       lbIdx = parseInt(el.dataset.idx || "0", 10);
+      window.__lbSource = "dupes";
       renderDupeGroup();
       openLightbox();
     });
   });
 }
 
+function lbList() {
+  return window.__lbSource === "review"
+    ? (reviewItems || []).map((r) => r.path)
+    : dupeFiles();
+}
+
 function openLightbox() {
-  const files = dupeFiles();
-  const g = dupeGroup();
+  const files = lbList();
   if (!files.length) return;
   lbIdx = Math.max(0, Math.min(lbIdx, files.length - 1));
   const path = files[lbIdx];
-  const name = (g.names || [])[lbIdx] || path.split(/[\\/]/).pop();
-  $("lbImg").src = `/api/dupes/image?path=${encodeURIComponent(path)}`;
-  $("lbName").textContent = name;
-  $("lbCount").textContent = `${lbIdx + 1} / ${files.length}`;
-  $("lbInfo").textContent = [
-    `${t("undo.from")}: ${path}`,
-    `${t("dupes.aiBest")}: ${(g.keeper_name || "")}`,
-  ].join("\n");
-  $("lbKeep").style.display = path === dupeSelected ? "" : "";
-  const badge = $("lbBadge");
-  if (path === g.keeper) {
-    badge.hidden = false;
-    badge.className = "dupe-badge lb-badge";
-    badge.textContent = `★ ${t("dupes.aiBest")}`;
-  } else if (path === dupeSelected) {
-    badge.hidden = false;
-    badge.className = "dupe-badge lb-badge user";
-    badge.textContent = t("dupes.keepThis");
+
+  if (window.__lbSource === "review") {
+    const item = reviewItems[lbIdx] || {};
+    $("lbImg").src = `/api/journal/image?path=${encodeURIComponent(path)}`;
+    $("lbName").textContent = item.filename || path.split(/[\\/]/).pop();
+    $("lbCount").textContent = `${lbIdx + 1} / ${files.length}`;
+    $("lbInfo").textContent = [
+      `${t("undo.from")}: ${path}`,
+      `${t("review.score")}: ${item.score != null ? item.score : "—"}`,
+      `${t("review.reason")}: ${item.quality_reason || "—"}`,
+      `${t("review.tags")}: ${(item.category_tags || []).join(", ") || "—"}`,
+    ].join("\n");
+    $("lbKeep").style.display = "";
+    $("lbDelete").style.display = "";
+    const badge = $("lbBadge");
+    if (item.quality === "bad") {
+      badge.hidden = false;
+      badge.className = "dupe-badge lb-badge";
+      badge.style.background = "var(--bad)";
+      badge.textContent = `score ${item.score ?? ""}`;
+    } else {
+      badge.hidden = false;
+      badge.className = "dupe-badge lb-badge user";
+      badge.style.background = "";
+      badge.textContent = `score ${item.score ?? ""}`;
+    }
   } else {
-    badge.hidden = true;
-    badge.textContent = "";
+    const g = dupeGroup();
+    const name = (g.names || [])[lbIdx] || path.split(/[\\/]/).pop();
+    $("lbImg").src = `/api/dupes/image?path=${encodeURIComponent(path)}`;
+    $("lbName").textContent = name;
+    $("lbCount").textContent = `${lbIdx + 1} / ${files.length}`;
+    $("lbInfo").textContent = [
+      `${t("undo.from")}: ${path}`,
+      `${t("dupes.aiBest")}: ${(g && g.keeper_name) || ""}`,
+    ].join("\n");
+    $("lbKeep").style.display = "";
+    $("lbDelete").style.display = "";
+    const badge = $("lbBadge");
+    if (g && path === g.keeper) {
+      badge.hidden = false;
+      badge.className = "dupe-badge lb-badge";
+      badge.style.background = "";
+      badge.textContent = `★ ${t("dupes.aiBest")}`;
+    } else if (path === dupeSelected) {
+      badge.hidden = false;
+      badge.className = "dupe-badge lb-badge user";
+      badge.style.background = "";
+      badge.textContent = t("dupes.keepThis");
+    } else {
+      badge.hidden = true;
+      badge.textContent = "";
+    }
   }
+
   $("lightbox").hidden = false;
   document.body.style.overflow = "hidden";
 }
@@ -3044,6 +3089,7 @@ function bindDupes() {
   $("btnDupesView").addEventListener("click", async () => {
     await refreshDupesGroups();
     dupeSelected = "";
+    window.__lbSource = "dupes";
     renderDupeGroup();
     modal.hidden = false;
     document.body.style.overflow = "hidden";
@@ -3109,7 +3155,37 @@ function bindDupes() {
     lbIdx += 1;
     openLightbox();
   });
-  $("lbKeep").addEventListener("click", () => {
+  document.addEventListener("keydown", (e) => {
+    if ($("lightbox").hidden) return;
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      lbIdx -= 1;
+      openLightbox();
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      lbIdx += 1;
+      openLightbox();
+    }
+  });
+  $("lbKeep").addEventListener("click", async () => {
+    if (window.__lbSource === "review") {
+      const item = reviewItems[lbIdx];
+      if (!item) return;
+      try {
+        await api.post("/api/review/decide", { path: item.path, decision: "keep" });
+      } catch (e) {
+        uiAlert("Error", errText(e));
+        return;
+      }
+      showToast(t("review.keep") + ": " + (item.filename || ""));
+      reviewItems.splice(lbIdx, 1);
+      setReviewCountBadge(reviewItems.length);
+      if (lbIdx >= reviewItems.length) lbIdx = Math.max(0, reviewItems.length - 1);
+      showReviewItem();
+      if (!reviewItems.length) closeLightbox();
+      else openLightbox();
+      return;
+    }
     const files = dupeFiles();
     if (!files[lbIdx]) return;
     dupeSelected = files[lbIdx];
@@ -3118,6 +3194,24 @@ function bindDupes() {
     closeLightbox();
   });
   $("lbDelete").addEventListener("click", async () => {
+    if (window.__lbSource === "review") {
+      const item = reviewItems[lbIdx];
+      if (!item) return;
+      try {
+        await api.post("/api/review/decide", { path: item.path, decision: "reject" });
+      } catch (e) {
+        uiAlert("Error", errText(e));
+        return;
+      }
+      showToast(t("toast.toDeleted"));
+      reviewItems.splice(lbIdx, 1);
+      setReviewCountBadge(reviewItems.length);
+      if (lbIdx >= reviewItems.length) lbIdx = Math.max(0, reviewItems.length - 1);
+      showReviewItem();
+      if (!reviewItems.length) closeLightbox();
+      else openLightbox();
+      return;
+    }
     const files = dupeFiles();
     const g = dupeGroup();
     const path = files[lbIdx];
