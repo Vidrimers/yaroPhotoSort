@@ -892,7 +892,6 @@ legend {
 
       <section>
         <h2 data-i18n="folder.title"></h2>
-        <p class="hint" data-i18n="folder.hint"></p>
         <div class="folder-row">
           <input class="folder-input" id="inputFolder" type="text" spellcheck="false"
                  data-i18n-placeholder="folder.placeholder" autocomplete="off">
@@ -1741,7 +1740,7 @@ function bindForm() {
       $("testResult").textContent = t("provider.keySaved");
       poll();
     } catch (e) {
-      uiAlert("Error", e.message);
+      uiAlert("Error", errText(e));
     }
   });
   $("btnBaseUrlSave").addEventListener("click", async () => {
@@ -1759,7 +1758,7 @@ function bindForm() {
       $("testResult").textContent = t("provider.keySaved");
       poll();
     } catch (e) {
-      uiAlert("Error", e.message);
+      uiAlert("Error", errText(e));
     }
   });
   $("btnColabGuide").addEventListener("click", () => {
@@ -1785,7 +1784,7 @@ function bindForm() {
       await api.post("/api/usage/reset");
       poll();
     } catch (e) {
-      uiAlert("Error", e.message);
+      uiAlert("Error", errText(e));
     }
   });
   $("optCategories").addEventListener("change", () => {
@@ -1816,6 +1815,14 @@ function bindForm() {
 
 function fmtNum(n) {
   return new Intl.NumberFormat(LANG === "ru" ? "ru-RU" : "en-US").format(n);
+}
+
+function errText(e) {
+  const raw = (e && e.message) || String(e) || "";
+  if (/NetworkError|Failed to fetch|Load failed|fetch/i.test(raw)) {
+    return t("err.offline");
+  }
+  return raw;
 }
 
 /* кастомный confirm */
@@ -2035,7 +2042,7 @@ async function init() {
         updateDestPreview();
       }
     } catch (e) {
-      uiAlert(t("folder.title"), t("alert.browseFail") + e.message);
+      uiAlert(t("folder.title"), t("alert.browseFail") + errText(e));
     }
   });
 
@@ -2081,7 +2088,7 @@ async function init() {
         ? t("strip.countPrefix") + fmtNum(res.count)
         : (res.error || "—");
     } catch (e) {
-      uiAlert("Error", e.message);
+      uiAlert("Error", errText(e));
     }
   });
 
@@ -2093,7 +2100,7 @@ async function init() {
       await api.post("/api/start");
       poll();
     } catch (e) {
-      uiAlert(t("btn.start"), t("alert.startFail") + e.message);
+      uiAlert(t("btn.start"), t("alert.startFail") + errText(e));
     }
   });
 
@@ -2102,7 +2109,7 @@ async function init() {
       await api.post("/api/stop");
       poll();
     } catch (e) {
-      uiAlert("Error", e.message);
+      uiAlert("Error", errText(e));
     }
   });
 
@@ -2138,7 +2145,7 @@ async function init() {
       localStorage.removeItem("yarophoto-theme");
       location.reload();
     } catch (e) {
-      uiAlert("Error", e.message);
+      uiAlert("Error", errText(e));
     }
   });
   const closeHelp = () => {
@@ -2206,7 +2213,7 @@ async function decideReview(decision) {
   try {
     await api.post("/api/review/decide", { path: item.path, decision });
   } catch (e) {
-    uiAlert("Error", e.message);
+    uiAlert("Error", errText(e));
     return;
   }
   if (decision !== "skip") {
@@ -2236,7 +2243,7 @@ function bindReview() {
       modal.hidden = false;
       document.body.style.overflow = "hidden";
     } catch (e) {
-      uiAlert("Error", e.message);
+      uiAlert("Error", errText(e));
     }
   };
   const openPending = (item) => {
@@ -2286,7 +2293,7 @@ function bindDupes() {
       await api.post("/api/dupes/scan");
       refreshDupesStatus();
     } catch (e) {
-      uiAlert("Error", e.message);
+      uiAlert("Error", errText(e));
     }
   });
 
@@ -2311,7 +2318,7 @@ function bindDupes() {
       modal.hidden = false;
       document.body.style.overflow = "hidden";
     } catch (e) {
-      uiAlert("Error", e.message);
+      uiAlert("Error", errText(e));
     }
   });
   $("dupesClose").addEventListener("click", () => {
@@ -2403,7 +2410,7 @@ function bindUndo() {
       refreshUndo();
       poll();
     } catch (e) {
-      uiAlert("Error", e.message);
+      uiAlert("Error", errText(e));
     }
   });
   refreshUndo();

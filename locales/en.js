@@ -1,5 +1,5 @@
 window.YARO_I18N = {
-  "app.subtitle": "archive cleanup via LM Studio",
+  "app.subtitle": "sort your photo archive with local or cloud models",
   "theme.switch": "Switch theme",
   "theme.lab": "Darkroom",
   "theme.paper": "Paper",
@@ -18,7 +18,7 @@ window.YARO_I18N = {
   "alert.startFail": "Could not start: ",
   "confirm.start": "Start sorting?",
   "folder.title": "Photo folder",
-  "folder.hint": "Path to the archive. Pick it with the dialog, type it in, or drop a folder here.",
+  "folder.hint": "",
   "folder.placeholder": "D:\\Photos\\2024",
   "dropzone.default": "Drop a folder here, or type the path above",
   "dropzone.pathFail": "Dropped “{name}”, but the browser did not expose the full path. Use Browse… or type the path manually.",
@@ -239,5 +239,6 @@ window.YARO_I18N = {
   "undo.prev": "Previous",
   "undo.next": "Next",
   "undo.apply": "Undo all",
-  "confirm.undo": "Undo every file operation from the last run? Copies are deleted, moves return to their original names and folders."
+  "confirm.undo": "Undo every file operation from the last run? Copies are deleted, moves return to their original names and folders.",
+  "err.offline": "No connection to the server. Start it with start.bat, then refresh the page."
 };
