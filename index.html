@@ -63,7 +63,7 @@ body {
 .wrap {
   width: min(1200px, calc(100% - 36px));
   margin: 0 auto;
-  padding: 22px 0 56px;
+  padding: 22px 0 28px;
 }
 
 .top {
@@ -952,6 +952,71 @@ legend {
   flex-wrap: wrap;
   padding: 14px 18px 20px;
 }
+
+.footer-donate {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0 0;
+  margin: -12px 0 0;
+}
+
+.wallets {
+  display: grid;
+  gap: 12px;
+}
+.wallet {
+  border: 1px solid var(--line);
+  background: var(--bg-3);
+  border-radius: 3px;
+  padding: 14px 16px;
+}
+.wallet-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.wallet-name {
+  margin: 0;
+  font: 600 14.5px/1.2 "Source Sans 3", sans-serif;
+}
+.wallet-body {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 14px;
+  align-items: start;
+}
+.wallet-addr {
+  background: var(--input-bg);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font: 400 12px/1.5 "JetBrains Mono", Consolas, monospace;
+  padding: 10px 12px;
+  border-radius: 3px;
+  word-break: break-all;
+  margin-bottom: 8px;
+}
+.wallet-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.wallet-qr {
+  width: 128px;
+  height: 128px;
+  background: #fff;
+  padding: 6px;
+  border-radius: 3px;
+}
+.wallet-qr img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+@media (max-width: 640px) {
+  .wallet-body { grid-template-columns: 1fr; }
+  .wallet-qr { order: -1; margin: 0 auto; }
+}
 .lb-nav {
   display: flex;
   gap: 8px;
@@ -1092,6 +1157,19 @@ legend {
     <div class="lb-actions">
       <button class="btn btn-primary" type="button" id="lbKeep" data-i18n="dupes.keepThis"></button>
       <button class="btn btn-danger" type="button" id="lbDelete" data-i18n="review.reject"></button>
+    </div>
+  </div>
+
+
+  <div class="modal-overlay" id="donateModal" hidden>
+    <div class="modal-help" role="dialog" aria-modal="true" aria-labelledby="donateTitle">
+      <div class="modal-help-head">
+        <h2 id="donateTitle" data-i18n="donate.title"></h2>
+        <button class="btn" type="button" id="donateClose" data-i18n="modal.confirm"></button>
+      </div>
+      <div class="modal-help-body">
+        <div class="wallets" id="donateWallets"></div>
+      </div>
     </div>
   </div>
 
@@ -1511,6 +1589,10 @@ legend {
     </div>
   </div>
 </div>
+
+  <footer class="footer-donate">
+    <button class="btn btn-ghost" id="btnDonate" type="button" data-i18n="donate.open"></button>
+  </footer>
 
 <script>
 const $ = (id) => document.getElementById(id);
@@ -2405,6 +2487,7 @@ async function init() {
   }
   bindForm();
   bindTabsAcc();
+  bindDonate();
   poll();
   setInterval(poll, 2500);
 
@@ -2517,6 +2600,107 @@ async function init() {
   });
 
   bindReview();
+}
+
+/* ── donate ── */
+const DONATE_WALLETS = [
+  {
+    id: "donation",
+    name: "DonationAlerts",
+    address: "https://dalink.to/v1drimers",
+    link: "https://dalink.to/v1drimers",
+    color: "var(--accent-only-run)",
+  },
+  {
+    id: "kaspa",
+    name: "Kaspa",
+    address: "kaspa:qzdkq9n6p0rgp7fg3cyhuq4uznfy6a4csh5jcqt4gs355zyf3r3t2eszhhc9c",
+    color: "#70c7ba",
+  },
+  {
+    id: "ton",
+    name: "TON",
+    address: "UQB6VnvZJXUfq3CW-xS6ku38t3fIK7RJ30a5TMTGJiJal8tr",
+    color: "#0088cc",
+  },
+  {
+    id: "usdt",
+    name: "USDT (TRC-20)",
+    address: "TYYvAa7u8agTheFHoJK6sGqPV2E6UJd6Er",
+    color: "#26a17b",
+  },
+];
+
+function qrUrl(text) {
+  return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(text)}`;
+}
+
+function copyDonateAddress(addr) {
+  const done = () => showToast(t("donate.copied"));
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(addr).then(done).catch(() => {
+      const ta = document.createElement("textarea");
+      ta.value = addr;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      done();
+    });
+  } else {
+    const ta = document.createElement("textarea");
+    ta.value = addr;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+    done();
+  }
+}
+
+function renderDonateWallets() {
+  const box = $("donateWallets");
+  box.innerHTML = DONATE_WALLETS.map((w) => `
+    <div class="wallet">
+      <div class="wallet-head">
+        <h3 class="wallet-name" style="color: ${w.color}">${escapeHtml(w.name)}</h3>
+      </div>
+      <div class="wallet-body">
+        <div>
+          <div class="wallet-addr">${escapeHtml(w.address)}</div>
+          <div class="wallet-actions">
+            <button class="btn" type="button" data-copy="${escapeAttr(w.address)}">${escapeHtml(t("donate.copy"))}</button>
+            ${w.link ? `<a class="btn" href="${escapeAttr(w.link)}" target="_blank" rel="noopener noreferrer">${escapeHtml(t("donate.openLink"))}</a>` : ""}
+          </div>
+        </div>
+        <div class="wallet-qr">
+          <img src="${qrUrl(w.address)}" alt="${escapeAttr(w.name)} QR" loading="lazy">
+        </div>
+      </div>
+    </div>`).join("");
+  box.querySelectorAll("[data-copy]").forEach((btn) => {
+    btn.addEventListener("click", () => copyDonateAddress(btn.dataset.copy));
+  });
+}
+
+function bindDonate() {
+  const modal = $("donateModal");
+  $("btnDonate").addEventListener("click", () => {
+    renderDonateWallets();
+    modal.hidden = false;
+    document.body.style.overflow = "hidden";
+  });
+  const close = () => {
+    modal.hidden = true;
+    document.body.style.overflow = "";
+  };
+  $("donateClose").addEventListener("click", close);
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) close();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !modal.hidden) close();
+  });
 }
 
 /* РІ”Р‚РІ”Р‚ review queue РІ”Р‚РІ”Р‚ */

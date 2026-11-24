@@ -271,5 +271,10 @@ window.YARO_I18N = {
   "undo.keepTip": "Skip this file without touching it. The run stays undone only for this one.",
   "undo.prevTip": "Previous operation in the list.",
   "undo.nextTip": "Next operation in the list.",
-  "undo.closeTip": "Close. Nothing is undone until you confirm."
+  "undo.closeTip": "Close. Nothing is undone until you confirm.",
+  "donate.open": "Support the author ❤️",
+  "donate.title": "Support the author",
+  "donate.copy": "Copy address",
+  "donate.openLink": "Open",
+  "donate.copied": "Address copied"
 };
