@@ -34,10 +34,6 @@ Local providers show GPU name, temperature, VRAM, utilization and power draw.
 
 ![Help EN](img/12-help-en.png)
 
-### Support the author
-
-![Donate EN](img/13-donate-en.png)
-
 
 ## How it works
 
